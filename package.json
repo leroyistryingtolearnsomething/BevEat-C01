@@ -1,0 +1,9 @@
+{
+  "name": "kiddyeats",
+  "private": true,
+  "scripts": {
+    "dev": "node dev.js",
+    "start": "node dev.js",
+    "postinstall": "npm --prefix backend install && npm --prefix frontend install"
+  }
+}
