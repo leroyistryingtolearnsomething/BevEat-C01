@@ -10,7 +10,7 @@ app.use(express.json());
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
 // child login (PB02)
-app.use("/api", require("./routes/childAuth"));
+app.use("/api", require("./xinsheng/routes/childAuthRoutes"));
 
 // error handler
 app.use((err, req, res, next) => {
@@ -18,7 +18,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Something went wrong" });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 if (require.main === module) {
   app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
 }

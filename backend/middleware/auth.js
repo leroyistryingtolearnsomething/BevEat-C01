@@ -1,6 +1,6 @@
 // JWT auth. Header: Authorization: Bearer <token>, payload { id, role }
 const jwt = require("jsonwebtoken");
-const pool = require("../db");
+const ChildProfile = require("../xinsheng/models/childProfileModel");
 
 function requireAuth(req, res, next) {
   const header = req.headers.authorization || "";
@@ -27,11 +27,8 @@ async function requireOwnChild(req, res, next) {
   if (!Number.isInteger(childId) || childId <= 0)
     return res.status(400).json({ error: "Invalid child id" });
   try {
-    const { rows } = await pool.query(
-      `SELECT child_id FROM child_profiles WHERE child_id = $1 AND parent_id = $2`,
-      [childId, req.user.id]
-    );
-    if (rows.length === 0) return res.status(404).json({ error: "Child not found" });
+    if (!(await ChildProfile.isParentOf(req.user.id, childId)))
+      return res.status(404).json({ error: "Child not found" });
     req.childId = childId;
     next();
   } catch (err) {

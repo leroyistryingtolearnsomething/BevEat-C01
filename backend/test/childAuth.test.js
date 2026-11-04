@@ -65,7 +65,7 @@ const fakePool = {
 };
 
 // swap the real db.js for the fake one before the app loads
-const dbPath = require.resolve("../db");
+const dbPath = require.resolve("../config/db");
 require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: fakePool };
 
 const app = require("../server");
