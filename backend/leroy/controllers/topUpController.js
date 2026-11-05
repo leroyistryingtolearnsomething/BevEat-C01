@@ -2,30 +2,11 @@
 // 1. POST makes the QR code  2. the app calls GET every few seconds until status is success or failed
 const TopUp = require("../models/topUpModel");
 const Nets = require("../services/netsQrService");
-const ChildProfile = require("../../xinsheng/models/childProfileModel");
 
 const AMOUNT_RE = /^\d{1,3}(\.\d{1,2})?$/; // dollars, at most 2 decimal places
 const MIN_DOLLARS = 1;
 const MAX_DOLLARS = 200;
 const QR_SECONDS = 300; // a NETS QR code is valid for 5 minutes
-
-// GET /api/children  the parent's kids and their wallets, to pick who to top up
-async function listWallets(req, res, next) {
-  try {
-    const rows = await ChildProfile.listForParent(req.user.id);
-    res.json({
-      children: rows.map((c) => ({
-        id: c.child_id,
-        name: c.display_name,
-        avatarEmoji: c.avatar_emoji,
-        walletBalance: Number(c.wallet_balance),
-        dailyLimit: Number(c.daily_limit),
-      })),
-    });
-  } catch (err) {
-    next(err);
-  }
-}
 
 // POST /api/children/:childId/top-ups  body { amount }  (req.childId comes from requireOwnChild)
 async function createTopUp(req, res, next) {
@@ -83,4 +64,4 @@ async function checkWithNets(topUp) {
   return "pending";
 }
 
-module.exports = { listWallets, createTopUp, getTopUp };
+module.exports = { createTopUp, getTopUp };

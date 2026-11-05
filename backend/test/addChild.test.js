@@ -40,6 +40,24 @@ const client = {
       found.forEach((name) => allergies.push({ child_id, name }));
       return { rows: [], rowCount: found.length };
     }
+    if (sql.includes("DELETE FROM child_allergies")) {
+      allergies = allergies.filter((a) => a.child_id !== params[0]);
+      return { rows: [] };
+    }
+    if (sql.includes("SET daily_limit")) {
+      profiles.find((p) => p.child_id === params[0]).daily_limit = params[1];
+      return { rows: [] };
+    }
+    if (sql.includes("JOIN users")) {
+      const rows = profiles.filter((p) => p.parent_id === params[0]).map((p) => ({
+        child_id: p.child_id, display_name: users.find((u) => u.user_id === p.child_id).display_name,
+        wallet_balance: "0.00", daily_limit: String(p.daily_limit), spent_today: "0",
+        allergens: allergies.filter((a) => a.child_id === p.child_id).map((a) => a.name),
+      }));
+      return { rows };
+    }
+    if (sql.includes("FROM child_profiles WHERE child_id = $1 AND parent_id = $2"))
+      return { rows: profiles.filter((p) => p.child_id === params[0] && p.parent_id === params[1]) };
     return { rows: [] };
   },
   release: () => {},
@@ -91,6 +109,38 @@ async function run() {
 
   check((await add(good, kidToken)).status === 403, "kid cannot add a kid");
   check((await request(app).post("/api/children").send(good)).status === 401, "not logged in is rejected");
+
+  // list, change allergies, change daily limit
+  const chloeId = kid.user_id;
+  const otherParent = tokenFor(99, "parent");
+  const put = (path, body, token = parent) => request(app).put(`/api/children/${chloeId}/${path}`).set("Authorization", token).send(body);
+
+  res = await request(app).get("/api/children").set("Authorization", parent);
+  const listed = res.body.children[0];
+  check(res.status === 200 && listed.name === "Chloe" && listed.dailyLimit === 6 && listed.allergens.sort().join() === "peanut,wheat", "parent's kids list shows limit and allergy keys");
+
+  res = await put("allergies", { allergens: ["egg", "tree nuts", "egg"] });
+  check(res.status === 200 && allergies.filter((a) => a.child_id === chloeId).map((a) => a.name).sort().join() === "Egg,Tree nuts", "allergies replaced");
+
+  res = await put("allergies", { allergens: [] });
+  check(res.status === 200 && !allergies.some((a) => a.child_id === chloeId), "all allergies can be removed");
+
+  const beforeSet = JSON.stringify(allergies);
+  await put("allergies", { allergens: ["milk"] });
+  ALLERGEN_NAMES.splice(ALLERGEN_NAMES.indexOf("Sesame"), 1);
+  res = await put("allergies", { allergens: ["sesame"] });
+  check(res.status === 500 && allergies.filter((a) => a.child_id === chloeId).map((a) => a.name).join() === "Milk", "failed allergy save keeps the old allergies");
+  ALLERGEN_NAMES.push("Sesame");
+
+  check((await put("allergies", { allergens: ["bacon"] })).status === 400, "unknown allergy is rejected");
+  check((await put("allergies", { allergens: ["egg"] }, otherParent)).status === 404, "another parent cannot change the allergies");
+
+  res = await put("daily-limit", { dailyLimitCents: 850 });
+  check(res.status === 200 && profiles.find((p) => p.child_id === chloeId).daily_limit === 8.5, "daily limit saved");
+  for (const bad of [99, 5001, "800", 7.5])
+    check((await put("daily-limit", { dailyLimitCents: bad })).status === 400, `limit ${JSON.stringify(bad)} is rejected`);
+  check((await put("daily-limit", { dailyLimitCents: 800 }, otherParent)).status === 404, "another parent cannot change the limit");
+  check((await put("daily-limit", { dailyLimitCents: 800 }, kidToken)).status === 403, "kid cannot change the limit");
 
   console.log(failed ? `\n${failed} failed` : "\nall passed");
   process.exitCode = failed ? 1 : 0;

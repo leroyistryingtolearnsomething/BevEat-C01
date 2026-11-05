@@ -51,3 +51,10 @@ export const createTopUp = (token, childId, amount) =>
   request(`/children/${childId}/top-ups`, { method: "POST", body: { amount }, token });
 
 export const getTopUp = (token, topUpId) => request(`/top-ups/${topUpId}`, { token });
+
+// Live in the backend: change a kid's allergies (keys like "peanut") and daily food money
+export const setAllergies = (token, childId, allergens) =>
+  request(`/children/${childId}/allergies`, { method: "PUT", body: { allergens }, token });
+
+export const setDailyLimit = (token, childId, dailyLimitCents) =>
+  request(`/children/${childId}/daily-limit`, { method: "PUT", body: { dailyLimitCents }, token });
