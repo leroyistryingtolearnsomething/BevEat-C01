@@ -31,9 +31,9 @@ async function request(path, { method = "GET", body, token } = {}) {
 export const childLogin = (username, pin) =>
   request("/auth/child-login", { method: "POST", body: { username, pin } });
 
-// Not in the backend yet. Agreed shapes:
-// parent-login  { email, password }               -> { token, parent: { id, name, email } }
-// parent-signup { name, mobile, email, password } -> { token, parent: { id, name, email } }
+// Live in the backend: { email, password } -> { token, parent: { id, name, email } }
+// Live in the backend: parent-signup { name, mobile, email, password } -> { token, parent: { id, name, email } }
+// Not in the backend yet. Agreed shape:
 // POST /children { displayName, username, pin, colour, dailyLimitCents, allergens } -> { child }
 export const parentLogin = (email, password) =>
   request("/auth/parent-login", { method: "POST", body: { email, password } });
@@ -43,3 +43,11 @@ export const parentSignup = (form) =>
 
 export const addChild = (token, child) =>
   request("/children", { method: "POST", body: child, token });
+
+// Live in the backend: NETS QR top-ups (parent). Kids + wallets, make a QR, then check if it's paid
+export const listChildren = (token) => request("/children", { token });
+
+export const createTopUp = (token, childId, amount) =>
+  request(`/children/${childId}/top-ups`, { method: "POST", body: { amount }, token });
+
+export const getTopUp = (token, topUpId) => request(`/top-ups/${topUpId}`, { token });

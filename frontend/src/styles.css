@@ -83,6 +83,7 @@ button { cursor: pointer; }
   font-size: 16px; font-weight: 600; color: var(--p-ink);
 }
 .input input::placeholder { color: #5f7366; }
+.parent .input input:focus-visible { outline: none; } /* the .input box already shows the focus ring */
 .input__prefix { padding-left: 14px; font-weight: 700; }
 .input__prefix + input { padding-left: 8px; }
 .input__toggle {
@@ -220,6 +221,30 @@ legend { padding: 0; margin-bottom: 8px; }
 
 .home { align-items: center; justify-content: center; gap: 14px; text-align: center; }
 .parent.home .btn { max-width: 320px; }
+
+/* ---------- Parent home + top-up ---------- */
+.kid-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px; border-radius: 16px; background: #fff; border: 1.5px solid var(--p-line);
+}
+.kid-card__avatar {
+  flex: none; display: grid; place-items: center; width: 52px; height: 52px;
+  border-radius: 50%; background: var(--p-mint); font-size: 28px;
+}
+.kid-card__text { flex: 1; min-width: 0; }
+.kid-card__text h2 { font-size: 18px; font-weight: 700; overflow-wrap: anywhere; }
+.kid-card__text p { margin-top: 2px; font-size: 14px; color: var(--p-muted); }
+.kid-card__text strong { color: var(--p-ink); }
+.parent a.kid-card__btn { flex: none; width: auto; min-height: 44px; color: #fff; }
+.logout { align-self: center; width: auto; margin-top: 16px; }
+
+.topup__qr {
+  display: block; width: min(100%, 280px); aspect-ratio: 1; margin: 22px auto 0;
+  padding: 12px; border-radius: 16px; background: #fff; border: 1.5px solid var(--p-line);
+}
+.topup__timer { margin-top: 14px; text-align: center; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.topup__wait { margin: 6px 0 12px; text-align: center; }
+.topup__emoji { font-size: 64px; }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
