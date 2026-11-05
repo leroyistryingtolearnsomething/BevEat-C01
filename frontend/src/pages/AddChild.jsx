@@ -9,7 +9,7 @@ import BackButton from "../components/BackButton.jsx";
 
 const COLOURS = ["#2F6DB5", "#B04E15", "#7B4CC2", "#B33F6A"];
 const LIMITS = [400, 600, 800, 1000]; // cents
-const ALLERGENS = ["Peanut", "Egg", "Milk", "Shellfish", "Fish", "Soy", "Wheat", "Sesame"];
+const ALLERGENS = ["Peanut", "Tree nuts", "Egg", "Milk", "Shellfish", "Fish", "Soy", "Wheat", "Sesame"];
 const EMPTY = { displayName: "", username: "", pin: "", colour: COLOURS[0], dailyLimitCents: 600, allergens: [] };
 const toUsername = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 20);
 

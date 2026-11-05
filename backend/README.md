@@ -21,6 +21,7 @@ npm test                 # runs the child login checks against a fake DB (no Sup
 | POST | `/api/auth/parent-signup` | anyone | `{ name, mobile: "+6581234567", email, password }` (8+ chars with a number) | `201 { token, parent: { id, name, email } }`, `409` if the email is taken |
 | POST | `/api/auth/parent-login` | anyone | `{ email, password }` | `{ token, parent: { id, name, email } }` |
 | PUT | `/api/children/:childId/pin` | parent of that child | `{ pin }` (4 to 6 digits) | `{ message }` |
+| POST | `/api/children` | parent | `{ displayName, username, pin (4 digits), dailyLimitCents (100 to 5000), allergens: ["peanut", "tree nuts", "milk", "egg", "shellfish", "fish", "soy", "wheat", "sesame"] }` | `201 { child: { id, name, username } }`, `409` if the login name is taken |
 | GET | `/api/children` | parent | | `{ children: [{ id, name, avatarEmoji, walletBalance, dailyLimit }] }` |
 | POST | `/api/children/:childId/top-ups` | parent of that child | `{ amount }` ($1 to $200, max 2 decimals) | `{ topUpId, amount, status: "pending", qrCode, expiresInSeconds: 300 }` |
 | GET | `/api/top-ups/:topUpId` | parent who made it | | `{ topUpId, amount, status }`, status is `pending`, `success` or `failed` |

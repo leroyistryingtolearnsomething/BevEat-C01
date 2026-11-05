@@ -15,6 +15,9 @@ app.use("/api", require("./xinsheng/routes/childAuthRoutes"));
 // parent log in
 app.use("/api", require("./leroy/routes/parentAuthRoutes"));
 
+// parent adds a kid
+app.use("/api", require("./leroy/routes/childRoutes"));
+
 // NETS QR wallet top-ups
 app.use("/api", require("./leroy/routes/topUpRoutes"));
 
