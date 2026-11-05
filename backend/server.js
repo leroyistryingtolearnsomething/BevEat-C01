@@ -18,6 +18,9 @@ app.use("/api", require("./leroy/routes/parentAuthRoutes"));
 // NETS QR wallet top-ups
 app.use("/api", require("./leroy/routes/topUpRoutes"));
 
+// kid Home page
+app.use("/api", require("./gabriel/routes/homeRoutes"));
+
 // error handler
 app.use((err, req, res, next) => {
   console.error(err);
