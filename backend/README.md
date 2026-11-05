@@ -22,7 +22,9 @@ npm test                 # runs the child login checks against a fake DB (no Sup
 | POST | `/api/auth/parent-login` | anyone | `{ email, password }` | `{ token, parent: { id, name, email } }` |
 | PUT | `/api/children/:childId/pin` | parent of that child | `{ pin }` (4 to 6 digits) | `{ message }` |
 | POST | `/api/children` | parent | `{ displayName, username, pin (4 digits), dailyLimitCents (100 to 5000), allergens: ["peanut", "tree nuts", "milk", "egg", "shellfish", "fish", "soy", "wheat", "sesame"] }` | `201 { child: { id, name, username } }`, `409` if the login name is taken |
-| GET | `/api/children` | parent | | `{ children: [{ id, name, avatarEmoji, walletBalance, dailyLimit }] }` |
+| GET | `/api/children` | parent | | `{ children: [{ id, name, avatarEmoji, walletBalance, dailyLimit, spentToday, allergens: ["peanut", ...] }] }` (spent today = Singapore day, not cancelled orders) |
+| PUT | `/api/children/:childId/allergies` | parent of that child | `{ allergens: ["peanut", ...] }` (same keys as above, `[]` for none) | `{ allergens }` |
+| PUT | `/api/children/:childId/daily-limit` | parent of that child | `{ dailyLimitCents }` (100 to 5000) | `{ dailyLimit }` |
 | POST | `/api/children/:childId/top-ups` | parent of that child | `{ amount }` ($1 to $200, max 2 decimals) | `{ topUpId, amount, status: "pending", qrCode, expiresInSeconds: 300 }` |
 | GET | `/api/top-ups/:topUpId` | parent who made it | | `{ topUpId, amount, status }`, status is `pending`, `success` or `failed` |
 

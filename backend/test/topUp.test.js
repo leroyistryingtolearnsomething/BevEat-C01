@@ -12,7 +12,7 @@ const request = require("supertest");
 
 // ---------- fake data ----------
 
-const childProfiles = [{ child_id: 10, parent_id: 1, wallet_balance: 5, display_name: "Ethan", avatar_emoji: "🐻", daily_limit: "5.00" }];
+const childProfiles = [{ child_id: 10, parent_id: 1, wallet_balance: 5, display_name: "Ethan", avatar_emoji: "🐻", daily_limit: "5.00", allergens: ["Peanuts"], spent_today: "3.50" }];
 const topUps = [];
 
 // ---------- fake database ----------
@@ -102,7 +102,7 @@ async function run() {
 
   // listing the parent's kids
   res = await request(app).get("/api/children").set("Authorization", parent1);
-  check(res.status === 200 && res.body.children.length === 1 && res.body.children[0].walletBalance === 5 && res.body.children[0].name === "Ethan", "parent sees their kid and wallet");
+  check(res.status === 200 && res.body.children.length === 1 && res.body.children[0].walletBalance === 5 && res.body.children[0].name === "Ethan" && res.body.children[0].spentToday === 3.5 && res.body.children[0].allergens.join() === "peanut", "parent sees their kid, wallet, spent today and allergies");
   res = await request(app).get("/api/children").set("Authorization", parent2);
   check(res.status === 200 && res.body.children.length === 0, "another parent does not see the kid");
   check((await request(app).get("/api/children").set("Authorization", kid)).status === 403, "kid cannot list children");

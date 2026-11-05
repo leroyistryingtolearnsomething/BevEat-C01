@@ -1,4 +1,4 @@
-// Parent adds a kid: login name + 4-digit PIN, daily food money, allergies
+// Parent's kids: list them, add one, change allergies and daily food money
 const bcrypt = require("bcrypt");
 const ChildAccount = require("../models/childAccountModel");
 
@@ -10,6 +10,31 @@ const ALLERGENS = {
   peanut: "Peanuts", "tree nuts": "Tree nuts", milk: "Milk", egg: "Egg", shellfish: "Shellfish",
   fish: "Fish", soy: "Soy", wheat: "Wheat / gluten", sesame: "Sesame",
 };
+const KEY_FOR = Object.fromEntries(Object.entries(ALLERGENS).map(([key, name]) => [name, key]));
+
+const validAllergens = (list) => Array.isArray(list) && list.every((a) => Object.hasOwn(ALLERGENS, a));
+const validLimitCents = (c) => Number.isInteger(c) && c >= 100 && c <= 5000;
+const allergenNames = (keys) => [...new Set(keys)].map((a) => ALLERGENS[a]);
+
+// GET /api/children
+async function listChildren(req, res, next) {
+  try {
+    const rows = await ChildAccount.listForParent(req.user.id);
+    res.json({
+      children: rows.map((c) => ({
+        id: c.child_id,
+        name: c.display_name,
+        avatarEmoji: c.avatar_emoji,
+        walletBalance: Number(c.wallet_balance),
+        dailyLimit: Number(c.daily_limit),
+        spentToday: Number(c.spent_today),
+        allergens: c.allergens.map((name) => KEY_FOR[name]).filter(Boolean),
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
 
 // POST /api/children  body { displayName, username, pin, dailyLimitCents, allergens: ["peanut", ...] }
 async function addChild(req, res, next) {
@@ -19,10 +44,8 @@ async function addChild(req, res, next) {
   if (typeof username !== "string" || !USERNAME_RE.test(username))
     return res.status(400).json({ error: "Login name must be 3 to 20 letters, numbers or _" });
   if (typeof pin !== "string" || !PIN_RE.test(pin)) return res.status(400).json({ error: "PIN must be 4 numbers" });
-  if (!Number.isInteger(dailyLimitCents) || dailyLimitCents < 100 || dailyLimitCents > 5000)
-    return res.status(400).json({ error: "Daily food money must be S$1 to S$50" });
-  if (!Array.isArray(allergens) || allergens.some((a) => !Object.hasOwn(ALLERGENS, a)))
-    return res.status(400).json({ error: "Unknown allergy" });
+  if (!validLimitCents(dailyLimitCents)) return res.status(400).json({ error: "Daily food money must be S$1 to S$50" });
+  if (!validAllergens(allergens)) return res.status(400).json({ error: "Unknown allergy" });
 
   try {
     const childId = await ChildAccount.createChild(req.user.id, {
@@ -30,7 +53,7 @@ async function addChild(req, res, next) {
       username: username.toLowerCase(), // kid log in ignores case, so store one spelling
       pinHash: await bcrypt.hash(pin, SALT_ROUNDS),
       dailyLimit: dailyLimitCents / 100,
-      allergenNames: [...new Set(allergens)].map((a) => ALLERGENS[a]),
+      allergenNames: allergenNames(allergens),
     });
     res.status(201).json({ child: { id: childId, name, username: username.toLowerCase() } });
   } catch (err) {
@@ -39,4 +62,28 @@ async function addChild(req, res, next) {
   }
 }
 
-module.exports = { addChild };
+// PUT /api/children/:childId/allergies  body { allergens: ["peanut", ...] }  (req.childId from requireOwnChild)
+async function setAllergies(req, res, next) {
+  const { allergens } = req.body || {};
+  if (!validAllergens(allergens)) return res.status(400).json({ error: "Unknown allergy" });
+  try {
+    await ChildAccount.setAllergies(req.childId, allergenNames(allergens));
+    res.json({ allergens: [...new Set(allergens)] });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// PUT /api/children/:childId/daily-limit  body { dailyLimitCents }
+async function setDailyLimit(req, res, next) {
+  const { dailyLimitCents } = req.body || {};
+  if (!validLimitCents(dailyLimitCents)) return res.status(400).json({ error: "Daily food money must be S$1 to S$50" });
+  try {
+    await ChildAccount.setDailyLimit(req.childId, dailyLimitCents / 100);
+    res.json({ dailyLimit: dailyLimitCents / 100 });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { listChildren, addChild, setAllergies, setDailyLimit };
