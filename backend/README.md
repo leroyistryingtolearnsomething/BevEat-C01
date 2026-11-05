@@ -18,9 +18,27 @@ npm test                 # runs the child login checks against a fake DB (no Sup
 |---|---|---|---|---|
 | GET | `/api/health` | anyone | | `{ ok: true }` |
 | POST | `/api/auth/child-login` | anyone | `{ username, pin }` | `{ token, child: { id, username, displayName, avatarEmoji } }` |
+| POST | `/api/auth/parent-signup` | anyone | `{ name, mobile: "+6581234567", email, password }` (8+ chars with a number) | `201 { token, parent: { id, name, email } }`, `409` if the email is taken |
+| POST | `/api/auth/parent-login` | anyone | `{ email, password }` | `{ token, parent: { id, name, email } }` |
 | PUT | `/api/children/:childId/pin` | parent of that child | `{ pin }` (4 to 6 digits) | `{ message }` |
+| GET | `/api/children` | parent | | `{ children: [{ id, name, avatarEmoji, walletBalance, dailyLimit }] }` |
+| POST | `/api/children/:childId/top-ups` | parent of that child | `{ amount }` ($1 to $200, max 2 decimals) | `{ topUpId, amount, status: "pending", qrCode, expiresInSeconds: 300 }` |
+| GET | `/api/top-ups/:topUpId` | parent who made it | | `{ topUpId, amount, status }`, status is `pending`, `success` or `failed` |
+
+## NETS QR top-up (Leroy)
+
+1. The parent picks an amount and the app calls `POST /api/children/:childId/top-ups`.
+   The server asks NETS for a QR code and saves a `pending` row in `top_ups`.
+2. Show `qrCode` as an image (`<img src={qrCode}>`) with a 5 minute countdown.
+3. Every 3 seconds, call `GET /api/top-ups/:topUpId`. The server asks NETS if it's paid.
+   On `success` the kid's `wallet_balance` goes up once. After 5 minutes unpaid it becomes `failed`.
+
+The NETS API key stays in `backend/.env` (`NETS_API_KEY`, `NETS_PROJECT_ID`, `NETS_TXN_ID`, see `.env.example`), never in the front end.
 
 Kid logins from the seed data: `ethan`, `chloe`, `aisyah`, PIN `1234`.
+
+Test parent (made for testing top-ups, user 10): `leroy.test@example.com`, password `kiddyeats-test-6294`.
+Its kid is `leroy_kid` (child 11), PIN `1234`, wallet starts at $0.
 
 ## Login token
 
@@ -39,8 +57,9 @@ backend/
     models/        SQL only: one file per table, returns plain rows
     controllers/   request logic: check input, call models, send JSON
     routes/        URL -> middleware -> controller, nothing else
-  leroy/           same three folders inside each person's folder
-  leslie/
+  leroy/           NETS QR wallet top-up (models, controllers, routes,
+                   services/ = calls to outside APIs like NETS)
+  leslie/          same folders inside each person's folder
   raghav/
   gabriel/
 ```

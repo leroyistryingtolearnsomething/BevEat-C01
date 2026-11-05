@@ -12,6 +12,12 @@ app.get("/api/health", (req, res) => res.json({ ok: true }));
 // child login (PB02)
 app.use("/api", require("./xinsheng/routes/childAuthRoutes"));
 
+// parent log in
+app.use("/api", require("./leroy/routes/parentAuthRoutes"));
+
+// NETS QR wallet top-ups
+app.use("/api", require("./leroy/routes/topUpRoutes"));
+
 // error handler
 app.use((err, req, res, next) => {
   console.error(err);
