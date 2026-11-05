@@ -51,3 +51,5 @@ export const createTopUp = (token, childId, amount) =>
   request(`/children/${childId}/top-ups`, { method: "POST", body: { amount }, token });
 
 export const getTopUp = (token, topUpId) => request(`/top-ups/${topUpId}`, { token });
+
+export const getHome = (token) => request("/home", { token });
