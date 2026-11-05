@@ -33,8 +33,8 @@ export const childLogin = (username, pin) =>
 
 // Live in the backend: { email, password } -> { token, parent: { id, name, email } }
 // Live in the backend: parent-signup { name, mobile, email, password } -> { token, parent: { id, name, email } }
-// Not in the backend yet. Agreed shape:
-// POST /children { displayName, username, pin, colour, dailyLimitCents, allergens } -> { child }
+// Live in the backend: POST /children { displayName, username, pin, dailyLimitCents, allergens } -> { child }
+// (colour is sent but not saved yet: no column for it)
 export const parentLogin = (email, password) =>
   request("/auth/parent-login", { method: "POST", body: { email, password } });
 
@@ -53,3 +53,9 @@ export const createTopUp = (token, childId, amount) =>
 export const getTopUp = (token, topUpId) => request(`/top-ups/${topUpId}`, { token });
 
 export const getHome = (token) => request("/home", { token });
+// Live in the backend: change a kid's allergies (keys like "peanut") and daily food money
+export const setAllergies = (token, childId, allergens) =>
+  request(`/children/${childId}/allergies`, { method: "PUT", body: { allergens }, token });
+
+export const setDailyLimit = (token, childId, dailyLimitCents) =>
+  request(`/children/${childId}/daily-limit`, { method: "PUT", body: { dailyLimitCents }, token });
