@@ -8,6 +8,8 @@ import KidLogin from "./pages/KidLogin.jsx";
 import Home from "./pages/Home.jsx";
 import ParentHome from "./pages/ParentHome.jsx";
 import TopUp from "./pages/TopUp.jsx";
+import ParentAllergies from "./pages/ParentAllergies.jsx";
+import ParentLimit from "./pages/ParentLimit.jsx";
 
 // UI guard only; the API checks the token's role on every request
 function RequireRole({ role, children }) {
@@ -29,7 +31,9 @@ export default function App() {
       <Route path="/kid/login" element={<LoggedOutOnly><KidLogin /></LoggedOutOnly>} />
       <Route path="/parent/add-child" element={<RequireRole role="parent"><AddChild /></RequireRole>} />
       <Route path="/parent/home" element={<RequireRole role="parent"><ParentHome /></RequireRole>} />
-      <Route path="/parent/top-up/:childId" element={<RequireRole role="parent"><TopUp /></RequireRole>} />
+      <Route path="/parent/allergies" element={<RequireRole role="parent"><ParentAllergies /></RequireRole>} />
+      <Route path="/parent/limit" element={<RequireRole role="parent"><ParentLimit /></RequireRole>} />
+      <Route path="/parent/top-up" element={<RequireRole role="parent"><TopUp /></RequireRole>} />
       <Route path="/kid/home" element={<RequireRole role="child"><Home role="child" /></RequireRole>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
