@@ -400,3 +400,169 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* ========== Kid Home page (Gabriel) ==========
+   Every class starts with hk- (home-kid) so it can't clash with anyone else's. */
+
+.home-kid {
+  --hk-mint: #2ec4a0;        /* meter fill, safe-pick tick */
+  --hk-money-bg: #dbf2ff;    /* money card */
+  --hk-allergy-bg: #ffe0db;  /* red chips and notes: allergies */
+  --hk-allergy-ink: #bf3326;
+  --hk-parent-bg: #ebe6ff;   /* purple chips and notes: parent rules */
+  --hk-parent-ink: #5945cc;
+  --hk-muted-pill: #ededf2;  /* price pill on a blocked dish */
+  --hk-muted-ink: #9999ad;   /* dish name on a blocked dish */
+  --hk-link: #b83226;        /* "See all" */
+}
+
+/* .kid.home-kid (2 classes) so this padding beats the one in .screen */
+.kid.home-kid {
+  gap: 18px;
+  padding-bottom: calc(130px + env(safe-area-inset-bottom)); /* room for the fixed tab bar */
+}
+
+.home-kid h2 { font-size: 19px; font-weight: 600; }
+.home-kid h3 { margin: 0; font-family: "Fredoka", system-ui, sans-serif; font-size: 15px; font-weight: 600; }
+.hk-sub { font-size: 15px; color: var(--k-soft); }
+
+/* ---------- Header ---------- */
+.hk-header { display: flex; align-items: center; gap: 12px; }
+.hk-header > div { flex: 1; min-width: 0; }
+.hk-header h1 { font-size: 26px; font-weight: 700; line-height: 1.2; }
+.hk-avatar {
+  display: grid; place-items: center; flex: none;
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--k-sky); border: var(--k-line);
+  font-size: 24px;
+}
+
+/* ---------- Money card ---------- */
+.hk-money {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 18px;
+  background: var(--hk-money-bg);
+  border: var(--k-line); border-radius: 26px; box-shadow: var(--k-shadow);
+}
+.hk-money__title { font-family: "Fredoka", system-ui, sans-serif; font-size: 15px; font-weight: 500; }
+.hk-money__left { font-family: "Fredoka", system-ui, sans-serif; font-size: 40px; font-weight: 700; line-height: 1.2; }
+.hk-money__left span { font-size: 18px; font-weight: 500; color: var(--k-soft); }
+.hk-money__note { font-size: 12px; color: var(--k-muted); }
+
+.hk-meter {
+  height: 26px; padding: 4px;
+  background: #fff; border: var(--k-line); border-radius: 13px;
+}
+.hk-meter__fill {
+  height: 100%; min-width: 15px; /* a tiny dot still shows when almost nothing is left */
+  background: var(--hk-mint); border-radius: 9px;
+  transition: width 0.4s ease;
+}
+
+/* ---------- Mum's rules ---------- */
+.hk-rules { display: flex; flex-direction: column; gap: 10px; }
+.hk-rules h2 { font-size: 17px; }
+.hk-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.hk-chip {
+  padding: 4px 10px;
+  border: 1.5px solid var(--k-ink); border-radius: 999px;
+  font-family: "Fredoka", system-ui, sans-serif; font-size: 13px; font-weight: 500;
+}
+.hk-chip--allergy { background: var(--hk-allergy-bg); color: var(--hk-allergy-ink); }
+.hk-chip--parent { background: var(--hk-parent-bg); color: var(--hk-parent-ink); }
+
+/* ---------- Section headings with a link on the right ---------- */
+.hk-row-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hk-link { font-family: "Fredoka", system-ui, sans-serif; font-size: 14px; font-weight: 500; color: var(--hk-link); }
+
+/* ---------- Today's yummiest pics ---------- */
+.hk-pics { display: flex; flex-direction: column; gap: 12px; }
+.hk-pics__row {
+  display: flex; gap: 12px;
+  margin: 0 -22px; padding: 2px 22px 8px; /* scroll edge to edge, but line up with the page */
+  overflow-x: auto; scroll-snap-type: x mandatory;
+}
+.hk-pic {
+  position: relative; flex: none; scroll-snap-align: start;
+  display: flex; flex-direction: column; gap: 8px;
+  width: 165px; padding: 8px 8px 12px;
+  background: #fff; border: var(--k-line); border-radius: 22px; box-shadow: var(--k-shadow);
+}
+.hk-pic__img {
+  width: 100%; height: 112px; object-fit: cover;
+  border: 2px solid var(--k-ink); border-radius: 16px;
+  background: var(--k-bg); /* shows behind a missing photo */
+}
+.hk-pic__meta { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.hk-price {
+  padding: 3px 8px;
+  background: var(--k-sun); border: 1.5px solid var(--k-ink); border-radius: 999px;
+  font-family: "Fredoka", system-ui, sans-serif; font-size: 13px; font-weight: 600;
+}
+.hk-likes { font-size: 12px; font-weight: 800; }
+.hk-note {
+  align-self: flex-start;
+  padding: 3px 8px;
+  border: 1.5px solid var(--k-ink); border-radius: 999px;
+  font-family: "Fredoka", system-ui, sans-serif; font-size: 12px; font-weight: 500;
+}
+
+/* a dish this kid can't eat: tinted photo, greyed name and price */
+.hk-pic--allergy .hk-pic__img { filter: grayscale(0.6); }
+.hk-pic--allergy::after {
+  content: ""; position: absolute; left: 8px; right: 8px; top: 8px; height: 112px;
+  border-radius: 16px; background: rgba(255, 107, 91, 0.35); pointer-events: none;
+}
+.hk-pic--allergy h3 { color: var(--hk-muted-ink); }
+.hk-pic--allergy .hk-price { background: var(--hk-muted-pill); }
+.hk-pic--allergy .hk-note { background: var(--hk-allergy-bg); }
+
+/* ---------- Stalls near you ---------- */
+.hk-stalls { display: flex; flex-direction: column; gap: 12px; }
+.hk-stall {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px;
+  background: #fff; border: var(--k-line); border-radius: 22px; box-shadow: var(--k-shadow);
+}
+.hk-stall__img {
+  flex: none; width: 64px; height: 64px; object-fit: cover;
+  border: 2px solid var(--k-ink); border-radius: 16px;
+}
+.hk-stall__img--empty { display: grid; place-items: center; background: var(--k-bg); font-size: 28px; }
+.hk-stall__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.hk-stall__text h3 { font-size: 16px; }
+.hk-stall__text .hk-sub { font-size: 12px; }
+.hk-safe { font-size: 12px; font-weight: 800; }
+.hk-safe--none { color: var(--k-soft); }
+
+/* ---------- Tab bar (fixed to the bottom) ---------- */
+/* 3 classes so it beats ".kid > :not(.blob) { position: relative }" above */
+.kid.home-kid > .hk-tabbar {
+  position: fixed; left: 50%; bottom: 0; z-index: 10;
+  transform: translateX(-50%);
+  display: flex; align-items: flex-end;
+  width: 100%; max-width: 430px;
+  padding: 10px 12px calc(14px + env(safe-area-inset-bottom));
+  background: #fff; border-top: var(--k-line); border-radius: 28px 28px 0 0;
+}
+.hk-tab {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 0; background: none; border: 0;
+  color: var(--k-soft); text-decoration: none;
+  font-family: "Fredoka", system-ui, sans-serif; font-size: 12px; font-weight: 500;
+}
+.hk-tab__icon {
+  display: grid; place-items: center;
+  width: 48px; height: 36px; border-radius: 18px;
+  font-size: 20px;
+}
+.hk-tab--active { color: var(--k-ink); font-weight: 700; }
+.hk-tab--active .hk-tab__icon { background: var(--k-sun); border: 2px solid var(--k-ink); }
+
+/* the big red Snap button sits higher than the rest */
+.hk-tab--snap .hk-tab__icon {
+  width: 58px; height: 58px; margin-top: -26px; border-radius: 50%;
+  background: var(--k-coral); border: 2px solid var(--k-ink); box-shadow: 0 3px 0 var(--k-ink);
+  font-size: 26px;
+}

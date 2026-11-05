@@ -52,6 +52,7 @@ export const createTopUp = (token, childId, amount) =>
 
 export const getTopUp = (token, topUpId) => request(`/top-ups/${topUpId}`, { token });
 
+export const getHome = (token) => request("/home", { token });
 // Live in the backend: change a kid's allergies (keys like "peanut") and daily food money
 export const setAllergies = (token, childId, allergens) =>
   request(`/children/${childId}/allergies`, { method: "PUT", body: { allergens }, token });
