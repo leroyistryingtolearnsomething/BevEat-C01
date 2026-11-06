@@ -20,7 +20,14 @@ export default function Home() {
   useEffect(() => {
     getHome(token)
       .then((data) => setHome(data))          // success: save the data, page redraws
-      .catch((err) => setError(err.message)); // failure: save the error, page redraws
+            .catch((err) => {
+        if (err.status === 401) {          // login expired or invalid
+          clearSession();                  // forget the old token
+          navigate("/kid/login", { replace: true });
+        } else {
+          setError(err.message);
+        }
+      }); // failure: save the error, page redraws
   }, []);
 
   if (error) return <main className="screen kid"><p>{error}</p></main>;
