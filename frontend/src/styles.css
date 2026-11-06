@@ -581,7 +581,21 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
 }
 
 /* ---------- Kid Wallet tab ---------- */
-.kw-logout { align-self: center; margin-top: 8px; background: #fff; }
+.hk-tab__wallet { width: 26px; height: 26px; background: currentColor; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }
+
+/* kid's avatar opens a small menu with Log out */
+button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
+.kid-menu {
+  position: fixed; inset: auto; margin: 0; width: 200px; padding: 8px;
+  background: #fff; color: var(--k-ink); border: var(--k-line); border-radius: 18px; box-shadow: var(--k-shadow);
+  font-family: "Fredoka", system-ui, sans-serif;
+}
+.kid-menu__name { padding: 6px 10px 8px; margin-bottom: 4px; border-bottom: 2px solid var(--k-bg); font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+.kid-menu__item {
+  width: 100%; min-height: 44px; padding: 0 10px; border: 0; border-radius: 12px; background: none; text-align: left;
+  font: inherit; font-size: 16px; font-weight: 600; color: var(--k-error); cursor: pointer;
+}
+.kid-menu__item:hover { background: var(--k-bg); }
 .kid .kw-confirm { color: var(--k-ink); border: var(--k-line); box-shadow: var(--k-shadow); text-align: center; }
 .kid .kw-confirm p { color: var(--k-muted); }
 .kid .kw-confirm .btn--kid { max-width: none; }

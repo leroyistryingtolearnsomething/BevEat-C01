@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getHome } from "../api.js";
 import { getSession } from "../session.js";
 import KidTabs from "../components/KidTabs.jsx";
+import KidAvatarMenu from "../components/KidAvatarMenu.jsx";
 // Kid Home page: shows the data from GET /api/home
 export default function Home() {
   const { token } = getSession();             // the logged-in kid's token
@@ -25,7 +26,7 @@ export default function Home() {
             <div className="blob blob--sun" aria-hidden="true" />
       {/* Header: avatar, greeting */}
       <header className="hk-header">
-        <span className="hk-avatar">{child.avatarEmoji}</span>
+        <KidAvatarMenu name={child.name} emoji={child.avatarEmoji} />
         <div>
           <h1>Hi {child.name}!</h1>
           <p className="hk-sub">What's for lunch?</p>
