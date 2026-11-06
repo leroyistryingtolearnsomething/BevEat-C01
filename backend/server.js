@@ -24,6 +24,9 @@ app.use("/api", require("./leroy/routes/topUpRoutes"));
 // kid Home page
 app.use("/api", require("./gabriel/routes/homeRoutes"));
 
+// stall discovery (Raghav)
+app.use("/api", require("./raghav/routes/stallRoutes"));
+
 // error handler
 app.use((err, req, res, next) => {
   console.error(err);

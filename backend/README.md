@@ -27,6 +27,8 @@ npm test                 # runs the child login checks against a fake DB (no Sup
 | PUT | `/api/children/:childId/daily-limit` | parent of that child | `{ dailyLimitCents }` (100 to 5000) | `{ dailyLimit }` |
 | POST | `/api/children/:childId/top-ups` | parent of that child | `{ amount }` ($1 to $200, max 2 decimals) | `{ topUpId, amount, status: "pending", qrCode, expiresInSeconds: 300 }` |
 | GET | `/api/top-ups/:topUpId` | parent who made it | | `{ topUpId, amount, status }`, status is `pending`, `success` or `failed` |
+| GET | `/api/stalls?cuisine=Malay&halal=true` | any logged-in user | (both filters optional; cuisine is `Chinese`, `Malay`, `Indian`, `Western` or `Drinks`, any case; halal only accepts `true`) | `{ stalls: [{ id, name, unitNo, cuisine, isHalal, description, yearStarted, isOpen, prepMinutes, coverImageUrl }] }` (open first, then A-Z; no match = `[]`), `400` for an unknown cuisine or halal value |
+| GET | `/api/stalls/:id` | any logged-in user | | `{ stall: { ...same fields } }`, `400` for a bad id, `404` if not found |
 
 ## NETS QR top-up (Leroy)
 
