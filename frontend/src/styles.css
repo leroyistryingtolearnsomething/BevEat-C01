@@ -566,3 +566,16 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
   background: var(--k-coral); border: 2px solid var(--k-ink); box-shadow: 0 3px 0 var(--k-ink);
   font-size: 26px;
 }
+
+/* a tab that isn't built yet: faded, can't be tapped, small lock badge on its icon */
+.hk-tab--locked { position: relative; cursor: not-allowed; }
+.hk-tab--locked .hk-tab__icon { opacity: 0.35; filter: grayscale(1); }
+.hk-tab--locked .hk-tab__label { opacity: 0.5; }
+/* the badge sits next to the icon (not inside it) so the fading above doesn't fade the lock too */
+.hk-tab__lock {
+  position: absolute; top: 16px; left: calc(50% + 8px);
+  display: grid; place-items: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; border: 2px solid var(--k-ink);
+  font-size: 10px;
+}

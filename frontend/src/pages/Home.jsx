@@ -124,8 +124,10 @@ export default function Home() {
         <button className="hk-tab hk-tab--snap">
           <span className="hk-tab__icon">📷</span>Snap
         </button>
-        <button className="hk-tab">
-          <span className="hk-tab__icon">⭐</span>Stars
+        <button className="hk-tab hk-tab--locked" disabled aria-label="Stars, coming soon" title="Coming soon">
+          <span className="hk-tab__icon">⭐</span>
+          <span className="hk-tab__lock" aria-hidden="true">🔒</span>
+          <span className="hk-tab__label">Stars</span>
         </button>
         <button className="hk-tab" onClick={logOut}>
           <span className="hk-tab__icon">👛</span>Log out
