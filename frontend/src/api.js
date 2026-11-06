@@ -1,4 +1,6 @@
 // Calls to the Express backend (see backend/README.md for the route table)
+import { clearSession, getSession } from "./session.js";
+
 const BASE = import.meta.env.VITE_API_URL ?? "";
 
 export class ApiError extends Error {
@@ -23,6 +25,13 @@ async function request(path, { method = "GET", body, token } = {}) {
     throw new ApiError(0, "Can't reach KiddyEats right now. Check your internet and try again.");
   }
   const data = await res.json().catch(() => ({}));
+  // token expired or bad: forget it and go back to the log in page
+  // (if 2 calls fail at once only the first one does this)
+  const s = getSession();
+  if (res.status === 401 && token && s) {
+    clearSession();
+    window.location.replace(s.role === "child" ? "/kid/login" : "/parent/login");
+  }
   if (!res.ok) throw new ApiError(res.status, data.error || "Something went wrong. Please try again.");
   return data;
 }
