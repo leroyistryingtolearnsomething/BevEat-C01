@@ -29,4 +29,61 @@ async function getSpentToday(childId){
     );
     return rows[0].spent;
 }
-module.exports = {getChildSummary, getSpentToday};
+
+async function getRules(childId) {
+    const {rows} = await pool.query
+    (
+        `SELECT a.name, a.icon, ca.severity
+        FROM child_allergies ca
+        JOIN allergens a ON a.allergen_id = ca.allergen_id
+        WHERE ca.child_id = $1 ORDER BY a.name`, [childId]
+    );
+    return rows; // to return all the allergies from the whole array
+}
+
+async function getTopPics(childId) {
+    const {rows} = await pool.query
+    (
+        `SELECT * FROM(
+            SELECT DISTINCT ON (m.item_id)
+        p.photo_id, m.item_id, m.name, m.price, p.image_url,
+        COUNT(v.user_id) AS likes,
+        m.item_id IN (
+        SELECT mia.item_id
+        FROM menu_item_allergens mia
+        JOIN child_allergies ca ON ca.allergen_id = mia.allergen_id
+        WHERE ca.child_id = $1)
+        AS blocked
+        FROM photos p
+        JOIN menu_items m ON m.item_id = p.item_id
+        LEFT JOIN photo_votes v ON v.photo_id = p.photo_id
+        WHERE p.ai_status = 'passed'
+        AND p.approval_status IN ('approved', 'not_needed')
+        GROUP BY p.photo_id, m.item_id
+        ORDER BY m.item_id, likes DESC, p.uploaded_at DESC) best
+        ORDER BY likes DESC
+        LIMIT 10`, [childId]
+    );
+    return rows;    
+}
+
+async function getStalls(childId) {
+    const {rows} = await pool.query
+    (
+        `SELECT s.stall_id, s.name, s.unit_no, s.cover_image_url,
+         COUNT(m.item_id) FILTER (WHERE m.item_id NOT IN (
+         SELECT mia.item_id
+            FROM menu_item_allergens mia
+            JOIN child_allergies ca ON ca.allergen_id = mia.allergen_id
+                WHERE ca.child_id = $1)) AS safe_picks
+            FROM stalls s
+            LEFT JOIN menu_items m ON m.stall_id = s.stall_id AND
+            m.is_available
+            WHERE s.is_open
+            GROUP BY s.stall_id
+            ORDER BY s.name`, [childId]
+    );
+
+    return rows;
+}
+module.exports = {getChildSummary, getSpentToday, getRules, getStalls, getTopPics};

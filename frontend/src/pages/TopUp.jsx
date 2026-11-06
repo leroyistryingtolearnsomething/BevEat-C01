@@ -6,6 +6,7 @@ import lockIcon from "../assets/figma/lock.svg";
 import clockIcon from "../assets/figma/clock.svg";
 import downloadIcon from "../assets/figma/download.svg";
 import successIcon from "../assets/figma/success.svg";
+import Icon from "../components/Icon.jsx";
 
 const AMOUNTS = [10, 20, 50];
 const POLL_MS = 3000;
@@ -24,6 +25,7 @@ export default function TopUp() {
   const value = other === null ? amount : Number(other);
   const validAmount = value >= 1 && value <= 200 && /^\d+(\.\d{1,2})?$/.test(String(value));
   const pending = topUp?.status === "pending";
+  const failed = topUp?.status === "failed";
 
   async function makeQr() {
     if (!validAmount) return setError("Amount must be S$1 to S$200.");
@@ -39,10 +41,12 @@ export default function TopUp() {
     setBusy(false);
   }
 
+  // the sheet stays open when the code expires, showing an X in place of the QR
+  const sheetOpen = pending || failed;
   useEffect(() => {
-    if (pending) sheet.current?.showModal();
-    else sheet.current?.close();
-  }, [pending]);
+    if (sheetOpen && !sheet.current?.open) sheet.current?.showModal();
+    if (!sheetOpen) sheet.current?.close();
+  }, [sheetOpen]);
 
   // ask the server every few seconds whether NETS says it's paid
   useEffect(() => {
@@ -78,19 +82,6 @@ export default function TopUp() {
             <div><dt>Time</dt><dd>Today, {topUp.paidAt.toLocaleTimeString("en-SG", { hour: "numeric", minute: "2-digit" })}</dd></div>
           </dl>
           <Link to={backTo} className="btn btn--primary">Back to Home</Link>
-        </section>
-        <ParentTabs active="home" kidId={kid?.id} />
-      </main>
-    );
-
-  if (topUp?.status === "failed")
-    return (
-      <main className="screen parent with-tabs">
-        <section className="done" role="status">
-          <h1>QR code expired</h1>
-          <p className="lead">Nothing was charged. Make a new QR code to try again.</p>
-          <button className="btn btn--primary" onClick={() => setTopUp(null)}>Try again</button>
-          <Link to={backTo} className="btn btn--text">Back to Home</Link>
         </section>
         <ParentTabs active="home" kidId={kid?.id} />
       </main>
@@ -164,6 +155,24 @@ export default function TopUp() {
               <img src={downloadIcon} alt="" width="18" height="18" />Save QR to Photos
             </a>
             <button className="btn btn--text" onClick={() => setTopUp(null)}>Cancel</button>
+          </>
+        )}
+        {failed && (
+          <>
+            <span className="sheet__grabber" aria-hidden="true" />
+            <span className="sheet__label">NETS QR</span>
+            <h2 id="sheet-title">QR code expired</h2>
+            <p className="lead">Top up for {topUp.kidName} · {money(topUp.amount)}</p>
+            <div className="sheet__qr sheet__qr--failed">
+              <span className="sheet__x"><Icon name="x" size={56} strokeWidth={3} /></span>
+              <p className="sheet__failed-text">Payment failed</p>
+            </div>
+            <p className="sheet__help" role="status">Nothing was charged. Make a new QR code to try again.</p>
+            {error && <p className="form-error" role="alert">{error}</p>}
+            <button className="btn btn--primary" onClick={makeQr} disabled={busy}>
+              {busy ? "Making QR code…" : "Make a new QR code"}
+            </button>
+            <button className="btn btn--text" onClick={() => setTopUp(null)}>Close</button>
           </>
         )}
       </dialog>

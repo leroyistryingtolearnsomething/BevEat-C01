@@ -27,6 +27,9 @@ app.use("/api", require("./gabriel/routes/homeRoutes"));
 // stall discovery (Raghav)
 app.use("/api", require("./raghav/routes/stallRoutes"));
 
+// live queue + order ready ping
+app.use("/api", require("./xinsheng/routes/orderQueueRoutes"));
+
 // error handler
 app.use((err, req, res, next) => {
   console.error(err);

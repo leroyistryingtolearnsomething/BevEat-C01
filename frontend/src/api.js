@@ -1,4 +1,6 @@
 // Calls to the Express backend (see backend/README.md for the route table)
+import { clearSession, getSession } from "./session.js";
+
 const BASE = import.meta.env.VITE_API_URL ?? "";
 
 export class ApiError extends Error {
@@ -23,6 +25,13 @@ async function request(path, { method = "GET", body, token } = {}) {
     throw new ApiError(0, "Can't reach KiddyEats right now. Check your internet and try again.");
   }
   const data = await res.json().catch(() => ({}));
+  // token expired or bad: forget it and go back to the log in page
+  // (if 2 calls fail at once only the first one does this)
+  const s = getSession();
+  if (res.status === 401 && token && s) {
+    clearSession();
+    window.location.replace(s.role === "child" ? "/kid/login" : "/parent/login");
+  }
   if (!res.ok) throw new ApiError(res.status, data.error || "Something went wrong. Please try again.");
   return data;
 }
@@ -52,9 +61,25 @@ export const createTopUp = (token, childId, amount) =>
 
 export const getTopUp = (token, topUpId) => request(`/top-ups/${topUpId}`, { token });
 
+export const getHome = (token) => request("/home", { token });
 // Live in the backend: change a kid's allergies (keys like "peanut") and daily food money
 export const setAllergies = (token, childId, allergens) =>
   request(`/children/${childId}/allergies`, { method: "PUT", body: { allergens }, token });
 
 export const setDailyLimit = (token, childId, dailyLimitCents) =>
   request(`/children/${childId}/daily-limit`, { method: "PUT", body: { dailyLimitCents }, token });
+
+// Live in the backend: live queue + order ready ping (Xin Sheng)
+export const getOrderQueue = (token, orderId) => request(`/orders/${orderId}/queue`, { token });
+
+export const getStallWait = (token, stallId) => request(`/stalls/${stallId}/wait`, { token });
+
+export const getReadyOrders = (token) => request("/me/ready-orders", { token });
+
+export const getStallOrders = (token) => request("/stall/orders", { token });
+
+export const markOrderReady = (token, orderId) =>
+  request(`/orders/${orderId}/ready`, { method: "PUT", token });
+
+export const markOrderCollected = (token, orderId) =>
+  request(`/orders/${orderId}/collected`, { method: "PUT", token });
