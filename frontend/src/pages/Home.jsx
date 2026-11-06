@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getHome } from "../api.js";
-import { getSession } from "../session.js";
+import { clearSession, getSession } from "../session.js";
+import { useNavigate } from "react-router-dom";
 import KidTabs from "../components/KidTabs.jsx";
 import KidAvatarMenu from "../components/KidAvatarMenu.jsx";
 // Kid Home page: shows the data from GET /api/home
@@ -8,6 +9,7 @@ export default function Home() {
   const { token } = getSession();             // the logged-in kid's token
   const [home, setHome] = useState(null);     // the data, null until it arrives
   const [error, setError] = useState("");     // an error message, if it fails
+    const navigate = useNavigate();
 
   // runs once when the page opens: ask the backend for the data
   useEffect(() => {
@@ -84,6 +86,8 @@ export default function Home() {
                 <span className="hk-likes">❤️ {p.likes}</span>
               </div>
               {p.status === "allergy" && <span className="hk-note">Not for you</span>}
+              {p.status === "locked" && <span className="hk-note">🔒 Mum says no</span>}
+              {p.status === "healthy" && <span className="hk-note">🌿 Healthy pick</span>}
             </article>
           ))}
         </div>

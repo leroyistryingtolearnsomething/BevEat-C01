@@ -507,15 +507,24 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
   font-family: "Fredoka", system-ui, sans-serif; font-size: 12px; font-weight: 500;
 }
 
-/* a dish this kid can't eat: tinted photo, greyed name and price */
-.hk-pic--allergy .hk-pic__img { filter: grayscale(0.6); }
-.hk-pic--allergy::after {
-  content: ""; position: absolute; left: 8px; right: 8px; top: 8px; height: 112px;
-  border-radius: 16px; background: rgba(255, 107, 91, 0.35); pointer-events: none;
+/* A dish this kid can't have is still shown (Figma: Laksa, Char Kway Teow), just marked:
+   a tinted layer + big icon over the photo, greyed name and price, and a coloured note.
+   allergy = red tint + warning (Figma Laksa); locked = white wash + lock (Figma Char Kway Teow, Mum's rule) */
+.hk-pic--allergy::after,
+.hk-pic--locked::after {
+  position: absolute; left: 8px; right: 8px; top: 8px; height: 112px;
+  display: grid; place-items: center;
+  border-radius: 16px; font-size: 44px; pointer-events: none;
 }
-.hk-pic--allergy h3 { color: var(--hk-muted-ink); }
-.hk-pic--allergy .hk-price { background: var(--hk-muted-pill); }
+.hk-pic--allergy::after { content: "⚠️"; background: rgba(255, 107, 91, 0.35); }
+.hk-pic--locked::after { content: "🔒"; background: rgba(255, 255, 255, 0.6); }
+.hk-pic--allergy h3,
+.hk-pic--locked h3 { color: var(--hk-muted-ink); }
+.hk-pic--allergy .hk-price,
+.hk-pic--locked .hk-price { background: var(--hk-muted-pill); }
 .hk-pic--allergy .hk-note { background: var(--hk-allergy-bg); }
+.hk-pic--locked .hk-note { background: var(--hk-parent-bg); }
+.hk-pic--healthy .hk-note { background: #d9f7ed; } /* Figma: green "Healthy pick" note with a leaf */
 
 /* ---------- Stalls near you ---------- */
 .hk-stalls { display: flex; flex-direction: column; gap: 12px; }
