@@ -23,8 +23,9 @@ export default function KidTabs({ active }) {
       </button>
       <Link to="/kid/wallet" {...tab("wallet")}>
         <span className="hk-tab__icon">
-          {/* Figma's wallet icon is drawn in white, so use it as a mask and colour it with the tab's text colour */}
-          <span className="hk-tab__wallet" style={{ WebkitMaskImage: `url(${walletIcon})`, maskImage: `url(${walletIcon})` }} />
+          {/* Figma's wallet icon is drawn in white, so use it as a mask and colour it with the tab's text colour.
+              The quotes matter: the production build inlines it as a data URL containing ' marks */}
+          <span className="hk-tab__wallet" style={{ WebkitMaskImage: `url("${walletIcon}")`, maskImage: `url("${walletIcon}")` }} />
         </span>Wallet
       </Link>
     </nav>
