@@ -86,6 +86,8 @@ export default function Home() {
                 <span className="hk-likes">❤️ {p.likes}</span>
               </div>
               {p.status === "allergy" && <span className="hk-note">Not for you</span>}
+              {p.status === "locked" && <span className="hk-note">🔒 Mum says no</span>}
+              {p.status === "healthy" && <span className="hk-note">🌿 Healthy pick</span>}
             </article>
           ))}
         </div>
