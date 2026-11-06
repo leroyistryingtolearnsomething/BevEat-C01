@@ -24,6 +24,9 @@ app.use("/api", require("./leroy/routes/topUpRoutes"));
 // kid Home page
 app.use("/api", require("./gabriel/routes/homeRoutes"));
 
+// live queue + order ready ping
+app.use("/api", require("./xinsheng/routes/orderQueueRoutes"));
+
 // error handler
 app.use((err, req, res, next) => {
   console.error(err);

@@ -27,6 +27,12 @@ npm test                 # runs the child login checks against a fake DB (no Sup
 | PUT | `/api/children/:childId/daily-limit` | parent of that child | `{ dailyLimitCents }` (100 to 5000) | `{ dailyLimit }` |
 | POST | `/api/children/:childId/top-ups` | parent of that child | `{ amount }` ($1 to $200, max 2 decimals) | `{ topUpId, amount, status: "pending", qrCode, expiresInSeconds: 300 }` |
 | GET | `/api/top-ups/:topUpId` | parent who made it | | `{ topUpId, amount, status }`, status is `pending`, `success` or `failed` |
+| GET | `/api/orders/:orderId/queue` | kid who ordered, their parent, or the stall owner | | `{ orderId, queueNumber, stallName, status, ready, ahead, waitMinutes, readyAt }` (wait = (ahead + 1) x stall `avg_prep_minutes`, 5 if not set) |
+| GET | `/api/stalls/:stallId/wait` | logged in | | `{ stallId, inQueue, waitMinutes }` |
+| GET | `/api/me/ready-orders` | kid | | `{ orders: [{ orderId, queueNumber, stallName, readyAt }] }` ready but not collected, the app checks this every 10s for the ping |
+| GET | `/api/stall/orders` | stall owner | | `{ orders: [{ orderId, queueNumber, stallId, stallName, status, placedAt, ready }] }` waiting first |
+| PUT | `/api/orders/:orderId/ready` | owner of that stall | | `{ orderId, readyAt }`, `409` if already ready or cancelled |
+| PUT | `/api/orders/:orderId/collected` | owner of that stall | | `{ orderId, collectedAt }`, `409` if not ready yet |
 
 ## NETS QR top-up (Leroy)
 
@@ -56,7 +62,7 @@ backend/
   config/db.js     Postgres connection (Supabase), shared
   middleware/      auth.js: requireAuth, requireRole, requireOwnChild, shared
   test/            API tests with a fake DB
-  xinsheng/        child login (done)
+  xinsheng/        child login, live queue + order ready ping
     models/        SQL only: one file per table, returns plain rows
     controllers/   request logic: check input, call models, send JSON
     routes/        URL -> middleware -> controller, nothing else
