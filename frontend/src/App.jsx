@@ -5,6 +5,7 @@ import ParentLogin from "./pages/ParentLogin.jsx";
 import SignUp from "./pages/SignUp.jsx";
 import AddChild from "./pages/AddChild.jsx";
 import KidLogin from "./pages/KidLogin.jsx";
+import KidWallet from "./pages/KidWallet.jsx";
 import Home from "./pages/Home.jsx";
 import ParentHome from "./pages/ParentHome.jsx";
 import TopUp from "./pages/TopUp.jsx";
@@ -38,6 +39,7 @@ export default function App() {
       <Route path="/parent/limit" element={<RequireRole role="parent"><ParentLimit /></RequireRole>} />
       <Route path="/parent/top-up" element={<RequireRole role="parent"><TopUp /></RequireRole>} />
       <Route path="/kid/home" element={<RequireRole role="child"><Home role="child" /></RequireRole>} />
+      <Route path="/kid/wallet" element={<RequireRole role="child"><KidWallet /></RequireRole>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </>
