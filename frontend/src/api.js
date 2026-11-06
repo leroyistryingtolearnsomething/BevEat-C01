@@ -59,3 +59,18 @@ export const setAllergies = (token, childId, allergens) =>
 
 export const setDailyLimit = (token, childId, dailyLimitCents) =>
   request(`/children/${childId}/daily-limit`, { method: "PUT", body: { dailyLimitCents }, token });
+
+// Live in the backend: live queue + order ready ping (Xin Sheng)
+export const getOrderQueue = (token, orderId) => request(`/orders/${orderId}/queue`, { token });
+
+export const getStallWait = (token, stallId) => request(`/stalls/${stallId}/wait`, { token });
+
+export const getReadyOrders = (token) => request("/me/ready-orders", { token });
+
+export const getStallOrders = (token) => request("/stall/orders", { token });
+
+export const markOrderReady = (token, orderId) =>
+  request(`/orders/${orderId}/ready`, { method: "PUT", token });
+
+export const markOrderCollected = (token, orderId) =>
+  request(`/orders/${orderId}/collected`, { method: "PUT", token });

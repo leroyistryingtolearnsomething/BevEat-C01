@@ -10,6 +10,7 @@ import ParentHome from "./pages/ParentHome.jsx";
 import TopUp from "./pages/TopUp.jsx";
 import ParentAllergies from "./pages/ParentAllergies.jsx";
 import ParentLimit from "./pages/ParentLimit.jsx";
+import ReadyPing from "./components/ReadyPing.jsx";
 
 // UI guard only; the API checks the token's role on every request
 function RequireRole({ role, children }) {
@@ -24,6 +25,8 @@ function LoggedOutOnly({ children }) {
 
 export default function App() {
   return (
+    <>
+    <ReadyPing />
     <Routes>
       <Route path="/" element={<LoggedOutOnly><Welcome /></LoggedOutOnly>} />
       <Route path="/parent/login" element={<LoggedOutOnly><ParentLogin /></LoggedOutOnly>} />
@@ -37,5 +40,6 @@ export default function App() {
       <Route path="/kid/home" element={<RequireRole role="child"><Home role="child" /></RequireRole>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }
