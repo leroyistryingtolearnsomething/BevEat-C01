@@ -579,3 +579,10 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
   background: #fff; border: 2px solid var(--k-ink);
   font-size: 10px;
 }
+
+/* ---------- Kid Wallet tab ---------- */
+.kw-logout { align-self: center; margin-top: 8px; background: #fff; }
+.kid .kw-confirm { color: var(--k-ink); border: var(--k-line); box-shadow: var(--k-shadow); text-align: center; }
+.kid .kw-confirm p { color: var(--k-muted); }
+.kid .kw-confirm .btn--kid { max-width: none; }
+.kw-confirm__out { background: none; color: var(--k-error); font-family: "Fredoka", system-ui, sans-serif; font-weight: 600; }

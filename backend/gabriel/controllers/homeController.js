@@ -45,7 +45,7 @@ async function getHome(req, res, next) {
 
         res.json({ // respond with data pulled using the query
             child: {name : child.display_name, avatarEmoji: child.avatar_emoji},
-            money: {left, spentToday, dailyLimit}, // arranged data from the lines 14-16
+            money: {left, spentToday, dailyLimit, wallet: Number(child.wallet_balance)}, // wallet is shown on the kid's Wallet tab
             rules: ruleChips,
             stalls: stallCards,
             pics: picCards,

@@ -1,20 +1,12 @@
 import { useEffect, useState } from "react";
 import { getHome } from "../api.js";
 import { getSession } from "../session.js";
-import { Link, useNavigate } from "react-router-dom";
-import { clearSession } from "../session.js";
-import Bao from "../components/Bao.jsx";
+import KidTabs from "../components/KidTabs.jsx";
 // Kid Home page: shows the data from GET /api/home
 export default function Home() {
   const { token } = getSession();             // the logged-in kid's token
   const [home, setHome] = useState(null);     // the data, null until it arrives
-  const [error, setError] = useState("");  
-  
-    const navigate = useNavigate();
-  const logOut = () => {
-    clearSession();                       // forget the token
-    navigate("/", { replace: true });     // back to the welcome screen
-  };// an error message, if it fails
+  const [error, setError] = useState("");     // an error message, if it fails
 
   // runs once when the page opens: ask the backend for the data
   useEffect(() => {
@@ -113,26 +105,7 @@ export default function Home() {
           </article>
         ))}
       </section>
-            {/* Tab bar: Home is the page we're on; the others link to pages that don't exist yet */}
-      <nav className="hk-tabbar" aria-label="Main">
-        <Link to="/kid/home" className="hk-tab hk-tab--active" aria-current="page">
-          <span className="hk-tab__icon">🏠</span>Home
-        </Link>
-        <button className="hk-tab">
-          <span className="hk-tab__icon"><Bao size={30} /></span>Ask Bao
-        </button>
-        <button className="hk-tab hk-tab--snap">
-          <span className="hk-tab__icon">📷</span>Snap
-        </button>
-        <button className="hk-tab hk-tab--locked" disabled aria-label="Stars, coming soon" title="Coming soon">
-          <span className="hk-tab__icon">⭐</span>
-          <span className="hk-tab__lock" aria-hidden="true">🔒</span>
-          <span className="hk-tab__label">Stars</span>
-        </button>
-        <button className="hk-tab" onClick={logOut}>
-          <span className="hk-tab__icon">👛</span>Log out
-        </button>
-      </nav>
+      <KidTabs active="home" />
     </main>
   );
 };
