@@ -24,6 +24,12 @@ app.use("/api", require("./leroy/routes/topUpRoutes"));
 // kid Home page
 app.use("/api", require("./gabriel/routes/homeRoutes"));
 
+// stall discovery (Raghav)
+app.use("/api", require("./raghav/routes/stallRoutes"));
+
+// stall menu, food detail and Ask Mum (Raghav)
+app.use("/api", require("./raghav/routes/menuRoutes"));
+
 // live queue + order ready ping
 app.use("/api", require("./xinsheng/routes/orderQueueRoutes"));
 

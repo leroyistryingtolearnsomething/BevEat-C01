@@ -83,3 +83,13 @@ export const markOrderReady = (token, orderId) =>
 
 export const markOrderCollected = (token, orderId) =>
   request(`/orders/${orderId}/collected`, { method: "PUT", token });
+
+// Live in the backend: stall menu, food detail and Ask Mum (Raghav). Each dish's status is decided by the server.
+export const getStallMenu = (token, stallId, view = "safe") =>
+  request(`/stalls/${encodeURIComponent(stallId)}/menu?view=${view}`, { token });
+
+export const getDish = (token, itemId) => request(`/menu-items/${encodeURIComponent(itemId)}`, { token });
+
+export const askMum = (token, itemId) => request("/ask-mum", { method: "POST", body: { itemId }, token });
+
+export const getAskMum = (token, itemId) => request(`/ask-mum/${encodeURIComponent(itemId)}`, { token });
