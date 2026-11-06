@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" role="img" aria-label="No photo yet">
+  <!-- Shown when a dish has no photo, or its photo file is missing (docs/dish-photos.md) -->
+  <rect width="800" height="600" fill="#fff6e5"/>
+  <ellipse cx="400" cy="318" rx="200" ry="200" fill="#ffffff" stroke="#1f2041" stroke-width="14"/>
+  <ellipse cx="400" cy="318" rx="128" ry="128" fill="#ffedb8" stroke="#1f2041" stroke-width="10"/>
+  <path d="M170 150v110M150 150v60a20 20 0 0 0 40 0v-60" fill="none" stroke="#1f2041" stroke-width="12" stroke-linecap="round"/>
+  <path d="M630 150c-30 20-30 80 0 100v60" fill="none" stroke="#1f2041" stroke-width="12" stroke-linecap="round"/>
+</svg>

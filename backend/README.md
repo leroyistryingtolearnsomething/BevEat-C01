@@ -35,6 +35,10 @@ npm test                 # runs the child login checks against a fake DB (no Sup
 | PUT | `/api/orders/:orderId/collected` | owner of that stall | | `{ orderId, collectedAt }`, `409` if not ready yet |
 | GET | `/api/stalls?cuisine=Malay&halal=true` | any logged-in user | (both filters optional; cuisine is `Chinese`, `Malay`, `Indian`, `Western` or `Drinks`, any case; halal only accepts `true`) | `{ stalls: [{ id, name, unitNo, cuisine, isHalal, description, yearStarted, isOpen, prepMinutes, coverImageUrl }] }` (open first, then A-Z; no match = `[]`), `400` for an unknown cuisine or halal value |
 | GET | `/api/stalls/:id` | any logged-in user | | `{ stall: { ...same fields } }`, `400` for a bad id, `404` if not found |
+| GET | `/api/stalls/:stallId/menu?view=safe` | kid | (`view` is `safe` (default) or `all`) | `{ stall, money: { canSpend }, counts: { safe, total }, dishes: [{ id, name, price, imageUrl, hearts, badges, status, overBudget, blockedAllergens?, reason?, parentRule?, askMumApproved? }] }`. `status` is `allowed`, `blocked_allergy` or `blocked_parent`, decided on the server. `safe` leaves locked dishes out, `all` shows them locked. `400` bad id/view, `404` stall or child not found, `500` (no dishes) if allergies can't load |
+| GET | `/api/menu-items/:itemId` | kid | | `{ dish: { ...card fields, stallId, stallName, description, photo, safeChecks, healthScore, ingredients, addOns: [{ id, name, extraPrice, allergen, locked, lockReason? }] }, alternatives: [up to 2 allowed cards] }`. A locked dish has `addOns: []`. `400`, `404` |
+| POST | `/api/ask-mum` | kid | `{ itemId }` | `201 { requestId, status: "pending" }`, or `200` with today's existing request (one per child per dish per day). `409` for an allergy dish or a dish that isn't locked. `400`, `404` |
+| GET | `/api/ask-mum/:itemId` | kid | | `{ request: { requestId, status, createdAt, decidedAt } }` or `{ request: null }` (today only) |
 
 ## NETS QR top-up (Leroy)
 

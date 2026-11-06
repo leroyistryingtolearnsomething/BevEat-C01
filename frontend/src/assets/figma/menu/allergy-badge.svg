@@ -1,0 +1,14 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="32.5" height="32.5" viewBox="0 0 32.5 32.5" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group">
+<path id="Vector" d="M16.25 31.25C24.5343 31.25 31.25 24.5343 31.25 16.25C31.25 7.96573 24.5343 1.25 16.25 1.25C7.96573 1.25 1.25 7.96573 1.25 16.25C1.25 24.5343 7.96573 31.25 16.25 31.25Z" fill="white" stroke="#1F2041" stroke-width="2.5"/>
+<path id="Vector_2" d="M21.75 12.85C8.55 10.65 8.55 23.85 17.35 22.75" stroke="#C2482A" stroke-width="6.05" stroke-linecap="round"/>
+<path id="Vector_3" d="M21.75 12.85C8.55 10.65 8.55 23.85 17.35 22.75" stroke="#FF8A5B" stroke-width="4.125" stroke-linecap="round"/>
+<path id="Vector_4" d="M17.35 22.75L22.3 20L21.75 25.5L17.35 22.75Z" fill="#FF8A5B" stroke="#C2482A" stroke-width="0.825" stroke-linejoin="round"/>
+<path id="Vector_5" d="M21.2 13.18C21.686 13.18 22.08 12.786 22.08 12.3C22.08 11.814 21.686 11.42 21.2 11.42C20.714 11.42 20.32 11.814 20.32 12.3C20.32 12.786 20.714 13.18 21.2 13.18Z" fill="#222222"/>
+<path id="Vector_6" d="M16.25 27.25C22.3251 27.25 27.25 22.3251 27.25 16.25C27.25 10.1749 22.3251 5.25 16.25 5.25C10.1749 5.25 5.25 10.1749 5.25 16.25C5.25 22.3251 10.1749 27.25 16.25 27.25Z" stroke="#FF5A4E" stroke-width="2.5"/>
+<g id="Vector_7">
+<path d="M8.55 8.55L23.95 23.95Z" fill="black"/>
+<path d="M8.55 8.55L23.95 23.95" stroke="#FF5A4E" stroke-width="2.5" stroke-linecap="round"/>
+</g>
+</g>
+</svg>

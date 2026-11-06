@@ -85,7 +85,7 @@ async function run() {
       typeof lim.description === "string",
     "stall has the agreed camelCase fields"
   );
-  check(lim && lim.coverImageUrl === "/images/stalls/placeholder.svg", "stall with no cover gets the placeholder");
+  check(lim && lim.coverImageUrl === null, "stall with no cover gets coverImageUrl null");
   check(res.body.stalls.find((s) => s.id === 2).coverImageUrl === "https://example.com/mariam.jpg", "stall with a cover keeps it");
   check(ids(res)[4] === 5, "closed stall is listed last");
 
@@ -138,6 +138,9 @@ async function run() {
   // single stall
   res = await get("/api/stalls/2");
   check(res.status === 200 && res.body.stall.id === 2 && res.body.stall.name === "Mariam Nasi Lemak", "gets one stall by id");
+
+  res = await get("/api/stalls/1");
+  check(res.status === 200 && res.body.stall.coverImageUrl === null, "GET /stalls/:id gives coverImageUrl null when there is no cover");
 
   res = await get("/api/stalls/999");
   check(res.status === 404 && res.body.error === "Stall not found", "unknown stall id gives 404");

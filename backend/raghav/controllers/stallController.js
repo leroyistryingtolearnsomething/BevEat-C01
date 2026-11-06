@@ -5,9 +5,6 @@ const Stall = require("../models/stallModel");
 // A whitelist also means odd input (e.g. SQL injection attempts) is rejected before any query runs.
 const ALLOWED_CUISINES = ["Chinese", "Malay", "Indian", "Western", "Drinks"];
 
-// Every stall's cover_image_url is NULL for now, so the app always gets an image to show
-const PLACEHOLDER_COVER = "/images/stalls/placeholder.svg";
-
 // "malay" -> "Malay"; returns undefined for anything not on the list
 function matchCuisine(input) {
   return ALLOWED_CUISINES.find((c) => c.toLowerCase() === input.trim().toLowerCase());
@@ -25,7 +22,9 @@ function toStallJson(row) {
     yearStarted: row.year_started,
     isOpen: row.is_open,
     prepMinutes: row.avg_prep_minutes,
-    coverImageUrl: row.cover_image_url || PLACEHOLDER_COVER,
+    // null when the stall has no cover: each screen draws its own empty state, so the API
+    // never points at an image file that might not exist
+    coverImageUrl: row.cover_image_url || null,
   };
 }
 
@@ -75,4 +74,5 @@ async function getStall(req, res, next) {
   }
 }
 
-module.exports = { listStalls, getStall };
+// toStallJson is shared with the menu endpoint, so a stall looks the same in every response
+module.exports = { listStalls, getStall, toStallJson };
