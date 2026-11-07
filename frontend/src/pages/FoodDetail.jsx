@@ -97,7 +97,7 @@ function DishDetail({ dish, canSpend, token }) {
     <main className="screen kid km-screen km-screen--detail">
       <div className="km-hero">
         <DishPhoto src={dish.imageUrl} name={dish.name} className="km-hero__img" />
-        <BackCircle to={`/kid/stalls/${dish.stallId}`} className="km-hero__back" />
+        <BackCircle to={`/kid/stalls/${dish.stallId}`} back className="km-hero__back" />
         {photo && photo.totalPics > 0 && (
           // Gabriel's "All pics" page isn't built yet, so this pill isn't a link yet
           <span className="km-hero__pics" aria-disabled="true">

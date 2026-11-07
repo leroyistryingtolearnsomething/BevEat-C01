@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import BackCircle from "./BackCircle.jsx";
+import BackCircle, { useGoBack } from "./BackCircle.jsx";
 import DishCard from "./DishCard.jsx";
 import DishPhoto from "./DishPhoto.jsx";
 import AllergenBadges from "./AllergenBadges.jsx";
@@ -15,7 +14,8 @@ import check22 from "../../assets/figma/menu/check-22.svg";
 // 05 "Oops! allergy" and 05b "Mum says not today". Same layout, different colours, badge and words.
 export default function LockedDish({ dish, alternatives, token }) {
   const allergy = dish.status === "blocked_allergy";
-  const backTo = `/kid/stalls/${dish.stallId}`;
+  const backTo = `/kid/stalls/${dish.stallId}`; // only when there's no previous page to go back to
+  const goBack = useGoBack(backTo);
 
   return (
     <main className={`screen kid km-screen km-screen--locked ${allergy ? "km-screen--allergy" : "km-screen--parent"}`}>
@@ -28,7 +28,7 @@ export default function LockedDish({ dish, alternatives, token }) {
         aria-hidden="true"
       />
       <div className="km-row">
-        <BackCircle to={backTo} />
+        <BackCircle to={backTo} back />
       </div>
 
       <div className="km-badge-photo">
@@ -62,7 +62,7 @@ export default function LockedDish({ dish, alternatives, token }) {
       </section>
 
       <footer className="km-footer">
-        <Link to={backTo} className="km-big km-big--white">{allergy ? "Got it!" : "Pick something else"}</Link>
+        <button type="button" onClick={goBack} className="km-big km-big--white">{allergy ? "Got it!" : "Pick something else"}</button>
       </footer>
     </main>
   );
