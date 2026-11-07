@@ -17,22 +17,26 @@ npm test                 # runs the child login checks against a fake DB (no Sup
 | Method | Path | Who | Body | Returns |
 |---|---|---|---|---|
 | GET | `/api/health` | anyone | | `{ ok: true }` |
-| POST | `/api/auth/child-login` | anyone | `{ username, pin }` | `{ token, child: { id, username, displayName, avatarEmoji } }` |
+| POST | `/api/auth/child-login` | anyone | `{ username, pin }` | `{ token, child: { id, username, displayName, avatarEmoji } }`, `423` after 5 wrong PINs (locked 15 min or until the parent sets a new PIN) |
 | POST | `/api/auth/parent-signup` | anyone | `{ name, mobile: "+6581234567", email, password }` (8+ chars with a number) | `201 { token, parent: { id, name, email } }`, `409` if the email is taken |
 | POST | `/api/auth/parent-login` | anyone | `{ email, password }` | `{ token, parent: { id, name, email } }` |
-| PUT | `/api/children/:childId/pin` | parent of that child | `{ pin }` (4 to 6 digits) | `{ message }` |
+| PUT | `/api/children/:childId/pin` | parent of that child | `{ pin }` (4 to 6 digits) | `{ message }`, also unlocks a locked kid |
+| GET | `/api/children/alerts` | parent | | `{ alerts: [{ childId, name, type, message }] }`, type is `low_wallet` (wallet under today's limit), `near_limit` (80%+ of today's limit spent), `limit_reached` or `pin_locked` |
+| GET | `/api/children/:childId/spending?period=week` | parent of that child | (`week` = last 7 days, `month` = last 30) | `{ childId, name, period, from, to, total, totalLimit, averagePerDay, daysOverLimit, days: [{ date, day, spent, limit, overLimit }] }` (limit = the kid's current limit for that weekday) |
+| GET | `/api/children/:childId/day-limits` | parent of that child | | `{ defaultLimit, days: { sun, mon, ..., sat }, today: { day, limit } }` (a day is `null` if it uses the normal daily limit) |
+| PUT | `/api/children/:childId/day-limits` | parent of that child | `{ days: { mon: 300, fri: 600 } }` (cents, 100 to 5000, days left out or `null` use the normal limit) | same as GET |
 | POST | `/api/children` | parent | `{ displayName, username, pin (4 digits), dailyLimitCents (100 to 5000), allergens: ["peanut", "tree nuts", "milk", "egg", "shellfish", "fish", "soy", "wheat", "sesame"] }` | `201 { child: { id, name, username } }`, `409` if the login name is taken |
 | GET | `/api/children` | parent | | `{ children: [{ id, name, avatarEmoji, walletBalance, dailyLimit, spentToday, allergens: ["peanut", ...] }] }` (spent today = Singapore day, not cancelled orders) |
 | PUT | `/api/children/:childId/allergies` | parent of that child | `{ allergens: ["peanut", ...] }` (same keys as above, `[]` for none) | `{ allergens }` |
 | PUT | `/api/children/:childId/daily-limit` | parent of that child | `{ dailyLimitCents }` (100 to 5000) | `{ dailyLimit }` |
 | POST | `/api/children/:childId/top-ups` | parent of that child | `{ amount }` ($1 to $200, max 2 decimals) | `{ topUpId, amount, status: "pending", qrCode, expiresInSeconds: 300 }` |
 | GET | `/api/top-ups/:topUpId` | parent who made it | | `{ topUpId, amount, status }`, status is `pending`, `success` or `failed` |
-| GET | `/api/orders/:orderId/queue` | kid who ordered, their parent, or the stall owner | | `{ orderId, queueNumber, stallName, status, ready, ahead, waitMinutes, readyAt }` (wait = (ahead + 1) x stall `avg_prep_minutes`, 5 if not set) |
+| GET | `/api/orders/:orderId/queue` | kid who ordered, their parent, or the stall owner | | `{ orderId, queueNumber, stallName, status, ready, ahead, waitMinutes, readyAt, pickupCode?, qrText? }` (wait = (ahead + 1) x stall `avg_prep_minutes`, 5 if not set; pickup code only for the kid/parent once ready) |
 | GET | `/api/stalls/:stallId/wait` | logged in | | `{ stallId, inQueue, waitMinutes }` |
-| GET | `/api/me/ready-orders` | kid | | `{ orders: [{ orderId, queueNumber, stallName, readyAt }] }` ready but not collected, the app checks this every 10s for the ping |
+| GET | `/api/me/ready-orders` | kid | | `{ orders: [{ orderId, queueNumber, stallName, readyAt, pickupCode, qrText }] }` ready but not collected, the app checks this every 10s for the ping |
 | GET | `/api/stall/orders` | stall owner | | `{ orders: [{ orderId, queueNumber, stallId, stallName, status, placedAt, ready }] }` waiting first |
-| PUT | `/api/orders/:orderId/ready` | owner of that stall | | `{ orderId, readyAt }`, `409` if already ready or cancelled |
-| PUT | `/api/orders/:orderId/collected` | owner of that stall | | `{ orderId, collectedAt }`, `409` if not ready yet |
+| PUT | `/api/orders/:orderId/ready` | owner of that stall | | `{ orderId, readyAt }`, `409` if already ready or cancelled. Makes the 4 digit pickup code |
+| PUT | `/api/orders/:orderId/collected` | owner of that stall | `{ code }` (kid's pickup code, typed or from the QR `BEVEAT-<orderId>-<code>`) | `{ orderId, collectedAt }`, `400` wrong code, `409` if not ready yet |
 | GET | `/api/stalls?cuisine=Malay&halal=true` | any logged-in user | (both filters optional; cuisine is `Chinese`, `Malay`, `Indian`, `Western` or `Drinks`, any case; halal only accepts `true`) | `{ stalls: [{ id, name, unitNo, cuisine, isHalal, description, yearStarted, isOpen, prepMinutes, coverImageUrl }] }` (open first, then A-Z; no match = `[]`), `400` for an unknown cuisine or halal value |
 | GET | `/api/stalls/:id` | any logged-in user | | `{ stall: { ...same fields } }`, `400` for a bad id, `404` if not found |
 | GET | `/api/stalls/:stallId/menu?view=safe` | kid | (`view` is `safe` (default) or `all`) | `{ stall, money: { canSpend }, counts: { safe, total }, dishes: [{ id, name, price, imageUrl, hearts, badges, status, overBudget, blockedAllergens?, reason?, parentRule?, askMumApproved? }] }`. `status` is `allowed`, `blocked_allergy` or `blocked_parent`, decided on the server. `safe` leaves locked dishes out, `all` shows them locked. `400` bad id/view, `404` stall or child not found, `500` (no dishes) if allergies can't load |
