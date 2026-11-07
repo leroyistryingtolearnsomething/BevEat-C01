@@ -1,4 +1,23 @@
 const homeModel = require('../models/homeModel');
+const Menu = require('../../raghav/models/menuModel');
+const { loadChildContext, buildDishCards } = require('../../raghav/services/menuService');
+
+const HOME_PICS = 10; // the row on Home
+const ALL_PICS = 50;  // the "See all" page
+
+// Today's most-hearted pics as the same dish cards the stall menu uses (Raghav's DishCard),
+// so a dish is locked for allergies or "Mum says no" exactly like on the menu, with the same Figma look
+async function topPicCards(childId, limit) {
+    const pics = await homeModel.getTopPics(childId, limit);
+    if (pics.length === 0) return [];
+    const [child, rows] = await Promise.all([
+        loadChildContext(childId),
+        Menu.getAvailableDishesByIds(pics.map((p) => p.item_id)),
+    ]);
+    if (!child) return [];
+    const cards = new Map((await buildDishCards(rows, child)).map(({ card }) => [card.id, card]));
+    return pics.map((p) => cards.get(p.item_id)).filter(Boolean); // most hearts first; sold-out dishes drop out
+}
 
 async function getHome(req, res, next) {
     try{
@@ -12,7 +31,7 @@ async function getHome(req, res, next) {
         const spent = await homeModel.getSpentToday(childId); // same as the home.getchildsummary
         const rules = await homeModel.getRules(childId);
         const stalls = await homeModel.getStalls(childId);
-        const pics = await homeModel.getTopPics(childId);
+        const pics = await topPicCards(childId, HOME_PICS);
 
         const dailyLimit = Number(child.daily_limit);
         const spentToday = Number(spent); // Number function turns it from a text to a number
@@ -33,22 +52,12 @@ async function getHome(req, res, next) {
             safePicks : Number(s.safe_picks)
         }));
 
-        const picCards = pics.map((p) => ({
-            photo: p.photo_id,
-            item: p.item_id,
-            dish: p.name,
-            price : Number(p.price),
-            imageUrl: p.image_url,
-            likes: Number(p.likes),
-            status: p.blocked ? "allergy" : "ok",
-        }));
-
         res.json({ // respond with data pulled using the query
             child: {name : child.display_name, avatarEmoji: child.avatar_emoji},
             money: {left, spentToday, dailyLimit, wallet: Number(child.wallet_balance)}, // wallet is shown on the kid's Wallet tab
             rules: ruleChips,
             stalls: stallCards,
-            pics: picCards,
+            pics, // same shape as a stall menu dish card
         });
     
     }
@@ -57,5 +66,13 @@ async function getHome(req, res, next) {
     }
 }
 
+// GET /api/home/pics: the "See all" page for Today's yummiest pics
+async function getAllPics(req, res, next) {
+    try {
+        res.json({ pics: await topPicCards(req.user.id, ALL_PICS) });
+    } catch (err) {
+        next(err);
+    }
+}
 
-module.exports = {getHome};
+module.exports = {getHome, getAllPics};

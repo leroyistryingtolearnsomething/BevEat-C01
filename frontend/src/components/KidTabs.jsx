@@ -1,6 +1,18 @@
 import { Link } from "react-router-dom";
 import Bao from "./Bao.jsx";
-import walletIcon from "../assets/figma/wallet.svg";
+import homeIcon from "../assets/figma/kid/tab-home.svg";
+import cameraIcon from "../assets/figma/kid/tab-camera.svg";
+import starIcon from "../assets/figma/kid/tab-star.svg";
+import walletIcon from "../assets/figma/kid/tab-wallet.svg";
+import lockIcon from "../assets/figma/menu/lock-12.svg";
+
+// Kids Figma "Tab Bar" icons. Each SVG has one fixed stroke colour, so it's used as a mask and
+// filled with the tab's text colour: dark on the open tab, grey on the rest.
+// The quotes in url("...") matter: the production build inlines small SVGs as data URLs with ' marks.
+function TabIcon({ src, size = 24 }) {
+  const mask = `url("${src}")`;
+  return <span className="hk-tab__svg" style={{ width: size, height: size, WebkitMaskImage: mask, maskImage: mask }} />;
+}
 
 // Kid tab bar, shared by Home and Wallet; Ask Bao, Snap and Stars aren't built yet
 export default function KidTabs({ active }) {
@@ -8,25 +20,21 @@ export default function KidTabs({ active }) {
   return (
     <nav className="hk-tabbar" aria-label="Main">
       <Link to="/kid/home" {...tab("home")}>
-        <span className="hk-tab__icon">🏠</span>Home
+        <span className="hk-tab__icon"><TabIcon src={homeIcon} /></span>Home
       </Link>
       <button className="hk-tab">
         <span className="hk-tab__icon"><Bao size={30} /></span>Ask Bao
       </button>
       <button className="hk-tab hk-tab--snap">
-        <span className="hk-tab__icon">📷</span>Snap
+        <span className="hk-tab__icon"><TabIcon src={cameraIcon} size={28} /></span>Snap
       </button>
       <button className="hk-tab hk-tab--locked" disabled aria-label="Stars, coming soon" title="Coming soon">
-        <span className="hk-tab__icon">⭐</span>
-        <span className="hk-tab__lock" aria-hidden="true">🔒</span>
+        <span className="hk-tab__icon"><TabIcon src={starIcon} /></span>
+        <span className="hk-tab__lock" aria-hidden="true"><img src={lockIcon} width="12" height="12" alt="" /></span>
         <span className="hk-tab__label">Stars</span>
       </button>
       <Link to="/kid/wallet" {...tab("wallet")}>
-        <span className="hk-tab__icon">
-          {/* Figma's wallet icon is drawn in white, so use it as a mask and colour it with the tab's text colour.
-              The quotes matter: the production build inlines it as a data URL containing ' marks */}
-          <span className="hk-tab__wallet" style={{ WebkitMaskImage: `url("${walletIcon}")`, maskImage: `url("${walletIcon}")` }} />
-        </span>Wallet
+        <span className="hk-tab__icon"><TabIcon src={walletIcon} /></span>Wallet
       </Link>
     </nav>
   );

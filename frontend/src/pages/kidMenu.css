@@ -1,0 +1,340 @@
+/* ========== Kid stall menu, food detail and locked screens (Raghav) ==========
+   Kids Figma (Sticker Pop) frames 03, 04, 05 and 05b. Every class starts with km- so nothing
+   here can clash with styles.css. Sizes and colours are copied from the Figma frames.
+   The Figma frames include a 54px iPhone status bar; on a real phone that space is the
+   safe-area inset, so "env(safe-area-inset-top) + Figma value - 54px" puts things where they are drawn. */
+
+/* .home-kid too: Home and its "See all" page show the same Food Cards */
+.km-screen,
+.home-kid {
+  --km-font: "Fredoka", system-ui, sans-serif;
+  --km-page: var(--k-bg);          /* #fff6e5 */
+  --km-mint: #2ec4a0;
+  --km-mint-soft: #d9f7ed;
+  --km-sky-soft: #dbf2ff;
+  --km-sun-soft: #ffedb8;
+  --km-allergy-soft: #ffe0db;
+  --km-allergy-ink: #bf3326;       /* 5.6:1 on white */
+  --km-parent-soft: #ebe5ff;
+  --km-muted-pill: #ededf2;
+  --km-muted-ink: #9999ad;
+  --km-green-ink: #0f7a61;
+  --km-grape: #715bff;           /* Figma #8e7dff darkened (same hue + saturation): white text 4.52:1, was 3.22:1 */
+  --km-caption: #55587a;
+  --km-no-red: #ff5a4e;
+}
+
+/* main.jsx loads App (and this file) BEFORE styles.css, so rules that compete with styles.css
+   use 2 classes (.kid.km-screen) to win on specificity instead of relying on file order */
+.kid.km-screen { background: var(--km-page); }
+
+/* .kid.km-screen (2 classes) beats the padding in .screen */
+.kid.km-screen {
+  gap: 16px;
+  padding: calc(env(safe-area-inset-top) + 20px) 20px calc(124px + env(safe-area-inset-bottom)); /* room for the fixed footer */
+}
+.kid.km-screen--center { justify-content: center; align-items: center; text-align: center; }
+.km-screen--allergy { --km-page: #ffe5e0; }
+.km-screen--parent { --km-page: #ede8ff; }
+body:has(.kid.km-screen--allergy) { background: #ffe5e0; }
+body:has(.kid.km-screen--parent) { background: #ede8ff; }
+
+.km-row { display: flex; align-items: center; gap: 12px; width: 100%; }
+.km-h2 { margin: 0; font-family: var(--km-font); font-size: 17px; font-weight: 600; color: var(--k-ink); }
+.km-muted { font-size: 15px; color: var(--k-soft); }
+.km-lead { font-size: 16px; line-height: 1.35; color: var(--k-soft); }
+
+/* ---------- blobs (Figma decoration) ---------- */
+.km-blob { position: absolute; pointer-events: none; }
+.km-blob--menu { width: 180px; height: 180px; left: -48px; top: calc(env(safe-area-inset-top) - 114px); }
+.km-blob--allergy { width: 200px; height: 200px; right: -40px; top: calc(env(safe-area-inset-top) - 124px); }
+.km-blob--parent { width: 200px; height: 200px; left: -58px; top: calc(env(safe-area-inset-top) - 104px); }
+
+/* ---------- back button: 44px white circle ---------- */
+.km-back {
+  display: grid; place-items: center; flex-shrink: 0;
+  width: 44px; height: 44px; border-radius: 22px;
+  background: #fff; border: var(--k-line); box-shadow: 0 3px 0 var(--k-ink);
+}
+button.km-back { padding: 0; cursor: pointer; } /* the "go back" version is a button, not a link */
+
+/* ---------- 03 header + banner ---------- */
+.km-head__text { flex: 1; min-width: 0; }
+.km-head__title { margin: 0; font-family: var(--km-font); font-size: 22px; font-weight: 700; line-height: normal; }
+.km-head__sub { font-size: 13px; color: var(--k-soft); }
+
+.km-banner {
+  display: flex; align-items: center; gap: 10px; padding: 12px;
+  background: var(--km-sun-soft); border: var(--k-line); border-radius: 18px; box-shadow: var(--k-shadow);
+  font-size: 13px; line-height: normal; color: var(--k-ink);
+}
+.km-banner__icon {
+  display: grid; place-items: center; flex-shrink: 0;
+  width: 36px; height: 36px; border-radius: 18px; background: #fff; border: var(--k-line);
+}
+
+/* ---------- 03 filter chips (Figma "Tag": Mint and Sky) ---------- */
+.km-chips { display: flex; gap: 8px; }
+.km-chip {
+  position: relative; padding: 4px 10px; border-radius: 999px;
+  border: 1.5px solid var(--k-ink); background: #fff; color: var(--k-ink);
+  font-family: var(--km-font); font-size: 13px; font-weight: 500; line-height: normal; cursor: pointer;
+}
+.km-chip::before { content: ""; position: absolute; inset: -10px -4px; } /* 44px tap target, same look */
+/* The Figma Tag has no "selected" variant: the chosen chip shows its Figma tone, the other is white */
+.km-chip--mint.km-chip--on { background: var(--km-mint-soft); }
+.km-chip--sky.km-chip--on { background: var(--km-sky-soft); }
+.km-chip--on { font-weight: 600; }
+.km-empty .km-chip { background: var(--km-sky-soft); }
+
+/* ---------- 03 grid + Food Card ---------- */
+/* Every card is the same size: equal columns, and grid-auto-rows: 1fr makes every row as tall as
+   the tallest one, with each card stretched to fill its cell */
+.km-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 14px 12px; }
+
+.km-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+  height: 100%; min-width: 0;
+  padding: 8px 8px 12px; border-radius: 22px;
+  background: #fff; border: var(--k-line); box-shadow: var(--k-shadow);
+  color: var(--k-ink); text-decoration: none;
+}
+.km-card--flat { flex: 1 1 0; min-width: 0; box-shadow: none; }
+
+.km-card__photo {
+  position: relative; width: 100%; height: 112px; flex-shrink: 0;
+  border: 2px solid var(--k-ink); border-radius: 16px; overflow: hidden;
+}
+.km-card__img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.km-card__overlay { position: absolute; inset: 0; }
+.km-card--parent .km-card__overlay { background: rgba(255, 255, 255, 0.6); }
+.km-card--allergy .km-card__overlay { background: rgba(255, 107, 91, 0.35); }
+
+/* Max 2 lines, then "…" (the full name is in the card's title and aria-label) */
+.km-card__name {
+  margin: 0; width: 100%; overflow: hidden; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+  font-family: var(--km-font); font-size: 15px; font-weight: 600; line-height: 1.2;
+}
+.km-card--parent .km-card__name,
+.km-card--allergy .km-card__name { color: var(--km-muted-ink); }
+
+/* margin-top: auto pins price + note to the bottom, so they line up across a row of equal cards */
+.km-card__meta { display: flex; align-items: center; gap: 4px; width: 100%; margin-top: auto; }
+/* Always reserved (one pill high) even when the card has no note */
+.km-card__note { display: flex; width: 100%; min-height: 24px; }
+.km-card__note .km-note { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.km-card__note .km-note img { vertical-align: -2px; margin-right: 2px; }
+.km-card__spacer { flex: 1; }
+.km-card__hearts { font-size: 12px; font-weight: 800; }
+
+/* Lock art (144x112) and Allergy art, centred on the photo like the Figma Food Card */
+.km-art {
+  position: absolute; left: 50%; top: 50%; width: 144px; height: 112px;
+  transform: translate(-50%, -50%); pointer-events: none;
+}
+/* Positions from the Figma "Allergy art": triangle centred at (65.6, 59.8) turned 6deg,
+   badge centred at (118, 30) turned -10deg */
+.km-art__triangle { position: absolute; left: 31.2px; top: 30.2px; transform: rotate(6deg); }
+/* Badge row: the right-most badge sits exactly where the Figma's single badge is (right edge
+   9.75px in, 13.75px down), and extra badges grow to the left, overlapping by 30% */
+.km-art__badges { position: absolute; right: 9.75px; top: 13.75px; }
+
+.km-badges { display: flex; }
+.km-badges > * { position: relative; flex-shrink: 0; width: var(--km-badge); height: var(--km-badge); transform: rotate(-10deg); }
+.km-badges > * + * { margin-left: calc(var(--km-badge) * -0.3); }
+.km-badge-svg { display: block; }
+
+/* The Figma "no shrimp" badge redrawn for any allergen: white circle, red ring and slash.
+   Sizes are the Figma ones as a share of the 32.5px badge, so the 05 screen's bigger badges match. */
+.km-badge { display: grid; place-items: center; border-radius: 50%; background: #fff; border: 2.5px solid var(--k-ink); }
+.km-badge__icon { font-size: calc(var(--km-badge) * 0.43); line-height: 1; }
+.km-badge::before,
+.km-badge::after { content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.km-badge::before { width: calc(var(--km-badge) * 0.754); height: calc(var(--km-badge) * 0.754); border-radius: 50%; border: 2.5px solid var(--km-no-red); }
+.km-badge::after { width: 2.5px; height: calc(var(--km-badge) * 0.67); border-radius: 2px; background: var(--km-no-red); transform: translate(-50%, -50%) rotate(-45deg); }
+/* "+N": same circle, no ring or slash, just the count */
+.km-badge--more { font-family: var(--km-font); font-size: calc(var(--km-badge) * 0.4); font-weight: 700; color: var(--k-ink); }
+.km-badge--more::before,
+.km-badge--more::after { content: none; }
+
+/* ---------- pills, notes, tags ---------- */
+.km-pill {
+  display: inline-flex; align-items: center; flex-shrink: 0; padding: 3px 8px; border-radius: 999px;
+  border: 1.5px solid var(--k-ink); font-family: var(--km-font); font-size: 13px; font-weight: 600; line-height: normal;
+  white-space: nowrap;
+}
+.km-pill--price { background: var(--k-sun); }
+.km-pill--muted { background: var(--km-muted-pill); }
+
+.km-note {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px;
+  border: 1.5px solid var(--k-ink); color: var(--k-ink);
+  font-family: var(--km-font); font-size: 12px; font-weight: 500; line-height: normal; white-space: nowrap;
+}
+.km-note--mint { background: var(--km-mint-soft); }
+.km-note--parent { background: var(--km-parent-soft); }
+.km-note--allergy { background: var(--km-allergy-soft); }
+.km-note--muted { background: var(--km-muted-pill); }
+.km-note--self { align-self: flex-start; margin-top: -6px; }
+
+.km-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.km-tag {
+  display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px;
+  border: 1.5px solid var(--k-ink); color: var(--k-ink);
+  font-family: var(--km-font); font-size: 13px; font-weight: 500; line-height: normal;
+}
+.km-tag--mint { background: var(--km-mint-soft); }
+.km-tag--sky { background: var(--km-sky-soft); }
+.km-tag--allergy { background: var(--km-allergy-soft); }
+.km-tag--plain { background: #fff; font-size: 12px; padding: 2px 8px; }
+
+.km-empty { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 24px 0; text-align: center; color: var(--k-soft); }
+
+/* ---------- Big Button (Figma: Sun / White, 18px radius, 5px hard shadow) ---------- */
+.km-big {
+  display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px;
+  padding: 16px 24px; border-radius: 18px; border: var(--k-line); box-shadow: 0 5px 0 var(--k-ink);
+  color: var(--k-ink); text-decoration: none; white-space: pre; /* keeps the Figma "  ·  " spacing */
+  font-family: var(--km-font); font-size: 19px; font-weight: 600; line-height: normal; cursor: pointer;
+}
+.km-big--sun { background: var(--k-sun); }
+.km-big--white { background: #fff; }
+.km-big--grow { flex: 1; width: auto; min-width: 0; }
+.km-big:disabled { background: var(--km-muted-pill); box-shadow: 0 2px 0 var(--k-ink); cursor: not-allowed; }
+.km-big:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 var(--k-ink); }
+span.km-big { cursor: default; }
+
+/* Footer fixed to the bottom. 3 classes so it beats ".kid > :not(.blob) { position: relative }" */
+.kid.km-screen > .km-footer {
+  position: fixed; left: 50%; bottom: 0; z-index: 10; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; max-width: 430px; padding: 12px 20px calc(28px + env(safe-area-inset-bottom));
+  background: var(--km-page);
+}
+
+/* ---------- 04 Food detail ---------- */
+.kid.km-screen--detail { gap: 0; padding: env(safe-area-inset-top) 0 calc(124px + env(safe-area-inset-bottom)); }
+
+.km-hero {
+  height: 290px; flex-shrink: 0; overflow: hidden;
+  border-bottom: var(--k-line); border-radius: 0 0 32px 32px;
+}
+.km-hero__img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.km-hero__back { position: absolute; left: 20px; top: 20px; }
+.km-hero__pics {
+  position: absolute; right: 20px; top: 20px;
+  display: flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 999px;
+  background: #fff; border: var(--k-line); box-shadow: 0 3px 0 var(--k-ink);
+  font-family: var(--km-font); font-size: 14px; font-weight: 700;
+}
+.km-hero__by {
+  position: absolute; left: 20px; bottom: 23px;
+  display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
+  background: rgba(31, 32, 65, 0.75); color: #fff;
+  font-family: var(--km-font); font-size: 13px; font-weight: 500;
+}
+.km-heart {
+  position: absolute; right: 20px; bottom: 10px;
+  display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 6px 12px 6px 10px; border-radius: 999px;
+  background: #fff; border: 2px solid var(--k-ink); box-shadow: 0 3px 0 var(--k-ink); color: var(--k-ink);
+  font-family: var(--km-font); font-size: 15px; font-weight: 600;
+}
+.km-heart--liked { background: #ff9ec4; box-shadow: 0 2px 0 var(--k-ink); }
+.km-heart:disabled { opacity: 1; cursor: default; }
+
+.km-body { display: flex; flex-direction: column; gap: 14px; padding: 18px 20px 0; }
+.km-title-row { gap: 10px; }
+.km-dish-name { flex: 1; min-width: 0; margin: 0; font-family: var(--km-font); font-size: 26px; font-weight: 700; line-height: normal; }
+.km-price-big {
+  flex-shrink: 0; padding: 6px 12px; border-radius: 999px;
+  background: var(--k-sun); border: 2px solid var(--k-ink); box-shadow: 0 3px 0 var(--k-ink);
+  font-family: var(--km-font); font-size: 18px; font-weight: 700;
+}
+.km-price-big.km-pill--muted { background: var(--km-muted-pill); }
+
+.km-safe {
+  display: flex; flex-direction: column; gap: 8px; padding: 14px;
+  background: var(--km-mint-soft); border: var(--k-line); border-radius: 22px; box-shadow: var(--k-shadow);
+}
+.km-safe__head { display: flex; align-items: center; gap: 8px; font-family: var(--km-font); font-size: 18px; font-weight: 600; }
+.km-safe__tick {
+  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 15px;
+  background: var(--km-mint); border: var(--k-line);
+}
+
+.km-meter {
+  display: flex; flex-direction: column; gap: 8px; padding: 14px;
+  background: #fff; border: var(--k-line); border-radius: 22px; box-shadow: var(--k-shadow);
+}
+.km-meter__head { display: flex; align-items: center; justify-content: space-between; }
+.km-meter__label { font-family: var(--km-font); font-size: 14px; font-weight: 500; color: var(--km-green-ink); }
+.km-meter__leaves { display: flex; gap: 8px; }
+.km-leaf { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 17px; background: var(--km-muted-pill); }
+.km-leaf--on { background: var(--km-mint); border: var(--k-line); }
+
+/* Extras: new section in the same Sticker Pop style (not in the Figma) */
+.km-extras { display: grid; gap: 10px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.km-extras legend { padding: 0; margin-bottom: 10px; }
+.km-extra {
+  display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 10px 12px;
+  background: #fff; border: var(--k-line); border-radius: 18px; box-shadow: 0 3px 0 var(--k-ink); cursor: pointer;
+}
+.km-extra--on { background: var(--km-mint-soft); }
+.km-extra--locked { cursor: not-allowed; }
+.km-extra--locked .km-extra__name { color: var(--km-muted-ink); }
+.km-extra:has(input:focus-visible) { outline: 3px solid var(--k-ink); outline-offset: 3px; }
+.km-extra__tick {
+  display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px; border-radius: 15px;
+  background: #fff; border: var(--k-line);
+}
+.km-extra--on .km-extra__tick { background: var(--km-mint); }
+.km-extra--locked .km-extra__tick { background: var(--km-muted-pill); }
+.km-extra__text { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; flex: 1; min-width: 0; }
+.km-extra__name { font-family: var(--km-font); font-size: 15px; font-weight: 600; }
+.km-extra__why { width: 100%; font-family: var(--km-font); font-size: 12px; font-weight: 500; color: var(--km-allergy-ink); }
+
+/* quantity stepper: the visual box matches the Figma, and the invisible ::before makes each tap target 44px */
+.km-qty {
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0; padding: 10px 12px;
+  background: #fff; border: var(--k-line); border-radius: 18px;
+}
+.km-qty button { position: relative; display: grid; place-items: center; width: 20px; height: 20px; padding: 0; background: none; border: 0; cursor: pointer; }
+.km-qty button::before { content: ""; position: absolute; inset: -12px; }
+.km-qty button:disabled { opacity: 0.35; cursor: not-allowed; }
+.km-qty__n { min-width: 12px; text-align: center; font-family: var(--km-font); font-size: 20px; font-weight: 700; }
+
+/* ---------- 05 / 05b locked screens ---------- */
+.kid.km-screen--locked { align-items: center; text-align: center; }
+
+.km-badge-photo { position: relative; width: 170px; height: 170px; flex-shrink: 0; }
+.km-badge-photo__img {
+  position: absolute; left: 5px; top: 5px; width: 160px; height: 160px; object-fit: cover;
+  border-radius: 50%; border: var(--k-line); box-shadow: 0 5px 0 var(--k-ink);
+}
+.km-badge-photo__mark {
+  position: absolute; left: 118px; top: 110px; display: grid; place-items: center;
+  width: 58px; height: 58px; border-radius: 29px; border: var(--k-line); box-shadow: 0 3px 0 var(--k-ink);
+  font-family: var(--km-font); font-size: 32px; font-weight: 700; line-height: 1;
+}
+.km-badge-photo__mark--allergy { background: var(--k-coral); }
+.km-badge-photo__mark--parent { background: var(--k-ink); }
+.km-badge-photo__badges { position: absolute; right: -6px; top: 4px; }
+
+.km-title { margin: 0; font-family: var(--km-font); font-size: 28px; font-weight: 700; line-height: normal; }
+
+.km-askmum {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px;
+  padding: 16px 24px; border-radius: 18px; border: var(--k-line); box-shadow: 0 5px 0 var(--k-ink);
+  background: var(--km-grape); color: #fff;
+  font-family: var(--km-font); font-size: 19px; font-weight: 600; line-height: normal; cursor: pointer;
+}
+.km-askmum:disabled { cursor: progress; }
+.km-askmum--sent { background: var(--km-mint); color: var(--k-ink); box-shadow: 0 2px 0 var(--k-ink); cursor: default; }
+.km-caption { font-size: 13px; font-weight: 600; color: var(--km-caption); }
+
+.km-alt-box {
+  display: flex; flex-direction: column; gap: 12px; width: 100%; padding: 14px; text-align: left;
+  background: #fff; border: var(--k-line); border-radius: 24px; box-shadow: var(--k-shadow);
+}
+.km-alt-row { display: flex; align-items: stretch; gap: 10px; } /* stretch: both cards the same height */

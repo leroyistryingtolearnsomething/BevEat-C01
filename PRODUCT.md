@@ -33,7 +33,7 @@ A closed-loop kids' food wallet for hawker centres where the parent's rules (dai
 
 - This half of the project covers: kid login, wallet and daily limit, Mum's rules (allergies, blocked items), menu with rules applied, ordering with a pickup code, parent top-up, food photo upload with AI check, and pic battles.
 - Not in this half: Ask Bao (AI assistant), stars/rewards/weekly leaderboard, hawker map.
-- Allergy-blocked dishes never appear to the child (stated in the parent app's own copy).
+- Dishes a child is allergic to never appear in their default 'Safe for me' menu. Under 'Everything' they show locked, so the child can learn why, but they can never be added to the tray or ordered.
 
 ## Evidence on Hand
 

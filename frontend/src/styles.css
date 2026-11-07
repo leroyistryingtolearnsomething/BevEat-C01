@@ -371,6 +371,10 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
 .sheet .lead { font-size: 14px; }
 .sheet__qr { padding: 14px; border-radius: 20px; background: #fff; border: 1.5px solid var(--p-line); box-shadow: 0 6px 18px rgb(35 64 43 / 0.08); }
 .sheet__qr img { display: block; }
+/* expired: same box as the QR, so nothing jumps, with a red X instead of the code */
+.sheet__qr--failed { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; width: 231px; height: 231px; }
+.sheet__failed-text { font-size: 18px; font-weight: 700; color: var(--p-danger); }
+.sheet__x { display: grid; place-items: center; width: 104px; height: 104px; border-radius: 50%; background: var(--p-danger-tint); color: var(--p-danger); }
 .sheet__expiry {
   display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
   background: var(--p-expiry); color: var(--p-warn-ink); font-size: 13px; font-variant-numeric: tabular-nums;
@@ -473,7 +477,7 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
 
 /* ---------- Section headings with a link on the right ---------- */
 .hk-row-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.hk-link { font-family: "Fredoka", system-ui, sans-serif; font-size: 14px; font-weight: 500; color: var(--hk-link); }
+.hk-link { font-family: "Fredoka", system-ui, sans-serif; font-size: 14px; font-weight: 500; color: var(--hk-link); text-decoration: none; }
 
 /* ---------- Today's yummiest pics ---------- */
 .hk-pics { display: flex; flex-direction: column; gap: 12px; }
@@ -482,40 +486,8 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
   margin: 0 -22px; padding: 2px 22px 8px; /* scroll edge to edge, but line up with the page */
   overflow-x: auto; scroll-snap-type: x mandatory;
 }
-.hk-pic {
-  position: relative; flex: none; scroll-snap-align: start;
-  display: flex; flex-direction: column; gap: 8px;
-  width: 165px; padding: 8px 8px 12px;
-  background: #fff; border: var(--k-line); border-radius: 22px; box-shadow: var(--k-shadow);
-}
-.hk-pic__img {
-  width: 100%; height: 112px; object-fit: cover;
-  border: 2px solid var(--k-ink); border-radius: 16px;
-  background: var(--k-bg); /* shows behind a missing photo */
-}
-.hk-pic__meta { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
-.hk-price {
-  padding: 3px 8px;
-  background: var(--k-sun); border: 1.5px solid var(--k-ink); border-radius: 999px;
-  font-family: "Fredoka", system-ui, sans-serif; font-size: 13px; font-weight: 600;
-}
-.hk-likes { font-size: 12px; font-weight: 800; }
-.hk-note {
-  align-self: flex-start;
-  padding: 3px 8px;
-  border: 1.5px solid var(--k-ink); border-radius: 999px;
-  font-family: "Fredoka", system-ui, sans-serif; font-size: 12px; font-weight: 500;
-}
-
-/* a dish this kid can't eat: tinted photo, greyed name and price */
-.hk-pic--allergy .hk-pic__img { filter: grayscale(0.6); }
-.hk-pic--allergy::after {
-  content: ""; position: absolute; left: 8px; right: 8px; top: 8px; height: 112px;
-  border-radius: 16px; background: rgba(255, 107, 91, 0.35); pointer-events: none;
-}
-.hk-pic--allergy h3 { color: var(--hk-muted-ink); }
-.hk-pic--allergy .hk-price { background: var(--hk-muted-pill); }
-.hk-pic--allergy .hk-note { background: var(--hk-allergy-bg); }
+/* each card is Raghav's Figma "Food Card" (DishCard), at the Figma's 165px width */
+.hk-pics__card { flex: none; width: 165px; scroll-snap-align: start; }
 
 /* ---------- Stalls near you ---------- */
 .hk-stalls { display: flex; flex-direction: column; gap: 12px; }
@@ -524,6 +496,9 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
   padding: 10px;
   background: #fff; border: var(--k-line); border-radius: 22px; box-shadow: var(--k-shadow);
 }
+/* pic and stall cards are <Link>s (<a> tags): drop the link underline and blue text, add a press effect */
+a.hk-stall { color: inherit; text-decoration: none; transition: transform .12s; }
+a.hk-stall:active { transform: scale(.97); }
 .hk-stall__img {
   flex: none; width: 64px; height: 64px; object-fit: cover;
   border: 2px solid var(--k-ink); border-radius: 16px;
@@ -581,7 +556,8 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
 }
 
 /* ---------- Kid Wallet tab ---------- */
-.hk-tab__wallet { width: 26px; height: 26px; background: currentColor; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }
+.hk-tab__svg { flex: none; background: currentColor; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }
+.hk-tab--snap .hk-tab__svg { background: var(--k-ink); } /* Figma: dark camera on the red button */
 
 /* kid's avatar opens a small menu with Log out */
 button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }

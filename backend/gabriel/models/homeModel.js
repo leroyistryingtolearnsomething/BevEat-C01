@@ -41,7 +41,7 @@ async function getRules(childId) {
     return rows; // to return all the allergies from the whole array
 }
 
-async function getTopPics(childId) {
+async function getTopPics(childId, limit = 10) {
     const {rows} = await pool.query
     (
         `SELECT * FROM(
@@ -62,7 +62,7 @@ async function getTopPics(childId) {
         GROUP BY p.photo_id, m.item_id
         ORDER BY m.item_id, likes DESC, p.uploaded_at DESC) best
         ORDER BY likes DESC
-        LIMIT 10`, [childId]
+        LIMIT $2`, [childId, limit]
     );
     return rows;    
 }

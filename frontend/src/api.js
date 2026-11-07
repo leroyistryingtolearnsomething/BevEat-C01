@@ -1,4 +1,6 @@
 // Calls to the Express backend (see backend/README.md for the route table)
+import { clearSession, getSession } from "./session.js";
+
 const BASE = import.meta.env.VITE_API_URL ?? "";
 
 export class ApiError extends Error {
@@ -23,6 +25,13 @@ async function request(path, { method = "GET", body, token } = {}) {
     throw new ApiError(0, "Can't reach KiddyEats right now. Check your internet and try again.");
   }
   const data = await res.json().catch(() => ({}));
+  // token expired or bad: forget it and go back to the log in page
+  // (if 2 calls fail at once only the first one does this)
+  const s = getSession();
+  if (res.status === 401 && token && s) {
+    clearSession();
+    window.location.replace(s.role === "child" ? "/kid/login" : "/parent/login");
+  }
   if (!res.ok) throw new ApiError(res.status, data.error || "Something went wrong. Please try again.");
   return data;
 }
@@ -53,6 +62,9 @@ export const createTopUp = (token, childId, amount) =>
 export const getTopUp = (token, topUpId) => request(`/top-ups/${topUpId}`, { token });
 
 export const getHome = (token) => request("/home", { token });
+
+// "See all" for Today's yummiest pics: { pics: [stall-menu dish cards] }
+export const getAllPics = (token) => request("/home/pics", { token });
 // Live in the backend: change a kid's allergies (keys like "peanut") and daily food money
 export const setAllergies = (token, childId, allergens) =>
   request(`/children/${childId}/allergies`, { method: "PUT", body: { allergens }, token });
@@ -72,8 +84,19 @@ export const getStallOrders = (token) => request("/stall/orders", { token });
 export const markOrderReady = (token, orderId) =>
   request(`/orders/${orderId}/ready`, { method: "PUT", token });
 
-export const markOrderCollected = (token, orderId) =>
-  request(`/orders/${orderId}/collected`, { method: "PUT", token });
+// code = the kid's 4 digit pickup code
+export const markOrderCollected = (token, orderId, code) =>
+  request(`/orders/${orderId}/collected`, { method: "PUT", body: { code }, token });
+
+// Live in the backend: stall menu, food detail and Ask Mum (Raghav). Each dish's status is decided by the server.
+export const getStallMenu = (token, stallId, view = "safe") =>
+  request(`/stalls/${encodeURIComponent(stallId)}/menu?view=${view}`, { token });
+
+export const getDish = (token, itemId) => request(`/menu-items/${encodeURIComponent(itemId)}`, { token });
+
+export const askMum = (token, itemId) => request("/ask-mum", { method: "POST", body: { itemId }, token });
+
+export const getAskMum = (token, itemId) => request(`/ask-mum/${encodeURIComponent(itemId)}`, { token });
 
 // Live in the backend: parent macros + order history (Leslie, CB69-50). date / start look like "2026-11-06"
 export const getMacrosDay = (token, childId, date) =>

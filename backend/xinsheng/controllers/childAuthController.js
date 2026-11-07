@@ -6,6 +6,10 @@ const User = require("../models/userModel");
 
 const PIN_RE = /^\d{4,6}$/; // 4-6 digits
 const SALT_ROUNDS = 10;
+// 5 wrong PINs locks the kid for 15 min, or until the parent sets a new PIN
+const MAX_PIN_TRIES = 5;
+const LOCK_MINUTES = 15;
+const LOCKED_MSG = "Too many wrong PINs. Ask your parent to reset it, or try again in 15 minutes";
 
 // POST /api/auth/child-login
 async function childLogin(req, res, next) {
@@ -15,9 +19,18 @@ async function childLogin(req, res, next) {
 
   try {
     const child = await User.findActiveChildByUsername(username.trim());
+    if (child && child.locked) return res.status(423).json({ error: LOCKED_MSG });
+
     // same error for wrong username or PIN
     const ok = child && child.password_hash && (await bcrypt.compare(pin, child.password_hash));
-    if (!ok) return res.status(401).json({ error: "Wrong username or PIN" });
+    if (!ok) {
+      if (child) {
+        const row = await User.recordWrongPin(child.user_id, MAX_PIN_TRIES, LOCK_MINUTES);
+        if (row && row.locked) return res.status(423).json({ error: LOCKED_MSG });
+      }
+      return res.status(401).json({ error: "Wrong username or PIN" });
+    }
+    if (child.failed_pin_tries > 0) await User.clearPinTries(child.user_id);
 
     const token = jwt.sign({ id: child.user_id, role: "child" }, process.env.JWT_SECRET, {
       expiresIn: "8h",
@@ -36,7 +49,7 @@ async function childLogin(req, res, next) {
   }
 }
 
-// PUT /api/children/:childId/pin  (parent sets kid's PIN; req.childId comes from requireOwnChild)
+// PUT /api/children/:childId/pin  (parent sets / resets kid's PIN, also unlocks; req.childId comes from requireOwnChild)
 async function setChildPin(req, res, next) {
   const { pin } = req.body || {};
   if (typeof pin !== "string" || !PIN_RE.test(pin))

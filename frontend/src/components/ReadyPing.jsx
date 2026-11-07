@@ -20,7 +20,8 @@ export default function ReadyPing() {
         if (isNew && navigator.vibrate) navigator.vibrate([200, 100, 200]);
         setReady(orders);
       } catch {
-        // try again next time
+        // 401 clears the session in api.js, so the next check stops before calling the api
+        // other errors (e.g. no internet): try again next time
       }
     }
     check();
@@ -29,15 +30,17 @@ export default function ReadyPing() {
   }, []);
 
   if (ready.length === 0) return null;
+  // bottom 104 so it sits above the kid tab bar
   return (
     <div className="ready-ping" role="alert" style={{
-      position: "fixed", left: 16, right: 16, bottom: 16, zIndex: 50, padding: "14px 16px",
+      position: "fixed", left: 16, right: 16, bottom: 104, zIndex: 50, padding: "14px 16px",
       borderRadius: 16, background: "#2e7d32", color: "#fff", fontWeight: 700,
       boxShadow: "0 6px 20px rgba(0,0,0,.2)",
     }}>
       {ready.map((o) => (
         <p key={o.orderId} style={{ margin: 0 }}>
           🔔 Your food is ready! Go to {o.stallName}, number {o.queueNumber}
+          {o.pickupCode && <> · show code <span style={{ fontSize: 20, letterSpacing: 2 }}>{o.pickupCode}</span></>}
         </p>
       ))}
     </div>

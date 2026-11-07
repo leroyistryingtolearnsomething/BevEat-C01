@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { getHome } from "../api.js";
-import { getSession } from "../session.js";
+import { clearSession, getSession } from "../session.js";
 import KidTabs from "../components/KidTabs.jsx";
 import KidAvatarMenu from "../components/KidAvatarMenu.jsx";
+import DishCard from "../components/menu/DishCard.jsx";
+import { Link, useNavigate } from "react-router-dom";
 // Kid Home page: shows the data from GET /api/home
 export default function Home() {
   const { token } = getSession();             // the logged-in kid's token
   const [home, setHome] = useState(null);     // the data, null until it arrives
   const [error, setError] = useState("");     // an error message, if it fails
+    const navigate = useNavigate();
 
   // runs once when the page opens: ask the backend for the data
   useEffect(() => {
@@ -72,19 +75,12 @@ export default function Home() {
       <section className="hk-pics">
         <div className="hk-row-head">
           <h2>Today's yummiest pics</h2>
-          <span className="hk-link">See all</span>
+          <Link to="/kid/pics" className="hk-link">See all</Link>
         </div>
+        {/* Raghav's Figma "Food Card", so locked and allergy dishes look the same as on the stall menu */}
         <div className="hk-pics__row">
-          {pics.map((p) => (
-            <article key={p.photo} className={`hk-pic hk-pic--${p.status}`}>
-              <img src={p.imageUrl} alt={p.dish} className="hk-pic__img" />
-              <h3>{p.dish}</h3>
-              <div className="hk-pic__meta">
-                <span className="hk-price">S${p.price.toFixed(2)}</span>
-                <span className="hk-likes">❤️ {p.likes}</span>
-              </div>
-              {p.status === "allergy" && <span className="hk-note">Not for you</span>}
-            </article>
+          {pics.map((d) => (
+            <div key={d.id} className="hk-pics__card"><DishCard dish={d} /></div>
           ))}
         </div>
       </section>
@@ -95,7 +91,7 @@ export default function Home() {
           <span className="hk-link">📍 Map</span>
         </div>
         {stalls.map((s) => (
-          <article key={s.stall} className="hk-stall">
+          <Link key={s.stall} to={`/kid/stalls/${s.stall}`} className="hk-stall">
             {s.image ? (
               <img src={s.image} alt="" className="hk-stall__img" />
             ) : (
@@ -110,7 +106,7 @@ export default function Home() {
                   : `✓ ${s.safePicks} safe ${s.safePicks === 1 ? "pick" : "picks"} for you`}
               </p>
             </div>
-          </article>
+          </Link>
         ))}
       </section>
       <KidTabs active="home" />

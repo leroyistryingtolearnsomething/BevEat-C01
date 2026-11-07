@@ -7,7 +7,7 @@ const IN_QUEUE = `o.ready_at IS NULL AND o.collected_at IS NULL AND o.status <> 
 async function getOrder(orderId) {
   const { rows } = await pool.query(
     `SELECT o.order_id, o.child_id, o.stall_id, o.queue_number, o.status, o.placed_at,
-            o.ready_at, o.collected_at, s.name AS stall_name, s.owner_id, s.avg_prep_minutes,
+            o.ready_at, o.collected_at, o.pickup_code, s.name AS stall_name, s.owner_id, s.avg_prep_minutes,
             c.parent_id
      FROM orders o
      JOIN stalls s ON s.stall_id = o.stall_id
@@ -42,7 +42,7 @@ async function getStallQueue(stallId) {
 // kid's orders that are ready but not picked up yet
 async function getReadyForChild(childId) {
   const { rows } = await pool.query(
-    `SELECT o.order_id, o.queue_number, o.ready_at, s.name AS stall_name
+    `SELECT o.order_id, o.queue_number, o.ready_at, o.pickup_code, s.name AS stall_name
      FROM orders o JOIN stalls s ON s.stall_id = o.stall_id
      WHERE o.child_id = $1 AND o.ready_at IS NOT NULL AND o.collected_at IS NULL
        AND o.status <> 'cancelled'
@@ -64,11 +64,12 @@ async function getForOwner(ownerId) {
   return rows;
 }
 
-async function markReady(orderId) {
+// pickup code is made when the order is ready, kid shows it at the stall
+async function markReady(orderId, pickupCode) {
   const { rows } = await pool.query(
-    `UPDATE orders SET status = 'ready', ready_at = now()
+    `UPDATE orders SET status = 'ready', ready_at = now(), pickup_code = $2
      WHERE order_id = $1 AND ready_at IS NULL RETURNING order_id, ready_at`,
-    [orderId]
+    [orderId, pickupCode]
   );
   return rows[0];
 }
