@@ -78,6 +78,7 @@ function fakeQuery(sql, params = []) {
     if (!o) return { rows: [] };
     o.status = "ready";
     o.ready_at = new Date();
+    o.pickup_code = params[1];
     return { rows: [o] };
   }
 
@@ -194,8 +195,11 @@ async function run() {
   res = await get("/orders/3/queue", kid);
   check(res.body.ahead === 1 && res.body.waitMinutes === 8, "queue moves up when an order is ready");
 
-  res = await put("/orders/3/collected", owner);
+  res = await put("/orders/3/collected", owner).send({ code: "0000" });
   check(res.status === 409, "can't collect before it's ready");
+
+  res = await get("/orders/3/queue", kid);
+  check(res.body.pickupCode === undefined, "no pickup code before it's ready");
 
   res = await put("/orders/3/ready", owner);
   res = await get("/me/ready-orders", kid);
@@ -203,6 +207,14 @@ async function run() {
     res.status === 200 && res.body.orders.length === 1 && res.body.orders[0].queueNumber === 103,
     "kid gets the ready ping"
   );
+  const code = res.body.orders[0].pickupCode;
+  check(/^\d{4}$/.test(code) && res.body.orders[0].qrText === `BEVEAT-3-${code}`, "ready ping has a 4 digit pickup code + qr text");
+
+  res = await get("/orders/3/queue", parent);
+  check(res.body.pickupCode === code, "parent can see the pickup code too");
+
+  res = await get("/orders/3/queue", owner);
+  check(res.status === 200 && res.body.pickupCode === undefined, "stall owner doesn't get the code");
 
   res = await get("/me/ready-orders", parent);
   check(res.status === 403, "ready ping is only for kids");
@@ -211,7 +223,20 @@ async function run() {
   check(res.status === 409, "cancelled order can't be marked ready");
 
   res = await put("/orders/3/collected", owner);
-  check(res.status === 200, "stall owner marks it collected");
+  check(res.status === 400, "collecting needs the code");
+
+  const wrong = code === "1111" ? "2222" : "1111";
+  res = await put("/orders/3/collected", owner).send({ code: wrong });
+  check(res.status === 400, "wrong pickup code is rejected");
+
+  res = await put("/orders/3/collected", otherOwner).send({ code });
+  check(res.status === 404, "other stall can't collect it even with the code");
+
+  res = await put("/orders/3/collected", owner).send({ code });
+  check(res.status === 200, "stall owner marks it collected with the right code");
+
+  res = await get("/orders/3/queue", kid);
+  check(res.body.pickupCode === undefined, "code is gone after it's collected");
 
   res = await get("/me/ready-orders", kid);
   check(res.body.orders.length === 0, "ping stops after it's collected");

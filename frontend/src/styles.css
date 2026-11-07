@@ -477,7 +477,7 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
 
 /* ---------- Section headings with a link on the right ---------- */
 .hk-row-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.hk-link { font-family: "Fredoka", system-ui, sans-serif; font-size: 14px; font-weight: 500; color: var(--hk-link); }
+.hk-link { font-family: "Fredoka", system-ui, sans-serif; font-size: 14px; font-weight: 500; color: var(--hk-link); text-decoration: none; }
 
 /* ---------- Today's yummiest pics ---------- */
 .hk-pics { display: flex; flex-direction: column; gap: 12px; }
@@ -486,49 +486,8 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
   margin: 0 -22px; padding: 2px 22px 8px; /* scroll edge to edge, but line up with the page */
   overflow-x: auto; scroll-snap-type: x mandatory;
 }
-.hk-pic {
-  position: relative; flex: none; scroll-snap-align: start;
-  display: flex; flex-direction: column; gap: 8px;
-  width: 165px; padding: 8px 8px 12px;
-  background: #fff; border: var(--k-line); border-radius: 22px; box-shadow: var(--k-shadow);
-}
-.hk-pic__img {
-  width: 100%; height: 112px; object-fit: cover;
-  border: 2px solid var(--k-ink); border-radius: 16px;
-  background: var(--k-bg); /* shows behind a missing photo */
-}
-.hk-pic__meta { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
-.hk-price {
-  padding: 3px 8px;
-  background: var(--k-sun); border: 1.5px solid var(--k-ink); border-radius: 999px;
-  font-family: "Fredoka", system-ui, sans-serif; font-size: 13px; font-weight: 600;
-}
-.hk-likes { font-size: 12px; font-weight: 800; }
-.hk-note {
-  align-self: flex-start;
-  padding: 3px 8px;
-  border: 1.5px solid var(--k-ink); border-radius: 999px;
-  font-family: "Fredoka", system-ui, sans-serif; font-size: 12px; font-weight: 500;
-}
-
-/* A dish this kid can't have is still shown (Figma: Laksa, Char Kway Teow), just marked:
-   a tinted layer + big icon over the photo, greyed name and price, and a coloured note.
-   allergy = red tint + warning (Figma Laksa); locked = white wash + lock (Figma Char Kway Teow, Mum's rule) */
-.hk-pic--allergy::after,
-.hk-pic--locked::after {
-  position: absolute; left: 8px; right: 8px; top: 8px; height: 112px;
-  display: grid; place-items: center;
-  border-radius: 16px; font-size: 44px; pointer-events: none;
-}
-.hk-pic--allergy::after { content: "⚠️"; background: rgba(255, 107, 91, 0.35); }
-.hk-pic--locked::after { content: "🔒"; background: rgba(255, 255, 255, 0.6); }
-.hk-pic--allergy h3,
-.hk-pic--locked h3 { color: var(--hk-muted-ink); }
-.hk-pic--allergy .hk-price,
-.hk-pic--locked .hk-price { background: var(--hk-muted-pill); }
-.hk-pic--allergy .hk-note { background: var(--hk-allergy-bg); }
-.hk-pic--locked .hk-note { background: var(--hk-parent-bg); }
-.hk-pic--healthy .hk-note { background: #d9f7ed; } /* Figma: green "Healthy pick" note with a leaf */
+/* each card is Raghav's Figma "Food Card" (DishCard), at the Figma's 165px width */
+.hk-pics__card { flex: none; width: 165px; scroll-snap-align: start; }
 
 /* ---------- Stalls near you ---------- */
 .hk-stalls { display: flex; flex-direction: column; gap: 12px; }
@@ -538,8 +497,8 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
   background: #fff; border: var(--k-line); border-radius: 22px; box-shadow: var(--k-shadow);
 }
 /* pic and stall cards are <Link>s (<a> tags): drop the link underline and blue text, add a press effect */
-a.hk-pic, a.hk-stall { color: inherit; text-decoration: none; transition: transform .12s; }
-a.hk-pic:active, a.hk-stall:active { transform: scale(.97); }
+a.hk-stall { color: inherit; text-decoration: none; transition: transform .12s; }
+a.hk-stall:active { transform: scale(.97); }
 .hk-stall__img {
   flex: none; width: 64px; height: 64px; object-fit: cover;
   border: 2px solid var(--k-ink); border-radius: 16px;
@@ -597,7 +556,8 @@ a.hk-pic:active, a.hk-stall:active { transform: scale(.97); }
 }
 
 /* ---------- Kid Wallet tab ---------- */
-.hk-tab__wallet { width: 26px; height: 26px; background: currentColor; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }
+.hk-tab__svg { flex: none; background: currentColor; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }
+.hk-tab--snap .hk-tab__svg { background: var(--k-ink); } /* Figma: dark camera on the red button */
 
 /* kid's avatar opens a small menu with Log out */
 button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }

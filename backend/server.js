@@ -36,6 +36,9 @@ app.use("/api", require("./raghav/routes/menuRoutes"));
 // live queue + order ready ping
 app.use("/api", require("./xinsheng/routes/orderQueueRoutes"));
 
+// weekday limits, spending report, low money alerts
+app.use("/api", require("./xinsheng/routes/parentMoneyRoutes"));
+
 // error handler
 app.use((err, req, res, next) => {
   console.error(err);

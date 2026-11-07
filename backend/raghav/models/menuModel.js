@@ -72,4 +72,16 @@ async function getTopPhotos(itemIds, viewerId) {
   return rows; // total_pics is counted before DISTINCT ON keeps the top photo, so it's every approved pic
 }
 
-module.exports = { getAvailableDishesForStall, getAvailableDish, getAddOns, getTopPhotos };
+// Same rows as the stall menu, for a list of dishes from any stall (Gabriel's Home "yummiest pics")
+async function getAvailableDishesByIds(itemIds) {
+  const { rows } = await pool.query(
+    `SELECT ${DISH_COLUMNS}
+     ${DISH_JOINS}
+     WHERE m.item_id = ANY($1::int[]) AND m.is_available
+     GROUP BY m.item_id`,
+    [itemIds]
+  );
+  return rows;
+}
+
+module.exports = { getAvailableDishesForStall, getAvailableDish, getAvailableDishesByIds, getAddOns, getTopPhotos };
