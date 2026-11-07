@@ -35,12 +35,78 @@ export function moneyLeftCents(canSpend, lines) {
 const addOnKey = (line) => line.addOns.map((a) => a.id).sort((a, b) => a - b).join(",");
 const sameLine = (a, b) => a.itemId === b.itemId && addOnKey(a) === addOnKey(b);
 
+// "1:2,3" = dish 1 with add-ons 2 and 3. A tray line and the server's priced line for it get the
+// same key (both have itemId + addOns [{ id }]), so the screen can match them up even while a
+// newer quote is still loading and the line numbers have moved.
+export const lineKey = (line) => `${line.itemId}:${addOnKey(line)}`;
+
 // Returns a NEW array (React state must not be changed in place). Adding the same dish with the
 // same extras again just raises its quantity, capped at MAX_QTY.
 export function addLine(lines, line) {
   const existing = lines.find((l) => sameLine(l, line));
   if (!existing) return [...lines, { ...line, quantity: Math.min(line.quantity, MAX_QTY) }];
   return lines.map((l) => (l === existing ? { ...l, quantity: Math.min(l.quantity + line.quantity, MAX_QTY) } : l));
+}
+
+// ---------- 06 My tray ----------
+
+// Change one line's quantity. 0 or less takes the line out; more than MAX_QTY stays at MAX_QTY.
+export function setQuantity(lines, index, quantity) {
+  if (quantity <= 0) return removeLine(lines, index).lines;
+  return lines.map((l, i) => (i === index ? { ...l, quantity: Math.min(quantity, MAX_QTY) } : l));
+}
+
+// Take a line out, and remember where it was so "Undo" can put it back in the same spot
+export function removeLine(lines, index) {
+  return { lines: lines.filter((_, i) => i !== index), removed: { line: lines[index], index } };
+}
+
+export function restoreLine(lines, removed) {
+  const at = Math.min(removed.index, lines.length);
+  return [...lines.slice(0, at), removed.line, ...lines.slice(at)];
+}
+
+// What POST /api/tray/quote (and Leroy's checkout) gets: ids and quantities ONLY. No names and
+// no prices leave the browser, so the server has nothing to "trust" but its own database.
+export function toQuoteItems(lines) {
+  return lines.map((l) => ({ itemId: l.itemId, quantity: l.quantity, addOnIds: l.addOns.map((a) => a.id) }));
+}
+
+// Figma row subtitle: chosen extras, then the stall. "Less rice, Add egg · Lim's Chicken Rice"
+export function lineSubtitle(line) {
+  const extras = line.addOns.map((a) => a.name).join(", ");
+  return extras ? `${extras} · ${line.stallName}` : line.stallName;
+}
+
+// Tray lines in stall order (each stall's lines together, stalls in the order first added).
+// That's the order the server groups them in, and Leroy's checkout makes one order per stall.
+// Each entry keeps its index in the saved tray, which the stepper needs to change it.
+export function linesInStallOrder(lines) {
+  const stallOrder = [...new Set(lines.map((l) => l.stallId))];
+  return stallOrder.flatMap((stallId) =>
+    lines.map((line, index) => ({ line, index })).filter(({ line }) => line.stallId === stallId)
+  );
+}
+
+// The server's 409 says which LINE NUMBERS of the tray it was sent are a problem. Turn that
+// into lineKey -> problem, so the right rows still show it after the kid removes another line.
+export function problemsByKey(sentLines, problems) {
+  const map = new Map();
+  for (const p of problems) {
+    const line = sentLines[p.lineIndex];
+    if (line && !map.has(lineKey(line))) map.set(lineKey(line), p);
+  }
+  return map;
+}
+
+// Kid-friendly words for each reason the server can give (docs/api-contracts.md §3c)
+export function problemMessage(problem) {
+  if (problem.reason === "allergy")
+    return problem.addOnId ? `${problem.name} isn't safe for you` : "Not safe for you";
+  if (problem.reason === "parent_rule") return "Mum says not today";
+  if (problem.reason === "sold_out") return "Sold out now";
+  if (problem.reason === "stall_closed") return "This stall just closed";
+  return "Can't order this now"; // a reason this app doesn't know yet
 }
 
 // ---------- storage ----------

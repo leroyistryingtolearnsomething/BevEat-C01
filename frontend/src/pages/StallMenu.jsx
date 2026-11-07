@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { getStallMenu, getStallWait } from "../api.js";
 import { getSession } from "../session.js";
 import { loadTray, trayCount, trayCents, formatSgd, moneyLeftCents, toCents } from "../tray.js";
@@ -67,7 +67,7 @@ export default function StallMenu() {
   const tray = loadTray(token);
   // The server's overBudget only knows today's money, not this browser's tray, so a dish is also
   // "Not enough money today" when it costs more than what's left after the tray.
-  // (PR B's POST /api/tray/quote re-checks the real total on the server.)
+  // (06 My tray's POST /api/tray/quote re-checks the real total on the server.)
   const leftCents = moneyLeftCents(menu.money.canSpend, tray);
   const dishes = menu.dishes.map((d) =>
     d.status === "allowed" && !d.overBudget && toCents(d.price) > leftCents ? { ...d, overBudget: true } : d
@@ -123,10 +123,10 @@ export default function StallMenu() {
 
       {trayCount(tray) > 0 && (
         <footer className="km-footer">
-          {/* The tray screen (06) comes in PR B, so this shows the tray but doesn't open it yet */}
-          <span className="km-big km-big--sun" aria-disabled="true">
+          {/* The total here is only a guide: 06 My tray asks the server for the real price */}
+          <Link to="/kid/tray" className="km-big km-big--sun">
             My tray  ·  {trayCount(tray)} {trayCount(tray) === 1 ? "item" : "items"}  ·  {formatSgd(trayCents(tray))}
-          </span>
+          </Link>
         </footer>
       )}
     </main>

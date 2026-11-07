@@ -1,0 +1,13 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="71.5" height="71.5" viewBox="0 0 71.5 71.5" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Bao">
+<ellipse id="Shadow" cx="35.75" cy="67.65" rx="24.2" ry="2.75" fill="#1F2041" fill-opacity="0.15"/>
+<g id="Bao_2">
+<path id="Vector" d="M7.15 42.9C7.15 24.75 20.9 12.1 35.75 12.1C50.6 12.1 64.35 24.75 64.35 42.9C64.35 56.1 52.25 61.6 35.75 61.6C19.25 61.6 7.15 56.1 7.15 42.9Z" fill="#FFFDF5" stroke-width="2.2" stroke="#1F2041"/>
+<path id="Vector_2" d="M44.55 20.9C40.7 19.8 37.4 17.05 35.75 12.1C34.1 17.05 30.8 19.8 26.95 20.9M35.75 12.1V20.35" stroke-width="1.925" stroke-linecap="round" stroke="#1F2041"/>
+<path id="Vector_3" d="M23.65 39.6C26.2167 36.3 28.7833 36.3 31.35 39.6M40.15 39.6C42.7167 36.3 45.2833 36.3 47.85 39.6" stroke-width="2.2" stroke-linecap="round" stroke="#1F2041"/>
+<path id="Vector_4" d="M28.05 45.1C33.1833 53.1667 38.3167 53.1667 43.45 45.1H28.05Z" fill="#FF6B5B" stroke-width="1.925" stroke-linejoin="round" stroke="#1F2041"/>
+<path id="Vector_5" d="M20.35 48.95C22.7801 48.95 24.75 47.7188 24.75 46.2C24.75 44.6812 22.7801 43.45 20.35 43.45C17.9199 43.45 15.95 44.6812 15.95 46.2C15.95 47.7188 17.9199 48.95 20.35 48.95Z" fill="#FF9EC4"/>
+<path id="Vector_6" d="M51.15 48.95C53.5801 48.95 55.55 47.7188 55.55 46.2C55.55 44.6812 53.5801 43.45 51.15 43.45C48.7199 43.45 46.75 44.6812 46.75 46.2C46.75 47.7188 48.7199 48.95 51.15 48.95Z" fill="#FF9EC4"/>
+</g>
+</g>
+</svg>

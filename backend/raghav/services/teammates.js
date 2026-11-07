@@ -3,6 +3,7 @@
 // Other files call these as `Teammates.getFoodRules(...)` (not destructured), so a test can
 // replace one function without touching the rest.
 const Home = require("../../gabriel/models/homeModel"); // read-only reuse, never edited here
+const Money = require("../../xinsheng/services/moneyService"); // read-only reuse, never edited here
 const Menu = require("../models/menuModel");
 
 // Xin Sheng's allergy profile (§2a). Reuses Gabriel's existing read of child_allergies.
@@ -13,20 +14,10 @@ async function getChildAllergies(childId) {
   return rows.map((r) => ({ name: r.name, icon: r.icon, severity: r.severity }));
 }
 
-// Xin Sheng's money check (§2c). Reuses Gabriel's Home queries, so the menu and Home always agree.
-// Returns null if there's no child profile for this id.
-async function getMoneyToday(childId) {
-  const child = await Home.getChildSummary(childId);
-  if (!child) return null;
-  const dailyLimit = Number(child.daily_limit);
-  const spentToday = Number(await Home.getSpentToday(childId));
-  return {
-    dailyLimit,
-    spentToday,
-    leftToday: Math.max(dailyLimit - spentToday, 0),
-    walletBalance: Number(child.wallet_balance),
-  };
-}
+// Xin Sheng's money check (§2c): today's limit (including a different limit for this weekday),
+// minus what was spent today, plus the wallet balance. Using her function means the menu, the
+// tray and her parent screens always agree on the money. Returns null if there's no child profile.
+const getMoneyToday = (childId) => Money.getMoneyToday(childId);
 
 // MOCK: replace when Leroy's getFoodRules is ready (§2b). There is no food-rules table yet,
 // so no dish is "Mum says no" until it exists.
