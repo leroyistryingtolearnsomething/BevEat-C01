@@ -613,3 +613,21 @@ button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
 .kid .kw-confirm p { color: var(--k-muted); }
 .kid .kw-confirm .btn--kid { max-width: none; }
 .kw-confirm__out { background: none; color: var(--k-error); font-family: "Fredoka", system-ui, sans-serif; font-weight: 600; }
+
+/* Parent > Allergies: "Something else?" custom allergies (Leslie) */
+.custom-allergies { margin-top: 16px; }
+.custom-allergies__list { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.custom-allergies__list li {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 12px; border-radius: 12px; background: var(--p-danger-tint);
+}
+.custom-allergies__list li > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.custom-allergies__list strong { font-size: 15px; color: var(--p-danger); }
+.custom-allergies__remove {
+  flex: none; min-height: 44px; padding: 0 12px; border-radius: 12px;
+  background: #fff; border: 1.5px solid var(--p-danger); color: var(--p-danger); font-weight: 700;
+}
+.custom-allergies__form { display: flex; gap: 8px; margin-top: 4px; }
+.custom-allergies__form .input { flex: 1; min-width: 0; }
+.custom-allergies__form .input input { width: 100%; }
+.custom-allergies__add { width: auto; flex: none; min-height: 48px; }
