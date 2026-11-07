@@ -13,7 +13,7 @@ async function getHome(req, res, next) {
         const rules = await homeModel.getRules(childId);
         const stalls = await homeModel.getStalls(childId);
         const pics = await homeModel.getTopPics(childId);
-
+            
         const dailyLimit = Number(child.daily_limit);
         const spentToday = Number(spent); // Number function turns it from a text to a number
         const left = Math.max(dailyLimit - spentToday, 0); // arranging the data pulled from the 2 await funcs
