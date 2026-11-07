@@ -3,6 +3,7 @@ import { getHome } from "../api.js";
 import { clearSession, getSession } from "../session.js";
 import KidTabs from "../components/KidTabs.jsx";
 import KidAvatarMenu from "../components/KidAvatarMenu.jsx";
+import DishCard from "../components/menu/DishCard.jsx";
 import { Link, useNavigate } from "react-router-dom";
 // Kid Home page: shows the data from GET /api/home
 export default function Home() {
@@ -74,21 +75,12 @@ export default function Home() {
       <section className="hk-pics">
         <div className="hk-row-head">
           <h2>Today's yummiest pics</h2>
-          <span className="hk-link">See all</span>
+          <Link to="/kid/pics" className="hk-link">See all</Link>
         </div>
+        {/* Raghav's Figma "Food Card", so locked and allergy dishes look the same as on the stall menu */}
         <div className="hk-pics__row">
-          {pics.map((p) => (
-            <Link key={p.photo} to={`/kid/dishes/${p.item}`} className={`hk-pic hk-pic--${p.status}`}>
-              <img src={p.imageUrl} alt={p.dish} className="hk-pic__img" />
-              <h3>{p.dish}</h3>
-              <div className="hk-pic__meta">
-                <span className="hk-price">S${p.price.toFixed(2)}</span>
-                <span className="hk-likes">❤️ {p.likes}</span>
-              </div>
-              {p.status === "allergy" && <span className="hk-note">Not for you</span>}
-              {p.status === "locked" && <span className="hk-note">🔒 Mum says no</span>}
-              {p.status === "healthy" && <span className="hk-note">🌿 Healthy pick</span>}
-            </Link>
+          {pics.map((d) => (
+            <div key={d.id} className="hk-pics__card"><DishCard dish={d} /></div>
           ))}
         </div>
       </section>

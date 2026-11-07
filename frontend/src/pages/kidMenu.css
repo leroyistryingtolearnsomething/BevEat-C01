@@ -4,7 +4,9 @@
    The Figma frames include a 54px iPhone status bar; on a real phone that space is the
    safe-area inset, so "env(safe-area-inset-top) + Figma value - 54px" puts things where they are drawn. */
 
-.km-screen {
+/* .home-kid too: Home and its "See all" page show the same Food Cards */
+.km-screen,
+.home-kid {
   --km-font: "Fredoka", system-ui, sans-serif;
   --km-page: var(--k-bg);          /* #fff6e5 */
   --km-mint: #2ec4a0;
@@ -54,6 +56,7 @@ body:has(.kid.km-screen--parent) { background: #ede8ff; }
   width: 44px; height: 44px; border-radius: 22px;
   background: #fff; border: var(--k-line); box-shadow: 0 3px 0 var(--k-ink);
 }
+button.km-back { padding: 0; cursor: pointer; } /* the "go back" version is a button, not a link */
 
 /* ---------- 03 header + banner ---------- */
 .km-head__text { flex: 1; min-width: 0; }

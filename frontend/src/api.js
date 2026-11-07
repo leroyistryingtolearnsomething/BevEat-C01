@@ -62,6 +62,9 @@ export const createTopUp = (token, childId, amount) =>
 export const getTopUp = (token, topUpId) => request(`/top-ups/${topUpId}`, { token });
 
 export const getHome = (token) => request("/home", { token });
+
+// "See all" for Today's yummiest pics: { pics: [stall-menu dish cards] }
+export const getAllPics = (token) => request("/home/pics", { token });
 // Live in the backend: change a kid's allergies (keys like "peanut") and daily food money
 export const setAllergies = (token, childId, allergens) =>
   request(`/children/${childId}/allergies`, { method: "PUT", body: { allergens }, token });
