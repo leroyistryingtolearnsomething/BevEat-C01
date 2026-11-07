@@ -11,6 +11,8 @@ import ParentHome from "./pages/ParentHome.jsx";
 import TopUp from "./pages/TopUp.jsx";
 import ParentAllergies from "./pages/ParentAllergies.jsx";
 import ParentLimit from "./pages/ParentLimit.jsx";
+import ParentMacros from "./pages/ParentMacros.jsx";
+import ParentOrders from "./pages/ParentOrders.jsx";
 import ReadyPing from "./components/ReadyPing.jsx";
 
 // UI guard only; the API checks the token's role on every request
@@ -37,6 +39,8 @@ export default function App() {
       <Route path="/parent/home" element={<RequireRole role="parent"><ParentHome /></RequireRole>} />
       <Route path="/parent/allergies" element={<RequireRole role="parent"><ParentAllergies /></RequireRole>} />
       <Route path="/parent/limit" element={<RequireRole role="parent"><ParentLimit /></RequireRole>} />
+      <Route path="/parent/macros" element={<RequireRole role="parent"><ParentMacros /></RequireRole>} />
+      <Route path="/parent/orders" element={<RequireRole role="parent"><ParentOrders /></RequireRole>} />
       <Route path="/parent/top-up" element={<RequireRole role="parent"><TopUp /></RequireRole>} />
       <Route path="/kid/home" element={<RequireRole role="child"><Home role="child" /></RequireRole>} />
       <Route path="/kid/wallet" element={<RequireRole role="child"><KidWallet /></RequireRole>} />

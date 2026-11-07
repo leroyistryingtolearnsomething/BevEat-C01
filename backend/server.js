@@ -27,6 +27,9 @@ app.use("/api", require("./gabriel/routes/homeRoutes"));
 // live queue + order ready ping
 app.use("/api", require("./xinsheng/routes/orderQueueRoutes"));
 
+// parent macros + order history (CB69-50)
+app.use("/api", require("./leslie/routes/macrosRoutes"));
+
 // error handler
 app.use((err, req, res, next) => {
   console.error(err);

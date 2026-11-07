@@ -74,3 +74,14 @@ export const markOrderReady = (token, orderId) =>
 
 export const markOrderCollected = (token, orderId) =>
   request(`/orders/${orderId}/collected`, { method: "PUT", token });
+
+// Live in the backend: parent macros + order history (Leslie, CB69-50). date / start look like "2026-11-06"
+export const getMacrosDay = (token, childId, date) =>
+  request(`/children/${childId}/macros/day${date ? `?date=${date}` : ""}`, { token });
+
+export const getMacrosWeek = (token, childId, start) =>
+  request(`/children/${childId}/macros/week${start ? `?start=${start}` : ""}`, { token });
+
+// range: "this_week" | "last_week" | "this_month"
+export const getChildOrders = (token, childId, range = "this_week") =>
+  request(`/children/${childId}/orders?range=${range}`, { token });
