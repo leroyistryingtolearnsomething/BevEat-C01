@@ -81,8 +81,9 @@ export const getStallOrders = (token) => request("/stall/orders", { token });
 export const markOrderReady = (token, orderId) =>
   request(`/orders/${orderId}/ready`, { method: "PUT", token });
 
-export const markOrderCollected = (token, orderId) =>
-  request(`/orders/${orderId}/collected`, { method: "PUT", token });
+// code = the kid's 4 digit pickup code
+export const markOrderCollected = (token, orderId, code) =>
+  request(`/orders/${orderId}/collected`, { method: "PUT", body: { code }, token });
 
 // Live in the backend: stall menu, food detail and Ask Mum (Raghav). Each dish's status is decided by the server.
 export const getStallMenu = (token, stallId, view = "safe") =>

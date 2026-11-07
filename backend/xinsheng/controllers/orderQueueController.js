@@ -1,7 +1,17 @@
 // Live queue + wait time, and the order ready ping
+const crypto = require("crypto");
 const Queue = require("../models/orderQueueModel");
 
 const DEFAULT_PREP_MIN = 5; // if the stall has no avg_prep_minutes
+const CODE_RE = /^\d{4}$/;
+
+const newPickupCode = () => String(crypto.randomInt(0, 10000)).padStart(4, "0");
+
+// kid / parent see the code + qr text once it's ready (stall owner doesn't, kid has to show it)
+function pickupInfo(user, order) {
+  if (user.role === "stall_owner" || !order.ready_at || order.collected_at || !order.pickup_code) return {};
+  return { pickupCode: order.pickup_code, qrText: `BEVEAT-${order.order_id}-${order.pickup_code}` };
+}
 
 const prepMins = (stall) => stall.avg_prep_minutes || DEFAULT_PREP_MIN;
 
@@ -37,6 +47,7 @@ async function getOrderQueue(req, res, next) {
       ahead,
       waitMinutes: waiting ? (ahead + 1) * prepMins(order) : 0,
       readyAt: order.ready_at,
+      ...pickupInfo(req.user, order),
     });
   } catch (err) {
     next(err);
@@ -70,6 +81,7 @@ async function getMyReadyOrders(req, res, next) {
         queueNumber: o.queue_number,
         stallName: o.stall_name,
         readyAt: o.ready_at,
+        ...pickupInfo(req.user, o),
       })),
     });
   } catch (err) {
@@ -118,7 +130,7 @@ async function markReady(req, res, next) {
     const order = await ownOrder(req, res);
     if (!order) return;
     if (order.status === "cancelled") return res.status(409).json({ error: "Order was cancelled" });
-    const row = await Queue.markReady(order.order_id);
+    const row = await Queue.markReady(order.order_id, newPickupCode());
     if (!row) return res.status(409).json({ error: "Order is already ready" });
     res.json({ orderId: row.order_id, readyAt: row.ready_at });
   } catch (err) {
@@ -126,11 +138,17 @@ async function markReady(req, res, next) {
   }
 }
 
-// PUT /api/orders/:orderId/collected
+// PUT /api/orders/:orderId/collected  body { code }  (typed in or from scanning the kid's qr)
 async function markCollected(req, res, next) {
+  const { code } = req.body || {};
+  if (typeof code !== "string" || !CODE_RE.test(code))
+    return res.status(400).json({ error: "Enter the 4 digit pickup code" });
   try {
     const order = await ownOrder(req, res);
     if (!order) return;
+    // orders marked ready before pickup codes existed have no code
+    if (order.ready_at && order.pickup_code && order.pickup_code !== code)
+      return res.status(400).json({ error: "Wrong pickup code" });
     const row = await Queue.markCollected(order.order_id);
     if (!row) return res.status(409).json({ error: "Order is not ready yet or already collected" });
     res.json({ orderId: row.order_id, collectedAt: row.collected_at });

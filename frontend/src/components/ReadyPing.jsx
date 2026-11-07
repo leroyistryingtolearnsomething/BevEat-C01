@@ -40,6 +40,7 @@ export default function ReadyPing() {
       {ready.map((o) => (
         <p key={o.orderId} style={{ margin: 0 }}>
           🔔 Your food is ready! Go to {o.stallName}, number {o.queueNumber}
+          {o.pickupCode && <> · show code <span style={{ fontSize: 20, letterSpacing: 2 }}>{o.pickupCode}</span></>}
         </p>
       ))}
     </div>
