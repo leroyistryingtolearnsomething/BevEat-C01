@@ -69,6 +69,16 @@ export const getAllPics = (token) => request("/home/pics", { token });
 export const setAllergies = (token, childId, allergens) =>
   request(`/children/${childId}/allergies`, { method: "PUT", body: { allergens }, token });
 
+// Live in the backend: allergies the parent types in themselves (Leslie, migration 005)
+// list/add -> { customAllergies: [{ id, label, icon, blockedDishes: ["Dish name", ...] }] }
+export const listCustomAllergies = (token, childId) => request(`/children/${childId}/custom-allergies`, { token });
+
+export const addCustomAllergy = (token, childId, label) =>
+  request(`/children/${childId}/custom-allergies`, { method: "POST", body: { label }, token });
+
+export const removeCustomAllergy = (token, childId, customAllergyId) =>
+  request(`/children/${childId}/custom-allergies/${customAllergyId}`, { method: "DELETE", token });
+
 export const setDailyLimit = (token, childId, dailyLimitCents) =>
   request(`/children/${childId}/daily-limit`, { method: "PUT", body: { dailyLimitCents }, token });
 

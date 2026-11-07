@@ -88,7 +88,7 @@ async function getDishDetail(req, res, next) {
     // A locked dish gets no add-ons, so there is nothing to build an order from
     const addOns = allowed
       ? (await Menu.getAddOns(itemId)).map((a) =>
-          toAddOnJson(a, decideAddOn({ allergenName: a.allergen_name }, child)))
+          toAddOnJson(a, decideAddOn({ allergenName: a.allergen_name, addOnId: a.add_on_id }, child)))
       : [];
 
     res.json({
