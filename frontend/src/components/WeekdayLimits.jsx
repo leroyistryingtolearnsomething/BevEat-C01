@@ -47,7 +47,7 @@ export default function WeekdayLimits({ token, kid }) {
               <span>{label}</span>
               <span className="input">
                 <span className="input__prefix">S$</span>
-                <input type="number" inputMode="decimal" min="1" max="50" step="0.5" placeholder="normal"
+                <input type="number" inputMode="decimal" min="1" max="50" step="0.5" placeholder={kid.dailyLimit.toFixed(2)}
                   value={values[k]} onChange={(e) => setValues({ ...values, [k]: e.target.value })} />
               </span>
             </label>
