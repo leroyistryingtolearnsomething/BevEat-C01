@@ -18,15 +18,19 @@ async function childLogin(req, res, next) {
     return res.status(400).json({ error: "Username and PIN are required" });
 
   try {
+    // lockSeconds = how long until they can try again (for the countdown)
+    const locked = (seconds) => res.status(423).json({ error: LOCKED_MSG, lockSeconds: seconds });
+
     const child = await User.findActiveChildByUsername(username.trim());
-    if (child && child.locked) return res.status(423).json({ error: LOCKED_MSG });
+    if (child && child.locked) return locked(child.lock_seconds);
 
     // same error for wrong username or PIN
     const ok = child && child.password_hash && (await bcrypt.compare(pin, child.password_hash));
     if (!ok) {
       if (child) {
         const row = await User.recordWrongPin(child.user_id, MAX_PIN_TRIES, LOCK_MINUTES);
-        if (row && row.locked) return res.status(423).json({ error: LOCKED_MSG });
+        if (row && row.locked) return locked(row.lock_seconds);
+        if (row) return res.status(401).json({ error: "Wrong username or PIN", attemptsLeft: MAX_PIN_TRIES - row.failed_pin_tries });
       }
       return res.status(401).json({ error: "Wrong username or PIN" });
     }

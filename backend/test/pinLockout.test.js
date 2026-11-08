@@ -22,6 +22,7 @@ const childProfiles = [
 
 const isLocked = (u) => !!u.locked_until && u.locked_until > new Date();
 const byId = (id) => users.find((u) => u.user_id === id);
+const lockSecs = (u) => (isLocked(u) ? Math.ceil((u.locked_until - Date.now()) / 1000) : 0);
 
 function fakeQuery(sql, params = []) {
   if (sql.includes("FROM child_profiles")) {
@@ -31,7 +32,7 @@ function fakeQuery(sql, params = []) {
 
   if (sql.includes("LOWER(username)")) {
     const u = users.find((x) => x.role === "child" && x.is_active && x.username === params[0].toLowerCase());
-    return { rows: u ? [{ ...u, locked: isLocked(u) }] : [] };
+    return { rows: u ? [{ ...u, locked: isLocked(u), lock_seconds: lockSecs(u) }] : [] };
   }
 
   if (sql.includes("failed_pin_tries + 1")) {
@@ -43,7 +44,7 @@ function fakeQuery(sql, params = []) {
     } else {
       u.failed_pin_tries++;
     }
-    return { rows: [{ locked: isLocked(u) }] };
+    return { rows: [{ failed_pin_tries: u.failed_pin_tries, locked: isLocked(u), lock_seconds: lockSecs(u) }] };
   }
 
   if (sql.includes("SET failed_pin_tries = 0 WHERE")) {
@@ -100,12 +101,12 @@ async function run() {
 
   // 5 wrong tries locks
   for (let i = 0; i < 4; i++) res = await login("ethan", "0000");
-  check(res.status === 401, "4 wrong tries is still just wrong PIN");
+  check(res.status === 401 && res.body.attemptsLeft === 1, "4 wrong tries is still just wrong PIN, 1 try left");
   res = await login("ethan", "0000");
-  check(res.status === 423, "5th wrong try locks the kid");
+  check(res.status === 423 && res.body.lockSeconds > 890 && res.body.lockSeconds <= 900, "5th wrong try locks the kid for 15 min");
 
   res = await login("ethan", "1234");
-  check(res.status === 423, "right PIN doesn't work while locked");
+  check(res.status === 423 && res.body.lockSeconds > 0, "right PIN doesn't work while locked, still shows time left");
 
   res = await login("chloe", "1234");
   check(res.status === 200, "other kids are not locked");
