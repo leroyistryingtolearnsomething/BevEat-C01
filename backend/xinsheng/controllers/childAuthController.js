@@ -24,7 +24,7 @@ async function childLogin(req, res, next) {
     const child = await User.findActiveChildByUsername(username.trim());
     if (child && child.locked) return locked(child.lock_seconds);
 
-    // same error for wrong username or PIN
+    // unknown nickname gets its own message, wrong PIN shows tries left
     const ok = child && child.password_hash && (await bcrypt.compare(pin, child.password_hash));
     if (!ok) {
       if (child) {
@@ -32,6 +32,7 @@ async function childLogin(req, res, next) {
         if (row && row.locked) return locked(row.lock_seconds);
         if (row) return res.status(401).json({ error: "Wrong username or PIN", attemptsLeft: MAX_PIN_TRIES - row.failed_pin_tries });
       }
+      if (!child) return res.status(404).json({ error: "No account with that nickname" });
       return res.status(401).json({ error: "Wrong username or PIN" });
     }
     if (child.failed_pin_tries > 0) await User.clearPinTries(child.user_id);

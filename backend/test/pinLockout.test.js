@@ -112,7 +112,7 @@ async function run() {
   check(res.status === 200, "other kids are not locked");
 
   res = await login("nobody", "0000");
-  check(res.status === 401, "unknown username is still 401");
+  check(res.status === 404, "unknown username says no account");
 
   // lock runs out
   users[0].locked_until = new Date(Date.now() - 1000);

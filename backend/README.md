@@ -17,7 +17,7 @@ npm test                 # runs the child login checks against a fake DB (no Sup
 | Method | Path | Who | Body | Returns |
 |---|---|---|---|---|
 | GET | `/api/health` | anyone | | `{ ok: true }` |
-| POST | `/api/auth/child-login` | anyone | `{ username, pin }` | `{ token, child: { id, username, displayName, avatarEmoji } }`, `423` after 5 wrong PINs (locked 15 min or until the parent sets a new PIN) |
+| POST | `/api/auth/child-login` | anyone | `{ username, pin }` | `{ token, child: { id, username, displayName, avatarEmoji } }`, `404` unknown nickname, `401 { attemptsLeft }` wrong PIN, `423 { lockSeconds }` after 5 wrong PINs (locked 15 min or until the parent sets a new PIN) |
 | POST | `/api/auth/parent-signup` | anyone | `{ name, mobile: "+6581234567", email, password }` (8+ chars with a number) | `201 { token, parent: { id, name, email } }`, `409` if the email is taken |
 | POST | `/api/auth/parent-login` | anyone | `{ email, password }` | `{ token, parent: { id, name, email } }` |
 | PUT | `/api/children/:childId/pin` | parent of that child | `{ pin }` (4 to 6 digits) | `{ message }`, also unlocks a locked kid |

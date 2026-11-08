@@ -49,6 +49,8 @@ export default function KidLogin() {
         if (err.status === 423) {
           setLockLeft(err.body.lockSeconds || 0);
           setError("");
+        } else if (err.status === 404) {
+          setError(`We can't find an account called "${username.trim()}". Check the spelling or ask your grown-up.`);
         } else if (err.status === 401 && left) {
           setError(`Hmm, that didn't match. You have ${left} ${left === 1 ? "attempt" : "attempts"} left.`);
         } else {
