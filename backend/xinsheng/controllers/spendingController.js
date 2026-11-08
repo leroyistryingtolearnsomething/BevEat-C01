@@ -4,7 +4,7 @@ const ChildAccount = require("../../leroy/models/childAccountModel"); // Leroy's
 const DayLimit = require("../models/dayLimitModel");
 const Spending = require("../models/spendingModel");
 const User = require("../models/userModel");
-const { DAYS, sgWeekdayToday, weekdayOf, limitFor, round2 } = require("../services/moneyService");
+const { DAYS, sgWeekdayToday, weekdayOf, limitFor, limitOnDay, round2 } = require("../services/moneyService");
 
 const PERIOD_DAYS = { week: 7, month: 30 };
 const NEAR_LIMIT = 0.8; // warn at 80% of the day's limit
@@ -19,11 +19,12 @@ async function getSpendingReport(req, res, next) {
     const child = await Home.getChildSummary(req.childId);
     const dayRows = await DayLimit.getDayLimits(req.childId);
     const rows = await Spending.getDailySpend(req.childId, PERIOD_DAYS[period]);
+    const history = await Spending.getLimitHistory(req.childId);
 
-    // limit is the kid's current setting for that weekday
+    // limit the kid had on that day (from the history), current limit if there's no history
     const days = rows.map((r) => {
       const weekday = weekdayOf(r.day);
-      const limit = limitFor(child.daily_limit, dayRows, weekday);
+      const limit = limitOnDay(history, r.day) ?? limitFor(child.daily_limit, dayRows, weekday);
       const spent = Number(r.spent);
       return { date: r.day, day: DAYS[weekday], spent, limit, overLimit: spent > limit };
     });
