@@ -25,6 +25,9 @@ async function getMyDishes(req, res, next) {
 
 async function createPhoto(req, res, next) {
     try{
+        // no Supabase keys on this server (see config/supabase.js): say so instead of crashing
+        if (!supabase) return res.status(503).json({ error: "Photo upload isn't set up yet. Try again later." });
+
         const childId = req.user.id;
         const itemId = Number(req.body.itemId);
         const orderId = Number(req.body.orderId);
