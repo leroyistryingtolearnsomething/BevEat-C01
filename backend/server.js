@@ -24,6 +24,9 @@ app.use("/api", require("./leroy/routes/topUpRoutes"));
 // kid Home page
 app.use("/api", require("./gabriel/routes/homeRoutes"));
 
+// photo upload page
+app.use("/api", require("./gabriel/routes/photoRoutes"));
+
 // stall discovery (Raghav)
 app.use("/api", require("./raghav/routes/stallRoutes"));
 

@@ -576,3 +576,91 @@ button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
 .kid .kw-confirm p { color: var(--k-muted); }
 .kid .kw-confirm .btn--kid { max-width: none; }
 .kw-confirm__out { background: none; color: var(--k-error); font-family: "Fredoka", system-ui, sans-serif; font-weight: 600; }
+
+/* =============================================================================
+   Kid Snap your food page (Gabriel). Figma "09 Snap your food". Prefix: sn-
+   ============================================================================= */
+.kid.snap-kid { background: #1f2041; color: #fff; gap: 16px; align-items: center; padding-top: max(20px, env(safe-area-inset-top)); }
+
+/* header: back button + title */
+.sn-head { display: flex; align-items: center; gap: 12px; align-self: stretch; }
+.sn-head h1 { margin: 0; font-size: 24px; font-weight: 700; line-height: 29px; color: #fff; }
+
+/* which dish you're snapping (a <select> dressed as a pill) */
+.sn-dish {
+  display: flex; align-items: center; gap: 8px; align-self: stretch;
+  padding: 8px 14px; border-radius: 999px;
+  background: rgba(255,255,255,.12); border: 2px solid rgba(255,255,255,.35);
+  font-family: "Fredoka", system-ui, sans-serif; font-size: 15px; font-weight: 500;
+}
+.sn-dish select {
+  flex: 1; min-width: 0; appearance: none; -webkit-appearance: none;
+  background: transparent; border: 0; color: #fff; font: inherit; font-weight: 600;
+  padding-right: 20px; cursor: pointer;
+  /* little white ▾ arrow */
+  background-image: linear-gradient(45deg, transparent 50%, #fff 50%), linear-gradient(135deg, #fff 50%, transparent 50%);
+  background-position: right 8px center, right 3px center; background-size: 5px 5px; background-repeat: no-repeat;
+}
+.sn-dish select option { color: var(--k-ink); }
+
+/* viewfinder: the live camera (or the photo you just took) */
+.sn-viewfinder {
+  position: relative; align-self: stretch; flex: none;
+  height: 430px; max-height: 55dvh;
+  border: 3px solid #fff; border-radius: 28px; overflow: hidden;
+  background: #2b2d5a;
+}
+.sn-viewfinder video, .sn-viewfinder img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sn-viewfinder__msg { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; font-family: "Fredoka", system-ui, sans-serif; font-size: 16px; font-weight: 500; color: rgba(255,255,255,.8); }
+
+/* "Point at your food" pill */
+.sn-hint {
+  position: absolute; top: 18px; left: 50%; transform: translateX(-50%); z-index: 2;
+  padding: 6px 12px; border-radius: 999px; white-space: nowrap;
+  background: rgba(31,32,65,.7); color: #fff;
+  font-family: "Fredoka", system-ui, sans-serif; font-size: 13px; font-weight: 500; line-height: 16px;
+}
+
+/* AI scan frame: 4 white corners + a glowing yellow line that sweeps down */
+.sn-scan { position: absolute; left: 20px; right: 20px; top: 22%; height: 54%; z-index: 1; pointer-events: none; }
+.sn-scan__corner { position: absolute; width: 44px; height: 44px; border: 6px solid #fff; }
+.sn-scan__corner--tl { top: 0; left: 0; border-right: 0; border-bottom: 0; border-top-left-radius: 18px; }
+.sn-scan__corner--tr { top: 0; right: 0; border-left: 0; border-bottom: 0; border-top-right-radius: 18px; }
+.sn-scan__corner--bl { bottom: 0; left: 0; border-right: 0; border-top: 0; border-bottom-left-radius: 18px; }
+.sn-scan__corner--br { bottom: 0; right: 0; border-left: 0; border-top: 0; border-bottom-right-radius: 18px; }
+.sn-scan__line {
+  position: absolute; left: 20px; right: 20px; top: 16px; height: 5px; border-radius: 3px;
+  background: #ffc93c; box-shadow: 0 0 14px 3px rgba(255,201,60,.9);
+  animation: sn-sweep 2.2s ease-in-out infinite alternate;
+}
+@keyframes sn-sweep { from { top: 16px; } to { top: calc(100% - 21px); } }
+@media (prefers-reduced-motion: reduce) { .sn-scan__line { animation: none; } }
+
+/* status pill: "Bao is checking it's food…" */
+.sn-status {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px; border-radius: 999px;
+  background: #fff; color: var(--k-ink); border: 2px solid var(--k-ink); box-shadow: 0 3px 0 var(--k-ink);
+  font-family: "Fredoka", system-ui, sans-serif; font-size: 15px; font-weight: 600; line-height: 18px;
+}
+.sn-status--error { background: #ffe1dc; }
+
+/* bottom controls: gallery, shutter, flip */
+.sn-controls { display: flex; justify-content: space-between; align-items: center; align-self: stretch; padding: 4px 24px; }
+.sn-round {
+  display: grid; place-items: center; width: 52px; height: 52px; border-radius: 26px;
+  background: #1f2041; border: 2px solid #fff; color: #fff; font-size: 22px; cursor: pointer;
+}
+.sn-round:disabled { opacity: .35; cursor: default; }
+.sn-shutter {
+  display: grid; place-items: center; width: 80px; height: 80px; border-radius: 40px;
+  background: #fff; border: 2.5px solid var(--k-ink); cursor: pointer; transition: transform .1s;
+}
+.sn-shutter::after { content: ""; width: 58px; height: 58px; border-radius: 29px; background: #ff6b5b; border: 2.5px solid var(--k-ink); }
+.sn-shutter:active { transform: scale(.92); }
+.sn-shutter:disabled { opacity: .5; cursor: default; }
+
+/* nothing ordered yet */
+.sn-empty { margin: auto 0; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.sn-empty p { margin: 0; font-family: "Fredoka", system-ui, sans-serif; font-size: 18px; font-weight: 500; }
+.sn-round input[type="file"] { display: none; } /* the gallery <label> opens this hidden file picker */

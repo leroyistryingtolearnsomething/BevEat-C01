@@ -16,6 +16,7 @@ import StallMenu from "./pages/StallMenu.jsx";
 import FoodDetail from "./pages/FoodDetail.jsx";
 import Tray from "./pages/Tray.jsx";
 import ReadyPing from "./components/ReadyPing.jsx";
+import Snap from "./pages/Snap.jsx"
 
 // UI guard only; the API checks the token's role on every request
 function RequireRole({ role, children }) {
@@ -45,6 +46,7 @@ export default function App() {
       <Route path="/kid/home" element={<RequireRole role="child"><Home role="child" /></RequireRole>} />
       <Route path="/kid/wallet" element={<RequireRole role="child"><KidWallet /></RequireRole>} />
       <Route path="/kid/pics" element={<RequireRole role="child"><KidPics /></RequireRole>} />
+      <Route path="/kid/snap" element={<RequireRole role ="child"><Snap/></RequireRole>} />
       <Route path="/kid/stalls/:stallId" element={<RequireRole role="child"><StallMenu /></RequireRole>} />
       <Route path="/kid/dishes/:itemId" element={<RequireRole role="child"><FoodDetail /></RequireRole>} />
       <Route path="/kid/tray" element={<RequireRole role="child"><Tray /></RequireRole>} />

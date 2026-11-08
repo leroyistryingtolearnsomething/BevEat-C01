@@ -15,14 +15,16 @@ export class ApiError extends Error {
 
 async function request(path, { method = "GET", body, token } = {}) {
   let res;
+  // a file upload (FormData) is sent as-is: the browser sets its own Content-Type with the file boundary
+  const isForm = body instanceof FormData;
   try {
     res = await fetch(`${BASE}/api${path}`, {
       method,
       headers: {
-        "Content-Type": "application/json",
+        ...(!isForm && { "Content-Type": "application/json" }),
         ...(token && { Authorization: `Bearer ${token}` }),
       },
-      body: body && JSON.stringify(body),
+      body: isForm ? body : body && JSON.stringify(body),
     });
   } catch {
     throw new ApiError(0, "Can't reach KiddyEats right now. Check your internet and try again.");
@@ -68,6 +70,16 @@ export const getHome = (token) => request("/home", { token });
 
 // "See all" for Today's yummiest pics: { pics: [stall-menu dish cards] }
 export const getAllPics = (token) => request("/home/pics", { token });
+// Snap your food: the kid's recent dishes they can take a photo of
+export const getMyDishes = (token) => request("/photos/my-dishes", { token });
+// Snap your food: send the photo (a JPEG Blob) + which dish/order it is. Returns { photo: { photo, imageUrl, aiStatus } }
+export function uploadPhoto(token, photo, itemId, orderId) {
+  const form = new FormData();          // like a form with a file field, the backend's multer reads it
+  form.append("photo", photo, "snap.jpg");
+  form.append("itemId", itemId);
+  form.append("orderId", orderId);
+  return request("/photos", { method: "POST", body: form, token });
+}
 // Live in the backend: change a kid's allergies (keys like "peanut") and daily food money
 export const setAllergies = (token, childId, allergens) =>
   request(`/children/${childId}/allergies`, { method: "PUT", body: { allergens }, token });
