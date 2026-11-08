@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { clearSession, getSession } from "../session.js";
 import { KidSwitcher, ParentTabs, money, useKids } from "../components/ParentShell.jsx";
+import ParentAlerts from "../components/ParentAlerts.jsx";
 import Icon from "../components/Icon.jsx";
 import walletIcon from "../assets/figma/wallet.svg";
 import warningIcon from "../assets/figma/warning.svg";
@@ -12,7 +13,7 @@ import plusWhite from "../assets/figma/plus-white.svg";
 export default function ParentHome() {
   const navigate = useNavigate();
   const { name } = getSession();
-  const { kids, kid, select, error } = useKids();
+  const { kids, kid, select, error, token } = useKids();
   const [section, setSection] = useState("allergies");
 
   const logOut = () => {
@@ -42,6 +43,7 @@ export default function ParentHome() {
       {kid && (
         <>
           <KidSwitcher kids={kids} kid={kid} onSelect={select} />
+          <ParentAlerts token={token} />
           <Today kid={kid} />
 
           <div className="seg" role="group" aria-label="Show">
@@ -73,6 +75,11 @@ export default function ParentHome() {
               <p className="lead">{kid.name} can spend up to {money(kid.dailyLimit)} a day. It resets at 12:00 am.</p>
             </section>
           )}
+
+          <div className="p-links">
+            <Link to={`/parent/spending?kid=${kid.id}`} className="btn btn--secondary">Spending report</Link>
+            <Link to={`/parent/pin?kid=${kid.id}`} className="btn btn--secondary">Reset PIN</Link>
+          </div>
         </>
       )}
 

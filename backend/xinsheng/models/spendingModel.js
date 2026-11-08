@@ -16,4 +16,20 @@ async function getDailySpend(childId, days) {
   return rows;
 }
 
-module.exports = { getDailySpend };
+// every saved change to the kid's limits, oldest first (filled by triggers, see db/schema_requests.sql)
+async function getLimitHistory(childId) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT changed_at, daily_limit, day_limits FROM child_limit_history
+        WHERE child_id = $1 ORDER BY changed_at, id`,
+      [childId]
+    );
+    return rows;
+  } catch (err) {
+    // table not made yet, report just uses the current limits
+    if (err.code === "42P01") return [];
+    throw err;
+  }
+}
+
+module.exports = { getDailySpend, getLimitHistory };

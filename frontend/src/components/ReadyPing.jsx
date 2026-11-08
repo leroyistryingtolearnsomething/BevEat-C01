@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { getReadyOrders } from "../api.js";
 import { getSession } from "../session.js";
 
@@ -8,6 +9,7 @@ const POLL_MS = 10000;
 export default function ReadyPing() {
   const [ready, setReady] = useState([]);
   const seen = useRef(new Set());
+  const { pathname } = useLocation();
 
   useEffect(() => {
     async function check() {
@@ -29,7 +31,8 @@ export default function ReadyPing() {
     return () => clearInterval(id);
   }, []);
 
-  if (ready.length === 0) return null;
+  // no banner on the pickup page, it already shows the code
+  if (ready.length === 0 || pathname.startsWith("/kid/pickup")) return null;
   // bottom 104 so it sits above the kid tab bar
   return (
     <div className="ready-ping" role="alert" style={{
@@ -38,10 +41,11 @@ export default function ReadyPing() {
       boxShadow: "0 6px 20px rgba(0,0,0,.2)",
     }}>
       {ready.map((o) => (
-        <p key={o.orderId} style={{ margin: 0 }}>
+        <Link key={o.orderId} to={`/kid/pickup/${o.orderId}`} style={{ display: "block", margin: 0, color: "#fff" }}>
           🔔 Your food is ready! Go to {o.stallName}, number {o.queueNumber}
           {o.pickupCode && <> · show code <span style={{ fontSize: 20, letterSpacing: 2 }}>{o.pickupCode}</span></>}
-        </p>
+          {" "}›
+        </Link>
       ))}
     </div>
   );

@@ -87,6 +87,21 @@ export const setAllergies = (token, childId, allergens) =>
 export const setDailyLimit = (token, childId, dailyLimitCents) =>
   request(`/children/${childId}/daily-limit`, { method: "PUT", body: { dailyLimitCents }, token });
 
+// parent money stuff + PIN reset (Xin Sheng)
+export const getSpending = (token, childId, period) =>
+  request(`/children/${childId}/spending?period=${period}`, { token });
+
+export const getParentAlerts = (token) => request("/children/alerts", { token });
+
+export const getDayLimits = (token, childId) => request(`/children/${childId}/day-limits`, { token });
+
+// days = { mon: 300, fri: 600 } in cents, null = normal limit
+export const setDayLimits = (token, childId, days) =>
+  request(`/children/${childId}/day-limits`, { method: "PUT", body: { days }, token });
+
+export const resetChildPin = (token, childId, pin) =>
+  request(`/children/${childId}/pin`, { method: "PUT", body: { pin }, token });
+
 // Live in the backend: live queue + order ready ping (Xin Sheng)
 export const getOrderQueue = (token, orderId) => request(`/orders/${orderId}/queue`, { token });
 
