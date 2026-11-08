@@ -338,3 +338,100 @@ span.km-big { cursor: default; }
   background: #fff; border: var(--k-line); border-radius: 24px; box-shadow: var(--k-shadow);
 }
 .km-alt-row { display: flex; align-items: stretch; gap: 10px; } /* stretch: both cards the same height */
+
+/* ========== 06 My tray (Kids Figma Sticker Pop, frame "06 My tray") ========== */
+.km-screen { --km-price-red: #b83226; } /* Figma tray price + "This tray" (6.3:1 on white) */
+
+.km-blob--tray { width: 180px; height: 180px; right: -40px; top: calc(env(safe-area-inset-top) - 114px); }
+.km-tray-title { margin: 0; font-family: var(--km-font); font-size: 26px; font-weight: 700; line-height: normal; }
+
+/* Tray items card */
+.km-tray {
+  display: flex; flex-direction: column; gap: 12px; width: 100%; margin: 0; padding: 12px; list-style: none;
+  background: #fff; border: var(--k-line); border-radius: 24px; box-shadow: var(--k-shadow);
+}
+.km-tray--busy .km-tray-row__price { opacity: 0.5; } /* a newer price is on its way */
+.km-tray-row { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.km-tray-row__img {
+  flex-shrink: 0; width: 60px; height: 60px; object-fit: cover;
+  border: 2px solid var(--k-ink); border-radius: 16px;
+}
+.km-tray-row__text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.km-tray-row__name { font-family: var(--km-font); font-size: 16px; font-weight: 600; line-height: normal; }
+.km-tray-row__sub { font-size: 12px; color: var(--k-soft); line-height: normal; }
+.km-tray-row__price { font-family: var(--km-font); font-size: 15px; font-weight: 700; color: var(--km-price-red); line-height: normal; }
+.km-tray-row__why {
+  align-self: flex-start; margin-top: 2px; padding: 2px 8px; border-radius: 999px;
+  background: var(--km-allergy-soft); color: var(--km-allergy-ink);
+  font-family: var(--km-font); font-size: 13px; font-weight: 600;
+}
+.km-tray-row--problem .km-tray-row__img { opacity: 0.5; }
+.km-tray-row--problem .km-tray-row__name { color: var(--km-muted-ink); }
+
+/* small stepper: Figma box is 75 x 35, the invisible ::before makes each tap target 44px */
+.km-tray-qty {
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 6px 8px;
+  background: var(--k-bg); border: 2px solid var(--k-ink); border-radius: 12px;
+}
+.km-tray-qty button { position: relative; display: grid; place-items: center; width: 16px; height: 16px; padding: 0; background: none; border: 0; cursor: pointer; }
+.km-tray-qty button::before { content: ""; position: absolute; inset: -14px; }
+.km-tray-qty button:disabled { opacity: 0.35; cursor: not-allowed; }
+.km-tray-qty__n { min-width: 10px; text-align: center; font-family: var(--km-font); font-size: 16px; font-weight: 700; line-height: normal; }
+
+.km-tray-remove {
+  flex-shrink: 0; min-width: 44px; min-height: 44px; padding: 8px 14px; border-radius: 14px;
+  background: #fff; border: var(--k-line); box-shadow: 0 3px 0 var(--k-ink); color: var(--k-ink);
+  font-family: var(--km-font); font-size: 15px; font-weight: 600; cursor: pointer;
+}
+.km-tray-remove:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--k-ink); }
+
+/* Money check card */
+.km-money {
+  display: flex; flex-direction: column; gap: 10px; width: 100%; padding: 16px;
+  background: var(--km-sky-soft); border: var(--k-line); border-radius: 24px; box-shadow: var(--k-shadow);
+}
+.km-money--busy .km-money__rows { opacity: 0.5; }
+.km-money__title { display: flex; align-items: center; gap: 6px; margin: 0; font-family: var(--km-font); font-size: 18px; font-weight: 600; line-height: normal; }
+.km-money__rows { display: flex; flex-direction: column; gap: 10px; margin: 0; }
+.km-money__row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.km-money__row dt { font-size: 15px; color: var(--k-soft); }
+.km-money__row dd { margin: 0; }
+.km-money__value { font-family: var(--km-font); font-size: 17px; font-weight: 600; }
+.km-money__value--minus { color: var(--km-price-red); }
+.km-money__line { height: 2px; background: rgba(31, 32, 65, 0.2); }
+.km-money__row--total dt { font-family: var(--km-font); font-size: 17px; font-weight: 600; color: var(--k-ink); }
+.km-money__left { font-family: var(--km-font); font-size: 30px; font-weight: 700; color: var(--km-green-ink); line-height: normal; }
+.km-money__left--short { color: var(--km-price-red); }
+
+/* messages under the cards */
+.km-tray-note { width: 100%; padding: 12px 14px; border-radius: 18px; border: var(--k-line); background: #fff; font-size: 15px; line-height: 1.35; }
+.km-tray-note--problem,
+.km-tray-note--short { background: var(--km-allergy-soft); color: var(--km-allergy-ink); }
+.km-tray-note--error { display: flex; flex-direction: column; gap: 12px; }
+
+/* Bao + speech bubble */
+.km-bao-says { display: flex; align-items: flex-end; gap: 8px; width: 100%; }
+.km-bao-says img { flex-shrink: 0; }
+.km-bubble {
+  padding: 10px 14px; background: #fff; border: var(--k-line); border-radius: 20px 20px 20px 4px;
+  box-shadow: 0 3px 0 var(--k-ink); font-family: var(--km-font); font-size: 15px; font-weight: 600; line-height: normal;
+}
+
+.km-tray-empty { color: var(--k-soft); }
+.km-tray-empty .km-big { width: auto; }
+
+/* Pay button: Figma Big Button "Mint" */
+.km-big--mint { background: var(--km-mint); }
+
+/* "Removed Milo Ice · Undo", just above the fixed footer. 3 classes, same reason as .km-footer */
+.kid.km-screen > .km-undo {
+  position: fixed; left: 50%; bottom: calc(112px + env(safe-area-inset-bottom)); z-index: 11; transform: translateX(-50%);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: calc(100% - 40px); max-width: 390px; padding: 8px 8px 8px 16px;
+  background: var(--k-ink); color: #fff; border-radius: 18px;
+}
+.km-undo__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+.km-undo__btn {
+  flex-shrink: 0; min-width: 44px; min-height: 44px; padding: 8px 16px; border-radius: 14px; border: 0;
+  background: var(--k-sun); color: var(--k-ink); font-family: var(--km-font); font-size: 16px; font-weight: 600; cursor: pointer;
+}

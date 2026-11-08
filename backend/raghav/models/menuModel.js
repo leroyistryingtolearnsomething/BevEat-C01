@@ -84,4 +84,39 @@ async function getAvailableDishesByIds(itemIds) {
   return rows;
 }
 
-module.exports = { getAvailableDishesForStall, getAvailableDish, getAvailableDishesByIds, getAddOns, getTopPhotos };
+// Tray: every dish in the tray in ONE query. Unlike the menu queries this keeps sold-out dishes
+// (is_available = false) and returns the stall's is_open, so the tray can tell the kid WHY a
+// dish can't be ordered any more instead of it just disappearing. Macros are for Leroy's
+// order_items snapshot.
+async function getDishesForTray(itemIds) {
+  const { rows } = await pool.query(
+    `SELECT ${DISH_COLUMNS}, m.is_available, m.calories, m.protein_g, m.carbs_g, m.fat_g,
+            s.name AS stall_name, s.is_open AS stall_is_open
+     ${DISH_JOINS}
+     JOIN stalls s ON s.stall_id = m.stall_id
+     WHERE m.item_id = ANY($1::int[])
+     GROUP BY m.item_id, s.stall_id`,
+    [itemIds]
+  );
+  return rows;
+}
+
+// Tray: every add-on of every dish in the tray, in one query. item_id is returned so the tray
+// can check each chosen add-on really belongs to the dish it was picked for.
+async function getAddOnsForItems(itemIds) {
+  const { rows } = await pool.query(
+    `SELECT ao.add_on_id, ao.item_id, ao.name, ao.extra_price,
+            ao.calories, ao.protein_g, ao.carbs_g, ao.fat_g, al.name AS allergen_name
+     FROM add_ons ao
+     LEFT JOIN allergens al ON al.allergen_id = ao.allergen_id
+     WHERE ao.item_id = ANY($1::int[])
+     ORDER BY ao.add_on_id`,
+    [itemIds]
+  );
+  return rows;
+}
+
+module.exports = {
+  getAvailableDishesForStall, getAvailableDish, getAvailableDishesByIds, getAddOns, getTopPhotos,
+  getDishesForTray, getAddOnsForItems,
+};

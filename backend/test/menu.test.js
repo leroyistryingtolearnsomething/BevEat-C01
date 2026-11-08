@@ -135,6 +135,9 @@ async function run() {
   res = await menu(4, SPENT_MOST);
   check(res.body.money.canSpend === 1.8, "canSpend = daily limit minus spent today, when lower than the wallet");
   check(byId(res, 12).overBudget === true && byId(res, 10).overBudget === false, "budget uses what's left today");
+  res = await menu(4, 8); // S$5 normal limit, but Mum set S$2 for every weekday (Xin Sheng's moneyService)
+  check(res.body.money.canSpend === 2 && byId(res, 11).overBudget === true,
+    "the weekday limit (child_day_limits) is used instead of the normal daily limit");
 
   // Mum's rules (Leroy's function is still a mock, so swap it in this test)
   const realRules = Teammates.getFoodRules;

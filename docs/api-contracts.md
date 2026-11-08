@@ -59,7 +59,7 @@ getMoneyToday(childId) -> Promise<{ dailyLimit: number, spentToday: number, left
 
 - `leftToday = max(dailyLimit - spentToday, 0)`, with the day counted in Asia/Singapore time and cancelled orders left out (the same rule as Home).
 - What the child can spend right now = `min(leftToday, walletBalance)`. The menu marks dishes above this as `overBudget` (Safety rule 4).
-- **Today:** Raghav reuses Gabriel's `homeModel.getChildSummary` + `homeModel.getSpentToday` (read-only), which already compute this for Home.
+- **Today (PR B):** Raghav calls Xin Sheng's `backend/xinsheng/services/moneyService.js → getMoneyToday(childId)` (read-only), which also applies a different limit for today's weekday from `child_day_limits`. So the menu, the tray and the parent money screens always show the same number.
 
 ### 2d. Dish photos and hearts: Gabriel
 
@@ -96,13 +96,48 @@ body: { items: [{ itemId: number, quantity: number, addOnIds: number[] }] }
 400 → bad body            409 → dish/add-on no longer allowed, or not enough money
 ```
 
-- Leroy's controller must **not** trust any price from the client. It calls Raghav's exported service, which re-runs every safety and money check and prices the tray from the database:
+- Leroy's controller must **not** trust any price from the client. It uses the same two pieces as `POST /api/tray/quote`, so checkout charges exactly what the tray showed:
 
   ```js
-  priceTray(childId, items) -> Promise<{ lines: [...], total: number, problems: string[] }>   // see 3c
+  const { parseTrayItems } = require("../../raghav/controllers/validation");
+  const { priceTray, TrayError } = require("../../raghav/services/trayPricing");
+
+  const parsed = parseTrayItems(req.body);              // { items } or { error }
+  if (parsed.error) return res.status(400).json({ error: parsed.error });
+  try {
+    const tray = await priceTray(req.user.id, parsed.items);
+    if (!tray.canPay) return res.status(409).json({ error: "Not enough food money", shortBy: tray.money.shortBy });
+    // ...one transaction, below
+  } catch (err) {
+    if (!(err instanceof TrayError)) return next(err);  // e.g. allergies can't load -> 500 (fail closed)
+    const status = { invalid: 400, locked: 409, no_child: 404 }[err.kind];
+    return res.status(status).json(err.kind === "locked" ? { error: err.message, problems: err.problems } : { error: err.message });
+  }
   ```
 
-  Then, in **one transaction**, it inserts `orders` + `order_items` (with `item_name`, `unit_price` and macro snapshots; `comment` stays NULL because there's no comments feature) + `order_item_add_ons` (name/price snapshots), and deducts `wallet_balance`.
+  `parseTrayItems` checks the body shape (1–20 lines, quantity a whole number 1–10, `addOnIds` a list of ids with no repeats) and copies only `itemId`, `quantity` and `addOnIds`, so any price the client sends is dropped. `priceTray` loads prices from the database, checks every add-on belongs to its dish, and re-runs the same safety rules as the menu (allergies, Mum's rules, today's Ask Mum approvals, sold out, stall closed). It returns:
+
+  ```js
+  {
+    lines: [{ lineIndex, itemId, stallId, stallName, name, quantity,
+              unitPrice,                       // the dish alone        -> order_items.unit_price
+              addOns: [{ id, name, extraPrice }],                    // -> order_item_add_ons snapshots
+              macros: { calories, proteinG, carbsG, fatG },          // ONE portion, add-ons included -> order_items macros
+              lineTotal }],                    // (unitPrice + extras) x quantity
+    stalls: [{ stallId, stallName, subtotal, lines }],             // one order per entry
+    total,
+    money: { canSpend, leftAfter, shortBy },
+    canPay                                     // total <= canSpend
+  }
+  ```
+
+  Then, in **one transaction**, insert one `orders` row per `stalls[]` entry (`total_amount` = its `subtotal`) + its `order_items` (`item_name`, `unit_price`, `quantity`, macro snapshots; `comment` stays NULL because there's no comments feature) + `order_item_add_ons` (`add_on_name`, `extra_price`), and deduct `total` from `wallet_balance`.
+- **Two quick taps (race):** `priceTray` reads outside the transaction, so two checkouts at the same moment could both pass its money check. Inside the transaction, lock the child's row first (`SELECT ... FROM child_profiles WHERE child_id = $1 FOR UPDATE`), re-read today's spend, and take the money with a guarded update, rolling back if `rowCount` is 0:
+
+  ```sql
+  UPDATE child_profiles SET wallet_balance = wallet_balance - $1
+   WHERE child_id = $2 AND wallet_balance >= $1
+  ```
 - **Decided (2026-11-06): a tray may hold dishes from more than one stall** (the Figma tray does). `orders` holds one stall per order, so checkout creates **one order per stall**, each with its own `queue_number`, all inside **one transaction** together with the single wallet deduction for the whole tray total. If any part fails (e.g. a dish became locked, or not enough money), nothing is saved and the wallet is not touched. The response lists every order so the kid sees one pickup number per stall.
 - **Today:** `// MOCK: replace when Leroy's checkout endpoint is ready`. The button calls the mock, which only shows a "coming soon" message. It never writes to the database.
 
@@ -229,19 +264,32 @@ All require `Authorization: Bearer <token>` with role `child` (a parent gets 403
 The tray screen calls this every time the tray changes. The client never sends prices.
 
 ```
-body: { "items": [{ "itemId": 2, "quantity": 1, "addOnIds": [16] }] }     // 1–20 lines, quantity 1–10
+body: { "items": [{ "itemId": 1, "quantity": 1, "addOnIds": [2] }, { "itemId": 10, "quantity": 1, "addOnIds": [8] }] }
+      // 1–20 lines, quantity a whole number 1–10, addOnIds a list (can be empty) with no repeats.
+      // Any other field (e.g. a price) is ignored.
 200 → {
-  "lines": [{ "itemId": 2, "name": "Roasted Chicken Rice", "stallName": "Lim's Chicken Rice", "imageUrl": "...",
-              "quantity": 1, "unitPrice": 3.8, "addOns": [{ "id": 16, "name": "Less rice", "extraPrice": 0 }], "lineTotal": 3.8 }],
-  "total": 3.8,
-  "money": { "canSpend": 6.5, "leftAfter": 2.7 },
-  "canPay": true
+  "stalls": [
+    { "stallId": 1, "stallName": "Lim's Chicken Rice", "subtotal": 3.5,
+      "lines": [{ "lineIndex": 0, "itemId": 1, "name": "Steamed Chicken Rice", "imageUrl": "/images/menu/chicken-rice.jpg",
+                  "quantity": 1, "unitPrice": 3.5, "addOns": [{ "id": 2, "name": "Less rice", "extraPrice": 0 }], "lineTotal": 3.5 }] },
+    { "stallId": 4, "stallName": "Wong's Drinks & Desserts", "subtotal": 1.8, "lines": [{ "lineIndex": 1, "...": "..." }] }
+  ],
+  "total": 5.3,
+  "money": { "canSpend": 5.0, "leftAfter": 0, "shortBy": 0.3 },
+  "canPay": false
 }
-400 → invalid body, unknown dish, or an add-on that doesn't belong to that dish
-409 → a dish or add-on is now locked for this child   { "error": "...", "itemId": 14 }
+400 → { "error": "..." }   bad body, a dish id that doesn't exist, or an add-on that doesn't belong to its dish
+404 → { "error": "Child not found" }
+409 → { "error": "Some food in your tray can't be ordered now",
+        "problems": [{ "lineIndex": 1, "itemId": 4, "addOnId": null, "name": "Nasi Lemak with Chicken Wing", "reason": "allergy" }] }
+        // reason: "allergy" | "parent_rule" | "sold_out" | "stall_closed". addOnId is set when it's the add-on
+        // that's the problem (e.g. "Add braised egg" for a child allergic to egg). EVERY bad line is listed.
 ```
 
-`canPay` is false (still 200) when `total > money.canSpend`, so the screen can show a kid-friendly "Not enough food money" message.
+- `lineIndex` is the line's position in the `items` that were sent, so the screen can match each priced line or problem back to its own tray line. Lines are grouped by stall, stalls in the order they first appear in the tray.
+- `unitPrice` is the dish alone; `lineTotal = (unitPrice + every extraPrice) × quantity`.
+- `canPay` is false (still 200) when `total > money.canSpend`, so the screen can say *"Oops! This is S$0.30 more than your food money today."* `leftAfter = max(canSpend − total, 0)`, `shortBy = max(total − canSpend, 0)`.
+- 500 if the allergy profile can't load: no prices at all (fail closed).
 
 ### 3d. `POST /api/ask-mum` (PR A)
 

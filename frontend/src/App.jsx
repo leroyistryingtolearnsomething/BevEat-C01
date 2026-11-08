@@ -14,6 +14,7 @@ import ParentAllergies from "./pages/ParentAllergies.jsx";
 import ParentLimit from "./pages/ParentLimit.jsx";
 import StallMenu from "./pages/StallMenu.jsx";
 import FoodDetail from "./pages/FoodDetail.jsx";
+import Tray from "./pages/Tray.jsx";
 import ReadyPing from "./components/ReadyPing.jsx";
 
 // UI guard only; the API checks the token's role on every request
@@ -46,6 +47,7 @@ export default function App() {
       <Route path="/kid/pics" element={<RequireRole role="child"><KidPics /></RequireRole>} />
       <Route path="/kid/stalls/:stallId" element={<RequireRole role="child"><StallMenu /></RequireRole>} />
       <Route path="/kid/dishes/:itemId" element={<RequireRole role="child"><FoodDetail /></RequireRole>} />
+      <Route path="/kid/tray" element={<RequireRole role="child"><Tray /></RequireRole>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </>

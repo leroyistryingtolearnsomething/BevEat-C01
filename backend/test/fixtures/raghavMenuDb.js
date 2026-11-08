@@ -41,7 +41,7 @@ const dishes = dishRows.map(([item_id, stall_id, name, price, ids]) => ({
 
 // A few add-ons (live data, incl. ones with and without an allergen)
 const addOns = [
-  { add_on_id: 1, item_id: 1, name: "Extra chicken", extra_price: "1.50", allergen_id: null },
+  { add_on_id: 1, item_id: 1, name: "Extra chicken", extra_price: "1.50", allergen_id: null, calories: 120 },
   { add_on_id: 2, item_id: 1, name: "Less rice", extra_price: "0.00", allergen_id: null },
   { add_on_id: 3, item_id: 1, name: "Add braised egg", extra_price: "0.80", allergen_id: 4 },
   { add_on_id: 5, item_id: 4, name: "Add otah", extra_price: "1.00", allergen_id: 6 },
@@ -50,13 +50,17 @@ const addOns = [
   { add_on_id: 12, item_id: 24, name: "Add vanilla ice cream", extra_price: "1.00", allergen_id: 4 },
 ];
 
-// Children: { allergies: [allergenId, severity][], limit, wallet, spent }
+// Children: { allergies: [allergenId, severity][], limit, wallet, spent, dayLimits? }
+// dayLimits = rows of Xin Sheng's child_day_limits: [weekday, limit]
 const children = {
   3: { name: "Ethan", allergies: [[1, "severe"], [5, "avoid"]], limit: "5.00", wallet: "11.90", spent: "0" },
   4: { name: "Chloe", allergies: [[4, "avoid"]], limit: "4.00", wallet: "7.50", spent: "0" },
   5: { name: "Aisyah", allergies: [], limit: "6.00", wallet: "21.00", spent: "0" },
   6: { name: "Low wallet", allergies: [], limit: "5.00", wallet: "2.00", spent: "0" },
   7: { name: "Spent most", allergies: [], limit: "5.00", wallet: "20.00", spent: "3.20" },
+  // S$2.00 on EVERY weekday, so the test doesn't depend on which day it runs
+  8: { name: "Short days", allergies: [], limit: "5.00", wallet: "20.00", spent: "0",
+       dayLimits: [0, 1, 2, 3, 4, 5, 6].map((d) => [d, "2.00"]) },
 };
 // One child per allergen: child 101 is allergic to allergen 1 (Peanuts) ... child 109 to Sesame
 for (let id = 1; id <= 9; id++) {
@@ -112,6 +116,12 @@ function fakeQuery(sql, params = []) {
     return { rows: c ? [{ display_name: c.name, avatar_emoji: "🙂", wallet_balance: c.wallet, daily_limit: c.limit }] : [] };
   }
   if (sql.includes("SUM(total_amount)")) return { rows: [{ spent: children[p1] ? children[p1].spent : "0" }] };
+
+  // Xin Sheng's dayLimitModel (moneyService reads it for weekday limits)
+  if (sql.includes("FROM child_day_limits WHERE child_id = $1")) {
+    const c = children[p1];
+    return { rows: (c && c.dayLimits ? c.dayLimits : []).map(([weekday, daily_limit]) => ({ weekday, daily_limit })) };
+  }
   if (sql.includes("FROM child_allergies ca")) {
     if (state.failAllergies) throw new Error("allergy table unreachable (expected in this test)");
     const c = children[p1];
@@ -123,6 +133,27 @@ function fakeQuery(sql, params = []) {
 
   // Raghav's menuModel
   if (sql.includes("FROM photos p")) return { rows: topPhotos(p1, p2) };
+
+  // tray: dishes by id INCLUDING sold-out ones, with their stall's open flag and macros
+  if (sql.includes("AS stall_is_open")) {
+    return {
+      rows: dishes.filter((d) => p1.includes(d.item_id)).map((d) => {
+        const stall = stalls.find((s) => s.stall_id === d.stall_id);
+        return { ...dishRow(d), is_available: d.is_available, stall_name: stall.name, stall_is_open: stall.is_open,
+          calories: 400, protein_g: "20.0", carbs_g: "50.0", fat_g: "10.0" };
+      }),
+    };
+  }
+  // tray: every add-on of the dishes in the tray (must come before the single-dish add-on query)
+  if (sql.includes("WHERE ao.item_id = ANY")) {
+    return {
+      rows: addOns.filter((a) => p1.includes(a.item_id)).map((a) => ({
+        add_on_id: a.add_on_id, item_id: a.item_id, name: a.name, extra_price: a.extra_price,
+        allergen_name: a.allergen_id ? allergens[a.allergen_id].name : null,
+        calories: a.calories || 0, protein_g: "0", carbs_g: "0", fat_g: "0",
+      })),
+    };
+  }
   if (sql.includes("FROM add_ons ao")) {
     return {
       rows: addOns.filter((a) => a.item_id === p1).map((a) => ({
