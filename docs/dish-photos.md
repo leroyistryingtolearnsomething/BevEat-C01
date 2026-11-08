@@ -80,3 +80,12 @@ SELECT item_id, name, default_image_url FROM menu_items ORDER BY stall_id, item_
 |---|---|---|
 | `/images/stalls/placeholder.svg` (old stall cover fallback) | Raghav | Not restored. `GET /api/stalls` now returns `coverImageUrl: null` when a stall has no cover, and each screen shows its own empty state (Home already shows 🍽️) |
 | `/uploads/photos/demo-1.jpg` … `demo-4.jpg` (`photos.image_url`) | Gabriel | Files don't exist, and nothing serves `/uploads`: Express has no static route, and the Vite proxy only forwards `/api`. Gabriel to decide where uploads are stored and served |
+
+## Photo credits
+
+<!-- TODO (Raghav, end of project): fill in where every photo came from before submitting. -->
+**TODO:** list the source of every photo in `frontend/public/images/menu/` before submission: site, photographer, link and licence (e.g. "Unsplash, Jane Tan, https://unsplash.com/photos/…, Unsplash License"). Only use photos we're allowed to use, and credit them even when the licence doesn't require it.
+
+| File | Dish | Source (site + link) | Photographer | Licence |
+|---|---|---|---|---|
+| | | | | |

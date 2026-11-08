@@ -4,7 +4,7 @@ const Menu = require("../models/menuModel");
 const AskMum = require("../models/askMumModel");
 const { STATUS, decideDish } = require("../services/dishSafety");
 const { loadChildContext, toDishFacts } = require("../services/menuService");
-const { toId, isId } = require("../utils/ids");
+const { toId, isId } = require("./validation");
 
 const UNIQUE_VIOLATION = "23505"; // Postgres error code for a broken unique index
 

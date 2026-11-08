@@ -4,7 +4,7 @@ const Menu = require("../models/menuModel");
 const { toStallJson } = require("./stallController");
 const { decideAddOn, safeChecks } = require("../services/dishSafety");
 const { loadChildContext, toDishFacts, buildDishCards, isAllowed } = require("../services/menuService");
-const { toId } = require("../utils/ids");
+const { toId } = require("./validation");
 
 const VIEWS = ["safe", "all"];
 const MAX_ALTERNATIVES = 2; // the Figma shows two "Try these yummy picks instead" cards

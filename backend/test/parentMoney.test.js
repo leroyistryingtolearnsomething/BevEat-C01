@@ -24,6 +24,7 @@ const kids = [
 // child_id -> { daysAgo: spent }
 const spend = { 10: { 0: 4.2, 1: 7, 3: 2.5 }, 11: { 0: 4 }, 12: {} };
 let dayLimits = []; // { child_id, weekday, daily_limit }
+let limitHistory = []; // { child_id, changed_at, daily_limit, day_limits }
 
 // ---------- fake database ----------
 
@@ -56,6 +57,10 @@ function fakeQuery(sql, params = []) {
         .filter((k) => k.parent_id === params[0])
         .map((k) => ({ ...k, avatar_emoji: "🙂", allergens: [], spent_today: String(spend[k.child_id][0] || 0) })),
     };
+  }
+
+  if (sql.includes("FROM child_limit_history")) {
+    return { rows: limitHistory.filter((h) => h.child_id === params[0]) };
   }
 
   if (sql.includes("SELECT weekday, daily_limit FROM child_day_limits")) {
@@ -168,6 +173,19 @@ async function run() {
   await put("/children/10/day-limits", parent1, { days: {} }); // back to S$5 every day
   res = await get("/children/10/spending", parent1);
   check(res.body.days[5].overLimit === true && res.body.daysOverLimit === 1, "spending more than the limit is flagged");
+
+  // limit history: limit was S$4 until 2 days ago, then S$8 on yesterday's weekday
+  const at = (n) => new Date(Date.now() - n * 86400000);
+  limitHistory = [
+    { child_id: 10, changed_at: at(20), daily_limit: "4.00", day_limits: {} },
+    { child_id: 10, changed_at: at(2), daily_limit: "5.00", day_limits: { [(todayIdx + 6) % 7]: 8 } },
+  ];
+  res = await get("/children/10/spending?period=month", parent1);
+  const m = res.body.days;
+  check(m[19].limit === 4, "a day 10 days ago uses the limit it had back then");
+  check(m[28].limit === 8 && m[28].overLimit === false, "yesterday uses yesterday's weekday limit from the history");
+  check(m[0].limit === 4, "days before the history started use the oldest saved limit");
+  limitHistory = [];
 
   // alerts
   res = await get("/children/alerts", parent1);

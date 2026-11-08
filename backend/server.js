@@ -33,6 +33,9 @@ app.use("/api", require("./raghav/routes/stallRoutes"));
 // stall menu, food detail and Ask Mum (Raghav)
 app.use("/api", require("./raghav/routes/menuRoutes"));
 
+// tray quote (Raghav)
+app.use("/api", require("./raghav/routes/trayRoutes"));
+
 // live queue + order ready ping
 app.use("/api", require("./xinsheng/routes/orderQueueRoutes"));
 

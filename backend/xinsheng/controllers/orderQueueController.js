@@ -7,10 +7,10 @@ const CODE_RE = /^\d{4}$/;
 
 const newPickupCode = () => String(crypto.randomInt(0, 10000)).padStart(4, "0");
 
-// kid / parent see the code + qr text once it's ready (stall owner doesn't, kid has to show it)
+// kid / parent see the code once it's ready (stall owner doesn't, kid has to show it)
 function pickupInfo(user, order) {
   if (user.role === "stall_owner" || !order.ready_at || order.collected_at || !order.pickup_code) return {};
-  return { pickupCode: order.pickup_code, qrText: `BEVEAT-${order.order_id}-${order.pickup_code}` };
+  return { pickupCode: order.pickup_code };
 }
 
 const prepMins = (stall) => stall.avg_prep_minutes || DEFAULT_PREP_MIN;
@@ -138,7 +138,7 @@ async function markReady(req, res, next) {
   }
 }
 
-// PUT /api/orders/:orderId/collected  body { code }  (typed in or from scanning the kid's qr)
+// PUT /api/orders/:orderId/collected  body { code }  (stall types in the kid's code)
 async function markCollected(req, res, next) {
   const { code } = req.body || {};
   if (typeof code !== "string" || !CODE_RE.test(code))

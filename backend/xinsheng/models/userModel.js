@@ -5,7 +5,8 @@ const pool = require("../../config/db");
 async function findActiveChildByUsername(username) {
   const { rows } = await pool.query(
     `SELECT user_id, username, display_name, avatar_emoji, password_hash, failed_pin_tries,
-            COALESCE(locked_until > now(), false) AS locked
+            COALESCE(locked_until > now(), false) AS locked,
+            GREATEST(CEIL(EXTRACT(EPOCH FROM locked_until - now())), 0)::int AS lock_seconds
        FROM users
       WHERE role = 'child' AND is_active AND LOWER(username) = LOWER($1)`,
     [username]
@@ -52,7 +53,8 @@ async function recordWrongPin(userId, maxTries, lockMinutes) {
             locked_until = CASE WHEN failed_pin_tries + 1 >= $2 THEN now() + make_interval(mins => $3)
                                 ELSE locked_until END
       WHERE user_id = $1
-      RETURNING COALESCE(locked_until > now(), false) AS locked`,
+      RETURNING failed_pin_tries, COALESCE(locked_until > now(), false) AS locked,
+                GREATEST(CEIL(EXTRACT(EPOCH FROM locked_until - now())), 0)::int AS lock_seconds`,
     [userId, maxTries, lockMinutes]
   );
   return rows[0];

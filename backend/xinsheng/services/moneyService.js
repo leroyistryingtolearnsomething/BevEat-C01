@@ -14,6 +14,19 @@ function limitFor(defaultLimit, dayRows, weekday) {
   return row ? Number(row.daily_limit) : Number(defaultLimit);
 }
 
+// history rows (oldest first) -> limit that was set at the end of that Singapore day
+// days before the first saved change use the oldest one, null if there's no history at all
+function limitOnDay(history, isoDate) {
+  if (history.length === 0) return null;
+  const [y, m, d] = isoDate.split("-").map(Number);
+  const endOfDay = Date.UTC(y, m - 1, d + 1) - 8 * 3600 * 1000;
+  let row = history[0];
+  for (const h of history) if (new Date(h.changed_at).getTime() < endOfDay) row = h;
+  const dayLimits = row.day_limits || {};
+  const weekday = weekdayOf(isoDate);
+  return Number(dayLimits[weekday] ?? row.daily_limit);
+}
+
 const round2 = (n) => Math.round(n * 100) / 100;
 
 // null if the kid has no profile
@@ -31,4 +44,4 @@ async function getMoneyToday(childId) {
   };
 }
 
-module.exports = { DAYS, sgWeekdayToday, weekdayOf, limitFor, round2, getMoneyToday };
+module.exports = { DAYS, sgWeekdayToday, weekdayOf, limitFor, limitOnDay, round2, getMoneyToday };

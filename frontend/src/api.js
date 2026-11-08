@@ -4,9 +4,12 @@ import { clearSession, getSession } from "./session.js";
 const BASE = import.meta.env.VITE_API_URL ?? "";
 
 export class ApiError extends Error {
-  constructor(status, message) {
+  // body = the whole JSON error reply, for errors that carry more than a message
+  // (e.g. the tray's 409 lists which dishes can't be ordered)
+  constructor(status, message, body = {}) {
     super(message);
     this.status = status;
+    this.body = body;
   }
 }
 
@@ -34,7 +37,7 @@ async function request(path, { method = "GET", body, token } = {}) {
     clearSession();
     window.location.replace(s.role === "child" ? "/kid/login" : "/parent/login");
   }
-  if (!res.ok) throw new ApiError(res.status, data.error || "Something went wrong. Please try again.");
+  if (!res.ok) throw new ApiError(res.status, data.error || "Something went wrong. Please try again.", data);
   return data;
 }
 
@@ -84,6 +87,21 @@ export const setAllergies = (token, childId, allergens) =>
 export const setDailyLimit = (token, childId, dailyLimitCents) =>
   request(`/children/${childId}/daily-limit`, { method: "PUT", body: { dailyLimitCents }, token });
 
+// parent money stuff + PIN reset (Xin Sheng)
+export const getSpending = (token, childId, period) =>
+  request(`/children/${childId}/spending?period=${period}`, { token });
+
+export const getParentAlerts = (token) => request("/children/alerts", { token });
+
+export const getDayLimits = (token, childId) => request(`/children/${childId}/day-limits`, { token });
+
+// days = { mon: 300, fri: 600 } in cents, null = normal limit
+export const setDayLimits = (token, childId, days) =>
+  request(`/children/${childId}/day-limits`, { method: "PUT", body: { days }, token });
+
+export const resetChildPin = (token, childId, pin) =>
+  request(`/children/${childId}/pin`, { method: "PUT", body: { pin }, token });
+
 // Live in the backend: live queue + order ready ping (Xin Sheng)
 export const getOrderQueue = (token, orderId) => request(`/orders/${orderId}/queue`, { token });
 
@@ -109,3 +127,14 @@ export const getDish = (token, itemId) => request(`/menu-items/${encodeURICompon
 export const askMum = (token, itemId) => request("/ask-mum", { method: "POST", body: { itemId }, token });
 
 export const getAskMum = (token, itemId) => request(`/ask-mum/${encodeURIComponent(itemId)}`, { token });
+
+// Live in the backend: My tray (Raghav). Sends ids and quantities only; the server prices it.
+export const quoteTray = (token, items) => request("/tray/quote", { method: "POST", body: { items }, token });
+
+// MOCK: replace when Leroy's checkout endpoint is ready (docs/api-contracts.md §2e).
+// The real one will be: request("/checkout", { method: "POST", body: { items }, token })
+//   -> { orders: [{ orderId, stallId, stallName, queueNumber, total }], total, walletBalance }
+// Same arguments as the real call, but it never reaches the server, so nothing is saved or paid.
+export const checkout = async (_token, _items) => {
+  throw new ApiError(501, "Paying with your wallet is coming soon! Your tray is saved.");
+};

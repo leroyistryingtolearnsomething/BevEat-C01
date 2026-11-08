@@ -107,13 +107,13 @@ async function run() {
   check(res.status === 401, "wrong PIN is rejected");
 
   res = await login("nobody", "1234");
-  check(res.status === 401, "unknown username is rejected");
+  check(res.status === 404, "unknown username says no account");
 
   res = await request(app).post("/api/auth/child-login").send({});
   check(res.status === 400, "missing username or PIN is rejected");
 
   res = await login("olduser", "1234");
-  check(res.status === 401, "inactive kid cannot log in");
+  check(res.status === 404, "inactive kid cannot log in");
 
   // parent setting the PIN
   res = await setPin(parent1, "5678");

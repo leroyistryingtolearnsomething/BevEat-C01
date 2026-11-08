@@ -14,6 +14,10 @@ import ParentAllergies from "./pages/ParentAllergies.jsx";
 import ParentLimit from "./pages/ParentLimit.jsx";
 import StallMenu from "./pages/StallMenu.jsx";
 import FoodDetail from "./pages/FoodDetail.jsx";
+import Tray from "./pages/Tray.jsx";
+import KidPickup from "./pages/KidPickup.jsx";
+import ParentSpending from "./pages/ParentSpending.jsx";
+import ParentPin from "./pages/ParentPin.jsx";
 import ReadyPing from "./components/ReadyPing.jsx";
 import Snap from "./pages/Snap.jsx"
 
@@ -41,6 +45,9 @@ export default function App() {
       <Route path="/parent/home" element={<RequireRole role="parent"><ParentHome /></RequireRole>} />
       <Route path="/parent/allergies" element={<RequireRole role="parent"><ParentAllergies /></RequireRole>} />
       <Route path="/parent/limit" element={<RequireRole role="parent"><ParentLimit /></RequireRole>} />
+      <Route path="/parent/spending" element={<RequireRole role="parent"><ParentSpending /></RequireRole>} />
+      <Route path="/parent/pin" element={<RequireRole role="parent"><ParentPin /></RequireRole>} />
+      <Route path="/kid/pickup/:orderId" element={<RequireRole role="child"><KidPickup /></RequireRole>} />
       <Route path="/parent/top-up" element={<RequireRole role="parent"><TopUp /></RequireRole>} />
       <Route path="/kid/home" element={<RequireRole role="child"><Home role="child" /></RequireRole>} />
       <Route path="/kid/wallet" element={<RequireRole role="child"><KidWallet /></RequireRole>} />
@@ -48,6 +55,7 @@ export default function App() {
       <Route path="/kid/snap" element={<RequireRole role ="child"><Snap/></RequireRole>} />
       <Route path="/kid/stalls/:stallId" element={<RequireRole role="child"><StallMenu /></RequireRole>} />
       <Route path="/kid/dishes/:itemId" element={<RequireRole role="child"><FoodDetail /></RequireRole>} />
+      <Route path="/kid/tray" element={<RequireRole role="child"><Tray /></RequireRole>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </>
