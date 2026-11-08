@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { QRCodeSVG } from "qrcode.react";
 import { getOrderQueue } from "../api.js";
 import { getSession } from "../session.js";
 import BackButton from "../components/BackButton.jsx";
@@ -8,7 +7,7 @@ import "./kidMenu.css";
 
 const POLL_MS = 10000;
 
-// kid's order: place in the queue, then the pickup code + QR to show the stall
+// kid's order: place in the queue, then the pickup code to show the stall
 export default function KidPickup() {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
@@ -34,8 +33,7 @@ export default function KidPickup() {
       {order && order.pickupCode && (
         <section className="pickup__card" aria-live="polite">
           <p className="pickup__title">Your food is ready! 🎉</p>
-          <p>Go to <strong>{order.stallName}</strong> and show this</p>
-          <div className="pickup__qr"><QRCodeSVG value={order.qrText} size={180} /></div>
+          <p>Go to <strong>{order.stallName}</strong> and show this code</p>
           <p className="pickup__label">Pickup code</p>
           <p className="pickup__code">{order.pickupCode}</p>
           <p className="pickup__small">Order number {order.queueNumber}</p>

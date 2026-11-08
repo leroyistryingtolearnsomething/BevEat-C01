@@ -208,7 +208,7 @@ async function run() {
     "kid gets the ready ping"
   );
   const code = res.body.orders[0].pickupCode;
-  check(/^\d{4}$/.test(code) && res.body.orders[0].qrText === `BEVEAT-3-${code}`, "ready ping has a 4 digit pickup code + qr text");
+  check(/^\d{4}$/.test(code), "ready ping has a 4 digit pickup code");
 
   res = await get("/orders/3/queue", parent);
   check(res.body.pickupCode === code, "parent can see the pickup code too");
