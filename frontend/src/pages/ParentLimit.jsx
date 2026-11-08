@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { setDailyLimit } from "../api.js";
 import { KidSwitcher, PageHeader, ParentTabs, money, useKids } from "../components/ParentShell.jsx";
+import WeekdayLimits from "../components/WeekdayLimits.jsx";
 
 const PRESETS = [4, 6, 8, 10];
 
@@ -66,6 +67,8 @@ export default function ParentLimit() {
           <button className="btn btn--primary" onClick={save} disabled={status.busy}>
             {status.busy ? "Saving…" : "Save limit"}
           </button>
+
+          <WeekdayLimits token={token} kid={kid} />
         </>
       )}
 
