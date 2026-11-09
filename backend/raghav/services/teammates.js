@@ -5,6 +5,7 @@
 const Home = require("../../gabriel/models/homeModel"); // read-only reuse, never edited here
 const Money = require("../../xinsheng/services/moneyService"); // read-only reuse, never edited here
 const Menu = require("../models/menuModel");
+const FoodRule = require("../../leroy/models/foodRuleModel"); // read-only reuse, never edited here
 
 // Xin Sheng's allergy profile (§2a). Reuses Gabriel's existing read of child_allergies.
 // If the database fails this THROWS, so the request fails closed with a 500. It never returns
@@ -19,10 +20,16 @@ async function getChildAllergies(childId) {
 // tray and her parent screens always agree on the money. Returns null if there's no child profile.
 const getMoneyToday = (childId) => Money.getMoneyToday(childId);
 
-// MOCK: replace when Leroy's getFoodRules is ready (§2b). There is no food-rules table yet,
-// so no dish is "Mum says no" until it exists.
-async function getFoodRules(_childId) {
-  return [];
+// Leroy's parent food rules (§2b): the dishes this child's parent locked on the parent Menu screen.
+// Like allergies, a database failure THROWS, so the request fails closed instead of showing
+// a locked dish.
+async function getFoodRules(childId) {
+  const rows = await FoodRule.listRulesForChild(childId);
+  return rows.map((r) => ({
+    type: r.rule_type,
+    itemId: r.item_id ?? undefined,
+    label: r.name ?? undefined, // "Mum picked “Fishball soup”."
+  }));
 }
 
 // MOCK: replace when Gabriel's getTopPhotos is ready (§2d). Returns Map itemId -> photo.

@@ -84,6 +84,13 @@ export function uploadPhoto(token, photo, itemId, orderId) {
 export const setAllergies = (token, childId, allergens) =>
   request(`/children/${childId}/allergies`, { method: "PUT", body: { allergens }, token });
 
+// Live in the backend: the parent's Menu screen. Every dish with allergyBlocked and locked flags,
+// and lock / unlock a dish (the kid's menu then shows it as "Mum says no")
+export const getChildMenu = (token, childId) => request(`/children/${childId}/menu`, { token });
+
+export const setDishLocked = (token, childId, itemId, locked) =>
+  request(`/children/${childId}/blocked-items/${itemId}`, { method: "PUT", body: { locked }, token });
+
 export const setDailyLimit = (token, childId, dailyLimitCents) =>
   request(`/children/${childId}/daily-limit`, { method: "PUT", body: { dailyLimitCents }, token });
 
