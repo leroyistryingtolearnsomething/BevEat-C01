@@ -80,4 +80,13 @@ async function setDailyLimit(childId, dailyLimit) {
   await pool.query(`UPDATE child_profiles SET daily_limit = $2 WHERE child_id = $1`, [childId, dailyLimit]);
 }
 
-module.exports = { createChild, listForParent, setAllergies, setDailyLimit };
+// names in the allergens table, e.g. ["Peanuts", "Egg"]
+async function getAllergyNames(childId) {
+  const { rows } = await pool.query(
+    `SELECT a.name FROM child_allergies ca JOIN allergens a ON a.allergen_id = ca.allergen_id WHERE ca.child_id = $1`,
+    [childId]
+  );
+  return rows.map((r) => r.name);
+}
+
+module.exports = { createChild, listForParent, setAllergies, setDailyLimit, getAllergyNames };

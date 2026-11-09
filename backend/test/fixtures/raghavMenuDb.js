@@ -171,6 +171,10 @@ function fakeQuery(sql, params = []) {
     return { rows: d ? [{ ...dishRow(d), stall_name: stalls.find((s) => s.stall_id === d.stall_id).name }] : [] };
   }
 
+  // Leroy's parent locks (child_food_rules): none here. Tests that need a "Mum says no" dish
+  // replace Teammates.getFoodRules instead.
+  if (sql.includes("FROM child_food_rules")) return { rows: [] };
+
   throw new Error("Fake DB got an unexpected query: " + sql.slice(0, 80));
 }
 

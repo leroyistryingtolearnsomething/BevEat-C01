@@ -8,6 +8,7 @@ import homeOnIcon from "../assets/figma/tab-home-on.svg";
 import allergiesIcon from "../assets/figma/tab-allergies.svg";
 import allergiesOnIcon from "../assets/figma/tab-allergies-on.svg";
 import menuIcon from "../assets/figma/tab-menu.svg";
+import menuOnIcon from "../assets/figma/tab-menu-on.svg";
 import limitIcon from "../assets/figma/tab-limit.svg";
 import limitOnIcon from "../assets/figma/tab-limit-on.svg";
 
@@ -62,7 +63,7 @@ export function KidSwitcher({ kids, kid, onSelect }) {
 const TABS = [
   { key: "home", label: "Home", to: "/parent/home", icon: homeIcon, iconOn: homeOnIcon },
   { key: "allergies", label: "Allergies", to: "/parent/allergies", icon: allergiesIcon, iconOn: allergiesOnIcon },
-  { key: "menu", label: "Menu", icon: menuIcon }, // shortcut: no menu preview yet, add `to` when that screen exists
+  { key: "menu", label: "Menu", to: "/parent/menu", icon: menuIcon, iconOn: menuOnIcon },
   { key: "limit", label: "Limit", to: "/parent/limit", icon: limitIcon, iconOn: limitOnIcon },
 ];
 

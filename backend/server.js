@@ -18,6 +18,9 @@ app.use("/api", require("./leroy/routes/parentAuthRoutes"));
 // parent adds a kid
 app.use("/api", require("./leroy/routes/childRoutes"));
 
+// parent locks dishes on a kid's menu
+app.use("/api", require("./leroy/routes/foodRuleRoutes"));
+
 // NETS QR wallet top-ups
 app.use("/api", require("./leroy/routes/topUpRoutes"));
 

@@ -12,6 +12,7 @@ import ParentHome from "./pages/ParentHome.jsx";
 import TopUp from "./pages/TopUp.jsx";
 import ParentAllergies from "./pages/ParentAllergies.jsx";
 import ParentLimit from "./pages/ParentLimit.jsx";
+import ParentMenu from "./pages/ParentMenu.jsx";
 import StallMenu from "./pages/StallMenu.jsx";
 import FoodDetail from "./pages/FoodDetail.jsx";
 import Tray from "./pages/Tray.jsx";
@@ -45,6 +46,7 @@ export default function App() {
       <Route path="/parent/home" element={<RequireRole role="parent"><ParentHome /></RequireRole>} />
       <Route path="/parent/allergies" element={<RequireRole role="parent"><ParentAllergies /></RequireRole>} />
       <Route path="/parent/limit" element={<RequireRole role="parent"><ParentLimit /></RequireRole>} />
+      <Route path="/parent/menu" element={<RequireRole role="parent"><ParentMenu /></RequireRole>} />
       <Route path="/parent/spending" element={<RequireRole role="parent"><ParentSpending /></RequireRole>} />
       <Route path="/parent/pin" element={<RequireRole role="parent"><ParentPin /></RequireRole>} />
       <Route path="/kid/pickup/:orderId" element={<RequireRole role="child"><KidPickup /></RequireRole>} />
