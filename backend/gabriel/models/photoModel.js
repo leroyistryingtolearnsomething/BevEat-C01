@@ -37,4 +37,32 @@ async function addPhoto(itemId, childId, orderId, imageUrl) {
     return rows[0];
 }
 
-module.exports = {getMyDishes, didOrder, addPhoto}
+async function setAiResults(photoId, aiStatus, confidence, label) {
+    const {rows} = await pool.query(
+        `UPDATE photos
+        SET ai_status =  $2, ai_confidence = $3, ai_label = $4
+        WHERE photo_id = $1
+        RETURNING photo_id, ai_status` , [photoId, aiStatus, confidence, label]
+    )
+    return rows[0];
+}
+
+async function deletePhoto(photoId, childId){
+    const {rows} = await pool.query(
+        `DELETE FROM photos
+        WHERE photo_id = $1 AND uploaded_by = $2
+        RETURNING image_url`, [photoId, childId]
+    )
+    return rows[0];
+
+}
+
+async function getDishName(itemId) {
+    const {rows} = await pool.query(
+        `SELECT name FROM menu_items
+        WHERE item_id = $1` , [itemId]
+    )
+    return rows[0]?.name; // ?. means if theres no rows give undefined instead of crashing
+}
+
+module.exports = {getMyDishes, didOrder, addPhoto, setAiResults, deletePhoto, getDishName}
