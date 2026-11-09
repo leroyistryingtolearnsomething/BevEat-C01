@@ -1,6 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { addLine, unitCents, lineCents, trayCount, trayCents, formatSgd, moneyLeftCents, MAX_QTY } from "./tray.js";
+import {
+  addLine, unitCents, lineCents, trayCount, trayCents, formatSgd, moneyLeftCents, MAX_QTY,
+  lineKey, setQuantity, removeLine, restoreLine, toQuoteItems, lineSubtitle, linesInStallOrder, problemsByKey, problemMessage,
+} from "./tray.js";
 
 const chickenRice = (quantity = 1, addOns = []) => ({ itemId: 1, stallId: 1, name: "Steamed Chicken Rice", price: 3.5, quantity, addOns });
 const egg = { id: 3, name: "Add braised egg", extraPrice: 0.8 };
@@ -61,4 +64,74 @@ test("money left is never negative, and an empty tray leaves all of it", () => {
   assert.equal(moneyLeftCents(5, []), 500);
   const big = addLine([], { itemId: 25, price: 5.5, quantity: 2, addOns: [] }); // S$11.00
   assert.equal(moneyLeftCents(5, big), 0);
+});
+
+// ---------- 06 My tray ----------
+
+const rice = { itemId: 1, stallId: 1, stallName: "Lim's Chicken Rice", name: "Steamed Chicken Rice", price: 3.5, quantity: 1, addOns: [lessRice, egg] };
+const milo = { itemId: 10, stallId: 4, stallName: "Wong's Drinks & Desserts", name: "Milo Ice", price: 1.8, quantity: 2, addOns: [] };
+const roast = { itemId: 2, stallId: 1, stallName: "Lim's Chicken Rice", name: "Roasted Chicken Rice", price: 3.8, quantity: 1, addOns: [] };
+
+test("stepper: + and - change only that line, and never go over the limit", () => {
+  const tray = [rice, milo];
+  assert.equal(setQuantity(tray, 1, 3)[1].quantity, 3);
+  assert.equal(setQuantity(tray, 1, 3)[0], rice);
+  assert.equal(setQuantity(tray, 0, MAX_QTY + 1)[0].quantity, MAX_QTY);
+  assert.equal(tray[1].quantity, 2); // the old tray isn't changed
+});
+
+test("stepper to 0 takes the line out", () => {
+  assert.deepEqual(setQuantity([rice, milo], 0, 0), [milo]);
+});
+
+test("undo puts a removed line back in the same spot", () => {
+  const tray = [rice, milo, roast];
+  const { lines, removed } = removeLine(tray, 1);
+  assert.deepEqual(lines, [rice, roast]);
+  assert.deepEqual(restoreLine(lines, removed), tray);
+});
+
+test("undo still works if the tray got shorter in the meantime", () => {
+  const { removed } = removeLine([rice, milo, roast], 2);
+  assert.deepEqual(restoreLine([rice], removed), [rice, roast]);
+});
+
+test("the quote request has ids and quantities only, never a price or name", () => {
+  const items = toQuoteItems([{ ...rice, price: 0.01, total: 0 }]);
+  assert.deepEqual(items, [{ itemId: 1, quantity: 1, addOnIds: [2, 3] }]);
+  assert.ok(!JSON.stringify(items).includes("price") && !JSON.stringify(items).includes("name"));
+});
+
+test("subtitle = extras, then the stall (Figma: 'Less sugar · Uncle Lim')", () => {
+  assert.equal(lineSubtitle(rice), "Less rice, Add braised egg · Lim's Chicken Rice");
+  assert.equal(lineSubtitle(milo), "Wong's Drinks & Desserts");
+});
+
+test("rows are grouped by stall, in the order the stalls were added, keeping each tray index", () => {
+  const rows = linesInStallOrder([rice, milo, roast]);
+  assert.deepEqual(rows.map((r) => r.index), [0, 2, 1]);
+  assert.equal(rows[2].line, milo);
+});
+
+test("a tray line and its priced server line get the same key", () => {
+  const serverLine = { itemId: 1, addOns: [{ id: 3, name: "Add braised egg", extraPrice: 0.8 }, { id: 2, name: "Less rice", extraPrice: 0 }] };
+  assert.equal(lineKey(rice), lineKey(serverLine));
+  assert.notEqual(lineKey(rice), lineKey(roast));
+});
+
+test("a 409 problem stays on the right dish after another line is removed", () => {
+  const sent = [rice, milo, roast];
+  const problems = problemsByKey(sent, [{ lineIndex: 1, itemId: 10, addOnId: null, name: "Milo Ice", reason: "sold_out" }]);
+  const afterRemovingRice = removeLine(sent, 0).lines; // Milo is now line 0
+  assert.equal(problems.get(lineKey(afterRemovingRice[0])).reason, "sold_out");
+  assert.equal(problems.get(lineKey(roast)), undefined);
+});
+
+test("every problem reason has kid-friendly words", () => {
+  assert.equal(problemMessage({ reason: "allergy", addOnId: null }), "Not safe for you");
+  assert.equal(problemMessage({ reason: "allergy", addOnId: 3, name: "Add braised egg" }), "Add braised egg isn't safe for you");
+  assert.equal(problemMessage({ reason: "parent_rule" }), "Mum says not today");
+  assert.equal(problemMessage({ reason: "sold_out" }), "Sold out now");
+  assert.equal(problemMessage({ reason: "stall_closed" }), "This stall just closed");
+  assert.equal(problemMessage({ reason: "something_new" }), "Can't order this now");
 });

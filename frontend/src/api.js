@@ -4,22 +4,27 @@ import { clearSession, getSession } from "./session.js";
 const BASE = import.meta.env.VITE_API_URL ?? "";
 
 export class ApiError extends Error {
-  constructor(status, message) {
+  // body = the whole JSON error reply, for errors that carry more than a message
+  // (e.g. the tray's 409 lists which dishes can't be ordered)
+  constructor(status, message, body = {}) {
     super(message);
     this.status = status;
+    this.body = body;
   }
 }
 
 async function request(path, { method = "GET", body, token } = {}) {
   let res;
+  // a file upload (FormData) is sent as-is: the browser sets its own Content-Type with the file boundary
+  const isForm = body instanceof FormData;
   try {
     res = await fetch(`${BASE}/api${path}`, {
       method,
       headers: {
-        "Content-Type": "application/json",
+        ...(!isForm && { "Content-Type": "application/json" }),
         ...(token && { Authorization: `Bearer ${token}` }),
       },
-      body: body && JSON.stringify(body),
+      body: isForm ? body : body && JSON.stringify(body),
     });
   } catch {
     throw new ApiError(0, "Can't reach KiddyEats right now. Check your internet and try again.");
@@ -32,7 +37,7 @@ async function request(path, { method = "GET", body, token } = {}) {
     clearSession();
     window.location.replace(s.role === "child" ? "/kid/login" : "/parent/login");
   }
-  if (!res.ok) throw new ApiError(res.status, data.error || "Something went wrong. Please try again.");
+  if (!res.ok) throw new ApiError(res.status, data.error || "Something went wrong. Please try again.", data);
   return data;
 }
 
@@ -65,9 +70,26 @@ export const getHome = (token) => request("/home", { token });
 
 // "See all" for Today's yummiest pics: { pics: [stall-menu dish cards] }
 export const getAllPics = (token) => request("/home/pics", { token });
+// Snap your food: the kid's recent dishes they can take a photo of
+export const getMyDishes = (token) => request("/photos/my-dishes", { token });
+// Snap your food: send the photo (a JPEG Blob) + which dish/order it is. Returns { photo: { photo, imageUrl, aiStatus } }
+export function uploadPhoto(token, photo, itemId, orderId) {
+  const form = new FormData();          // like a form with a file field, the backend's multer reads it
+  form.append("photo", photo, "snap.jpg");
+  form.append("itemId", itemId);
+  form.append("orderId", orderId);
+  return request("/photos", { method: "POST", body: form, token });
+}
 // Live in the backend: change a kid's allergies (keys like "peanut") and daily food money
 export const setAllergies = (token, childId, allergens) =>
   request(`/children/${childId}/allergies`, { method: "PUT", body: { allergens }, token });
+
+// Live in the backend: the parent's Menu screen. Every dish with allergyBlocked and locked flags,
+// and lock / unlock a dish (the kid's menu then shows it as "Mum says no")
+export const getChildMenu = (token, childId) => request(`/children/${childId}/menu`, { token });
+
+export const setDishLocked = (token, childId, itemId, locked) =>
+  request(`/children/${childId}/blocked-items/${itemId}`, { method: "PUT", body: { locked }, token });
 
 // Live in the backend: allergies the parent types in themselves (Leslie, migration 005)
 // list/add -> { customAllergies: [{ id, label, icon, blockedDishes: ["Dish name", ...] }] }
@@ -81,6 +103,21 @@ export const removeCustomAllergy = (token, childId, customAllergyId) =>
 
 export const setDailyLimit = (token, childId, dailyLimitCents) =>
   request(`/children/${childId}/daily-limit`, { method: "PUT", body: { dailyLimitCents }, token });
+
+// parent money stuff + PIN reset (Xin Sheng)
+export const getSpending = (token, childId, period) =>
+  request(`/children/${childId}/spending?period=${period}`, { token });
+
+export const getParentAlerts = (token) => request("/children/alerts", { token });
+
+export const getDayLimits = (token, childId) => request(`/children/${childId}/day-limits`, { token });
+
+// days = { mon: 300, fri: 600 } in cents, null = normal limit
+export const setDayLimits = (token, childId, days) =>
+  request(`/children/${childId}/day-limits`, { method: "PUT", body: { days }, token });
+
+export const resetChildPin = (token, childId, pin) =>
+  request(`/children/${childId}/pin`, { method: "PUT", body: { pin }, token });
 
 // Live in the backend: live queue + order ready ping (Xin Sheng)
 export const getOrderQueue = (token, orderId) => request(`/orders/${orderId}/queue`, { token });
@@ -107,6 +144,17 @@ export const getDish = (token, itemId) => request(`/menu-items/${encodeURICompon
 export const askMum = (token, itemId) => request("/ask-mum", { method: "POST", body: { itemId }, token });
 
 export const getAskMum = (token, itemId) => request(`/ask-mum/${encodeURIComponent(itemId)}`, { token });
+
+// Live in the backend: My tray (Raghav). Sends ids and quantities only; the server prices it.
+export const quoteTray = (token, items) => request("/tray/quote", { method: "POST", body: { items }, token });
+
+// MOCK: replace when Leroy's checkout endpoint is ready (docs/api-contracts.md §2e).
+// The real one will be: request("/checkout", { method: "POST", body: { items }, token })
+//   -> { orders: [{ orderId, stallId, stallName, queueNumber, total }], total, walletBalance }
+// Same arguments as the real call, but it never reaches the server, so nothing is saved or paid.
+export const checkout = async (_token, _items) => {
+  throw new ApiError(501, "Paying with your wallet is coming soon! Your tray is saved.");
+};
 
 // Live in the backend: parent macros + order history (Leslie, CB69-50). date / start look like "2026-11-06"
 export const getMacrosDay = (token, childId, date) =>

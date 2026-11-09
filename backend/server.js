@@ -18,17 +18,26 @@ app.use("/api", require("./leroy/routes/parentAuthRoutes"));
 // parent adds a kid
 app.use("/api", require("./leroy/routes/childRoutes"));
 
+// parent locks dishes on a kid's menu
+app.use("/api", require("./leroy/routes/foodRuleRoutes"));
+
 // NETS QR wallet top-ups
 app.use("/api", require("./leroy/routes/topUpRoutes"));
 
 // kid Home page
 app.use("/api", require("./gabriel/routes/homeRoutes"));
 
+// photo upload page
+app.use("/api", require("./gabriel/routes/photoRoutes"));
+
 // stall discovery (Raghav)
 app.use("/api", require("./raghav/routes/stallRoutes"));
 
 // stall menu, food detail and Ask Mum (Raghav)
 app.use("/api", require("./raghav/routes/menuRoutes"));
+
+// tray quote (Raghav)
+app.use("/api", require("./raghav/routes/trayRoutes"));
 
 // live queue + order ready ping
 app.use("/api", require("./xinsheng/routes/orderQueueRoutes"));

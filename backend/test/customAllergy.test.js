@@ -16,8 +16,8 @@ const { tidyLabel } = require("../leslie/controllers/customAllergyController");
 
 const PARENT = 1;
 const OTHER_PARENT = 2;
-const KID = 8; // fixture child with ONLY custom allergies: Watermelon, Ice cream
-const ownerOf = { 8: PARENT, 3: OTHER_PARENT };
+const KID = 20; // fixture child with ONLY custom allergies: Watermelon, Ice cream
+const ownerOf = { 20: PARENT, 3: OTHER_PARENT };
 let nextId = 1;
 const ids = new Map(); // `${childId}:${lower label}` -> id
 const idFor = (childId, label) => {

@@ -13,9 +13,18 @@ export default function KidLogin() {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  // locked after 5 wrong PINs: seconds left, counts down
+  const [lockLeft, setLockLeft] = useState(0);
+  const locked = lockLeft > 0;
+
+  useEffect(() => {
+    if (!locked) return;
+    const id = setInterval(() => setLockLeft((s) => Math.max(s - 1, 0)), 1000);
+    return () => clearInterval(id);
+  }, [locked]);
 
   const press = (d) => {
-    if (busy) return;
+    if (busy || locked) return;
     setError("");
     setPin((p) => (p.length < PIN_LENGTH ? p + d : p));
   };
@@ -36,7 +45,17 @@ export default function KidLogin() {
         navigate("/kid/home", { replace: true });
       })
       .catch((err) => {
-        setError(err.status === 401 ? "Hmm, that didn't match. Try again!" : err.message);
+        const left = err.body && err.body.attemptsLeft;
+        if (err.status === 423) {
+          setLockLeft(err.body.lockSeconds || 0);
+          setError("");
+        } else if (err.status === 404) {
+          setError(`We can't find an account called "${username.trim()}". Check the spelling or ask your grown-up.`);
+        } else if (err.status === 401 && left) {
+          setError(`Hmm, that didn't match. You have ${left} ${left === 1 ? "attempt" : "attempts"} left.`);
+        } else {
+          setError(err.status === 401 ? "Hmm, that didn't match. Try again!" : err.message);
+        }
         setPin("");
         setBusy(false);
       });
@@ -68,7 +87,7 @@ export default function KidLogin() {
 
       <div className="kid-field">
         <label htmlFor="nickname">Your nickname</label>
-        <input id="nickname" value={username} onChange={(e) => { setUsername(e.target.value); setError(""); }}
+        <input id="nickname" value={username} onChange={(e) => { setUsername(e.target.value); setError(""); setLockLeft(0); }}
           autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="e.g. ethan_eats" />
       </div>
 
@@ -77,14 +96,18 @@ export default function KidLogin() {
         {Array.from({ length: PIN_LENGTH }, (_, i) => <span key={i} className={i < pin.length ? "on" : ""} />)}
       </div>
       <p className="sr-only" role="status">{pin.length} of {PIN_LENGTH} numbers typed</p>
-      <p className="kid-login__error" role="alert">{error}</p>
+      <p className="kid-login__error" role="alert">
+        {locked
+          ? `Too many wrong PINs! Try again in ${Math.floor(lockLeft / 60)}:${String(lockLeft % 60).padStart(2, "0")}, or ask your grown-up to reset it.`
+          : error}
+      </p>
 
       <div className="keypad" role="group" aria-labelledby="code-label">
         {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
-          <button key={d} type="button" className="key" onClick={() => press(d)} disabled={busy}>{d}</button>
+          <button key={d} type="button" className="key" onClick={() => press(d)} disabled={busy || locked}>{d}</button>
         ))}
         <span />
-        <button type="button" className="key" onClick={() => press("0")} disabled={busy}>0</button>
+        <button type="button" className="key" onClick={() => press("0")} disabled={busy || locked}>0</button>
         <button type="button" className="key" onClick={del} disabled={busy} aria-label="Delete last number">
           <Icon name="backspace" size={26} />
         </button>
