@@ -16,14 +16,18 @@ const isOverBudget = (price, canSpend) => toCents(price) > toCents(canSpend);
 
 /**
  * dish:  { itemId, price, allergenNames: string[], isFried?: boolean | null }
- * child: { allergies: [{ name, icon }], foodRules: [...], approvedItemIds: Set<number>, canSpend: number }
+ * child: { allergies: [{ name, icon }], customBlocks?: { items: Map<itemId, [{ name, icon }]>, addOns: Set<addOnId> },
+ *          foodRules: [...], approvedItemIds: Set<number>, canSpend: number }
  *
  * Returns { status, overBudget, blockedAllergens?, reason?, parentRule?, askMumApproved? }
  */
 function decideDish(dish, child) {
   // 1. Allergies come first. They protect the child's health, so nothing (not Mum's rules,
   //    not an Ask Mum approval) can ever turn an allergy block into "allowed".
-  const matched = child.allergies.filter((a) => dish.allergenNames.includes(a.name));
+  // Custom allergies (words the parent typed, e.g. "Kiwi") are matched in the database and
+  // count exactly like preset ones.
+  const custom = (child.customBlocks && child.customBlocks.items.get(dish.itemId)) || [];
+  const matched = [...child.allergies.filter((a) => dish.allergenNames.includes(a.name)), ...custom];
   if (matched.length > 0) {
     return {
       status: STATUS.BLOCKED_ALLERGY,
@@ -62,13 +66,15 @@ function findParentRule(dish, rules) {
 }
 
 /**
- * addOn: { allergenName: string | null }
+ * addOn: { allergenName: string | null, addOnId?: number }
  * Only called for a dish that is already allowed, so the dish's own allergens are known to be safe.
  * add_ons.allergen_id holds the one allergen the add-on brings that the dish may not already have
  * (the rule seed 03 checks), so this single comparison is enough.
  */
 function decideAddOn(addOn, child) {
-  const allergic = addOn.allergenName !== null && child.allergies.some((a) => a.name === addOn.allergenName);
+  const allergic =
+    (addOn.allergenName !== null && child.allergies.some((a) => a.name === addOn.allergenName)) ||
+    Boolean(child.customBlocks && child.customBlocks.addOns.has(addOn.addOnId)); // e.g. "Add mango" for a mango allergy
   return allergic ? { locked: true, lockReason: "allergy" } : { locked: false };
 }
 

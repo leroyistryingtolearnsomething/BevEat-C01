@@ -91,6 +91,16 @@ export const getChildMenu = (token, childId) => request(`/children/${childId}/me
 export const setDishLocked = (token, childId, itemId, locked) =>
   request(`/children/${childId}/blocked-items/${itemId}`, { method: "PUT", body: { locked }, token });
 
+// Live in the backend: allergies the parent types in themselves (Leslie, migration 005)
+// list/add -> { customAllergies: [{ id, label, icon, blockedDishes: ["Dish name", ...] }] }
+export const listCustomAllergies = (token, childId) => request(`/children/${childId}/custom-allergies`, { token });
+
+export const addCustomAllergy = (token, childId, label) =>
+  request(`/children/${childId}/custom-allergies`, { method: "POST", body: { label }, token });
+
+export const removeCustomAllergy = (token, childId, customAllergyId) =>
+  request(`/children/${childId}/custom-allergies/${customAllergyId}`, { method: "DELETE", token });
+
 export const setDailyLimit = (token, childId, dailyLimitCents) =>
   request(`/children/${childId}/daily-limit`, { method: "PUT", body: { dailyLimitCents }, token });
 
@@ -145,3 +155,14 @@ export const quoteTray = (token, items) => request("/tray/quote", { method: "POS
 export const checkout = async (_token, _items) => {
   throw new ApiError(501, "Paying with your wallet is coming soon! Your tray is saved.");
 };
+
+// Live in the backend: parent macros + order history (Leslie, CB69-50). date / start look like "2026-11-06"
+export const getMacrosDay = (token, childId, date) =>
+  request(`/children/${childId}/macros/day${date ? `?date=${date}` : ""}`, { token });
+
+export const getMacrosWeek = (token, childId, start) =>
+  request(`/children/${childId}/macros/week${start ? `?start=${start}` : ""}`, { token });
+
+// range: "this_week" | "last_week" | "this_month"
+export const getChildOrders = (token, childId, range = "this_week") =>
+  request(`/children/${childId}/orders?range=${range}`, { token });

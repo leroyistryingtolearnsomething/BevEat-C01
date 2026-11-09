@@ -1,0 +1,111 @@
+/* ========== Parent macros + orders (Leslie, Figma 10a–10c) ==========
+   Every class starts with m- so it can't clash with anyone else's. */
+.m-screen {
+  --m-carbs: #f0a830;
+  --m-protein: #e0574a;
+  --m-fat: #8a63d2;
+  --m-fibre: #3aa665;
+  --m-sugar: #ec8fb5;
+  --m-track: #edf0ea;
+  --m-warn: #fbe7a1;
+  --m-warn-ink: #5c4500;
+  gap: 14px;
+}
+.m-screen .p-header h1 { font-size: 20px; }
+
+.m-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.m-controls .kid-switch { flex: none; }
+.m-seg {
+  flex: 1; min-width: 200px; display: flex; padding: 3px; border-radius: 22px;
+  background: #fff; border: 1.5px solid var(--p-green);
+}
+.m-seg button {
+  flex: 1; min-height: 38px; border: 0; border-radius: 19px; background: none;
+  color: var(--p-green); font-size: 14px; font-weight: 700;
+}
+.m-seg button[aria-pressed="true"] { background: var(--p-green); color: #fff; }
+
+/* green energy card */
+.m-energy { display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: 16px; background: var(--p-green); color: #fff; }
+.m-energy__top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.m-energy__title { font-size: 14px; }
+.m-energy__value { font-size: 16px; }
+.m-energy__value strong { margin-right: 2px; font-size: 34px; }
+.m-energy__bar { height: 8px; border-radius: 4px; background: var(--p-green-dark); overflow: hidden; }
+.m-energy__bar span { display: block; height: 100%; border-radius: 4px; background: #fff; }
+.m-energy__meta { font-size: 12px; }
+.m-badge { flex: none; padding: 3px 8px; border-radius: 999px; background: rgb(255 255 255 / 0.92); color: var(--p-green-dark); font-size: 11px; }
+
+/* white cards */
+.m-card { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 16px; background: #fff; border: 1px solid var(--p-line); }
+.m-card__head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.m-card__head h2 { font-size: 16px; font-weight: 700; }
+.m-card__aside { font-size: 12px; color: var(--p-muted); }
+
+.m-bars { display: flex; flex-direction: column; gap: 9px; margin: 0; padding: 0; list-style: none; }
+.m-bar__row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; }
+.m-bar__label { display: inline-flex; align-items: center; gap: 6px; }
+.m-bar__nums { color: var(--p-muted); font-variant-numeric: tabular-nums; }
+.m-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--m-c); }
+.m-bar__track { height: 5px; margin-top: 4px; border-radius: 3px; background: var(--m-track); overflow: hidden; }
+.m-bar__track span { display: block; height: 100%; border-radius: 3px; background: var(--m-c); }
+.m-bar--carbs { --m-c: var(--m-carbs); }
+.m-bar--protein { --m-c: var(--m-protein); }
+.m-bar--fat { --m-c: var(--m-fat); }
+.m-bar--fibre { --m-c: var(--m-fibre); }
+.m-bar--sugar { --m-c: var(--m-sugar); }
+
+.m-tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.m-tag--ok { background: var(--p-mint); color: var(--p-green-dark); }
+.m-tag--warn { background: var(--m-warn); color: var(--m-warn-ink); }
+.m-tag--bad { background: var(--p-danger-tint); color: var(--p-danger); }
+.m-tag--grey { background: var(--m-track); color: var(--p-muted); }
+
+.parent a.m-see-all { padding: 8px 0 8px 16px; color: var(--p-edit); font-size: 14px; text-decoration: none; }
+
+/* orders */
+.m-orders { margin: 0; padding: 0; list-style: none; border-radius: 16px; background: #fff; border: 1px solid var(--p-line); }
+.m-order { display: flex; justify-content: space-between; gap: 10px; padding: 12px 14px; }
+.m-order + .m-order { border-top: 1px solid var(--p-line); }
+.m-order__main { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.m-order__name { font-size: 15px; font-weight: 700; }
+.m-order__sub { font-size: 12px; color: var(--p-muted); }
+.m-order__macros { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: var(--p-muted); }
+.m-kcal { padding: 1px 8px; border-radius: 999px; background: var(--p-mint); color: var(--p-green-dark); font-weight: 700; }
+.m-order__side { flex: none; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; gap: 6px; }
+.m-order__price { font-size: 15px; font-weight: 700; }
+
+/* week chart */
+.m-chart { display: flex; gap: 10px; height: 150px; }
+.parent a.m-chart__day {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px;
+  min-width: 0; color: var(--p-muted); font-size: 11px; font-weight: 600; text-decoration: none;
+}
+.m-chart__bar { width: 100%; max-width: 44px; border-radius: 8px; background: #c4e0bf; }
+.m-chart__day[aria-current="date"] .m-chart__bar { background: var(--p-green); }
+.m-chart__day[aria-current="date"] .m-chart__lbl { color: var(--p-green); font-weight: 700; }
+.m-chart__day:hover .m-chart__bar { background: #9fcf98; }
+.m-chart__day[aria-current="date"]:hover .m-chart__bar { background: var(--p-green-dark); }
+.m-chart__lbl { font-size: 12px; }
+
+.m-tip { display: flex; gap: 8px; padding: 12px 14px; border-radius: 14px; background: var(--m-warn); color: var(--m-warn-ink); font-size: 13px; line-height: 1.4; }
+.m-empty { padding: 16px; border-radius: 14px; background: #fff; border: 1px dashed var(--p-line); font-size: 14px; color: var(--p-muted); text-align: center; }
+
+/* all orders page */
+.m-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.m-chip {
+  min-height: 36px; padding: 0 14px; border-radius: 18px; background: #fff;
+  border: 1.5px solid var(--p-green); color: var(--p-green); font-size: 13px; font-weight: 700;
+}
+.m-chip[aria-pressed="true"] { background: var(--p-mint); border-color: var(--p-green-dark); color: var(--p-green-dark); }
+.m-day { display: flex; flex-direction: column; gap: 8px; }
+.m-day__head { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 700; color: var(--p-muted); }
+.m-day__head h2 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+.m-day__head span { color: var(--p-green); }
+
+/* link on the parent Home */
+.parent a.m-home-link {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; padding: 0 16px;
+  border-radius: 14px; background: #fff; border: 1px solid var(--p-line); color: var(--p-ink); text-decoration: none;
+}
+.m-home-link span:last-child { color: var(--p-green); }

@@ -5,6 +5,7 @@
 const Home = require("../../gabriel/models/homeModel"); // read-only reuse, never edited here
 const Money = require("../../xinsheng/services/moneyService"); // read-only reuse, never edited here
 const Menu = require("../models/menuModel");
+const CustomAllergy = require("../../leslie/models/customAllergyModel"); // Leslie, migration 005
 const FoodRule = require("../../leroy/models/foodRuleModel"); // read-only reuse, never edited here
 
 // Xin Sheng's allergy profile (§2a). Reuses Gabriel's existing read of child_allergies.
@@ -13,6 +14,22 @@ const FoodRule = require("../../leroy/models/foodRuleModel"); // read-only reuse
 async function getChildAllergies(childId) {
   const rows = await Home.getRules(childId);
   return rows.map((r) => ({ name: r.name, icon: r.icon, severity: r.severity }));
+}
+
+// Allergies the parent typed in themselves (e.g. "Kiwi"). Dishes aren't tagged with these, so the
+// database matches the word against each dish's name, description and ingredients.
+// Returns { items: Map itemId -> [{ name, icon }], addOns: Set of add_on_id }. Throws on a DB error (fail closed).
+async function getCustomAllergyBlocks(childId) {
+  const [itemRows, addOnRows] = await Promise.all([
+    CustomAllergy.blockedItems(childId),
+    CustomAllergy.blockedAddOns(childId),
+  ]);
+  const items = new Map();
+  for (const r of itemRows) {
+    if (!items.has(r.item_id)) items.set(r.item_id, []);
+    items.get(r.item_id).push({ name: r.label, icon: r.icon });
+  }
+  return { items, addOns: new Set(addOnRows.map((r) => r.add_on_id)) };
 }
 
 // Xin Sheng's money check (§2c): today's limit (including a different limit for this weekday),
@@ -51,4 +68,4 @@ async function getTopPhotos(itemIds, viewerId) {
   );
 }
 
-module.exports = { getChildAllergies, getMoneyToday, getFoodRules, getTopPhotos };
+module.exports = { getChildAllergies, getCustomAllergyBlocks, getMoneyToday, getFoodRules, getTopPhotos };

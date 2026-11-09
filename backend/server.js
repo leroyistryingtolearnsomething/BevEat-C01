@@ -45,6 +45,12 @@ app.use("/api", require("./xinsheng/routes/orderQueueRoutes"));
 // weekday limits, spending report, low money alerts
 app.use("/api", require("./xinsheng/routes/parentMoneyRoutes"));
 
+// parent macros + order history (CB69-50)
+app.use("/api", require("./leslie/routes/macrosRoutes"));
+
+// parent's own allergy words for a kid (custom allergies)
+app.use("/api", require("./leslie/routes/customAllergyRoutes"));
+
 // error handler
 app.use((err, req, res, next) => {
   console.error(err);
