@@ -80,6 +80,8 @@ export function uploadPhoto(token, photo, itemId, orderId) {
   form.append("orderId", orderId);
   return request("/photos", { method: "POST", body: form, token });
 }
+// Retake: delete the kid's own photo (the row and the picture file)
+export const deletePhoto = (token, photoId) => request(`/photos/${photoId}`, { method: "DELETE", token });
 // Live in the backend: change a kid's allergies (keys like "peanut") and daily food money
 export const setAllergies = (token, childId, allergens) =>
   request(`/children/${childId}/allergies`, { method: "PUT", body: { allergens }, token });
