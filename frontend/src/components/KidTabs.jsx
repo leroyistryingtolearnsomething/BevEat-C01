@@ -25,9 +25,9 @@ export default function KidTabs({ active }) {
       <button className="hk-tab">
         <span className="hk-tab__icon"><Bao size={30} /></span>Ask Bao
       </button>
-      <button className="hk-tab hk-tab--snap">
+      <Link className="hk-tab hk-tab--snap">
         <span className="hk-tab__icon"><TabIcon src={cameraIcon} size={28} /></span>Snap
-      </button>
+      </Link>
       <button className="hk-tab hk-tab--locked" disabled aria-label="Stars, coming soon" title="Coming soon">
         <span className="hk-tab__icon"><TabIcon src={starIcon} /></span>
         <span className="hk-tab__lock" aria-hidden="true"><img src={lockIcon} width="12" height="12" alt="" /></span>
