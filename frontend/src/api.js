@@ -148,13 +148,9 @@ export const getAskMum = (token, itemId) => request(`/ask-mum/${encodeURICompone
 // Live in the backend: My tray (Raghav). Sends ids and quantities only; the server prices it.
 export const quoteTray = (token, items) => request("/tray/quote", { method: "POST", body: { items }, token });
 
-// MOCK: replace when Leroy's checkout endpoint is ready (docs/api-contracts.md §2e).
-// The real one will be: request("/checkout", { method: "POST", body: { items }, token })
+// Pay for the tray from the wallet. The server prices it again, so only the dishes are sent.
 //   -> { orders: [{ orderId, stallId, stallName, queueNumber, total }], total, walletBalance }
-// Same arguments as the real call, but it never reaches the server, so nothing is saved or paid.
-export const checkout = async (_token, _items) => {
-  throw new ApiError(501, "Paying with your wallet is coming soon! Your tray is saved.");
-};
+export const checkout = (token, items) => request("/checkout", { method: "POST", body: { items }, token });
 
 // Live in the backend: parent macros + order history (Leslie, CB69-50). date / start look like "2026-11-06"
 export const getMacrosDay = (token, childId, date) =>

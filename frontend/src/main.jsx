@@ -5,6 +5,8 @@ import App from "./App.jsx";
 import "./styles.css";
 import "./macros.css";
 import "./glass.css";
+import "./kidOrderDone.css";
+import "./kidMotion.css";
 import { installGlassDrag } from "./glassDrag.js";
 
 installGlassDrag();
