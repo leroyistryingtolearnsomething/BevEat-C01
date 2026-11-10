@@ -62,6 +62,20 @@ const children = {
   8: { name: "Short days", allergies: [], limit: "5.00", wallet: "20.00", spent: "0",
        dayLimits: [0, 1, 2, 3, 4, 5, 6].map((d) => [d, "2.00"]) },
 };
+// Custom allergies (words a parent typed, migration 005). Child 20 has ONLY custom ones.
+children[20] = { name: "Custom only", allergies: [], custom: ["Watermelon", "Ice cream"], limit: "50.00", wallet: "50.00", spent: "0" };
+
+
+// Same rule as mentions_food() in migration 005: word start, ignore case, simple plurals,
+// and "no X" / "without X" doesn't count
+function mentionsFood(text, word) {
+  let w = word.trim().toLowerCase();
+  const stem = w.replace(/(ies|y|es|s)$/, "");
+  if (stem.length >= 3) w = stem;
+  return new RegExp("(?<!no )(?<!without )(?<![a-z0-9])" + w.replace(/[^a-z0-9]/g, "\\$&"), "i").test(text);
+}
+const customOf = (childId) => (children[childId] && children[childId].custom) || [];
+
 // One child per allergen: child 101 is allergic to allergen 1 (Peanuts) ... child 109 to Sesame
 for (let id = 1; id <= 9; id++) {
   children[100 + id] = { name: `Allergic to ${allergens[id].name}`, allergies: [[id, "avoid"]], limit: "50.00", wallet: "50.00", spent: "0" };
@@ -125,7 +139,19 @@ function fakeQuery(sql, params = []) {
   if (sql.includes("FROM child_allergies ca")) {
     if (state.failAllergies) throw new Error("allergy table unreachable (expected in this test)");
     const c = children[p1];
-    return { rows: (c ? c.allergies : []).map(([id, severity]) => ({ ...allergens[id], severity })) };
+    const preset = (c ? c.allergies : []).map(([id, severity]) => ({ ...allergens[id], severity }));
+    const custom = sql.includes("child_custom_allergies") ? customOf(p1).map((label) => ({ name: label, icon: "⚠️", severity: "avoid" })) : [];
+    return { rows: [...preset, ...custom] };
+  }
+  if (sql.includes("FROM v_child_custom_allergy_items")) {
+    return { rows: customOf(p1).flatMap((label) => dishes
+      .filter((d) => mentionsFood(`${d.name} ${d.description}`, label))
+      .map((d) => ({ item_id: d.item_id, label, icon: "⚠️" }))) };
+  }
+  if (sql.includes("FROM v_child_custom_allergy_add_ons")) {
+    return { rows: customOf(p1).flatMap((label) => addOns
+      .filter((a) => mentionsFood(a.name, label))
+      .map((a) => ({ add_on_id: a.add_on_id, label, icon: "⚠️" }))) };
   }
 
   // Raghav's stallModel
@@ -171,6 +197,10 @@ function fakeQuery(sql, params = []) {
     return { rows: d ? [{ ...dishRow(d), stall_name: stalls.find((s) => s.stall_id === d.stall_id).name }] : [] };
   }
 
+  // Leroy's parent locks (child_food_rules): none here. Tests that need a "Mum says no" dish
+  // replace Teammates.getFoodRules instead.
+  if (sql.includes("FROM child_food_rules")) return { rows: [] };
+
   throw new Error("Fake DB got an unexpected query: " + sql.slice(0, 80));
 }
 
@@ -188,4 +218,4 @@ function install() {
 // Which allergen names a dish really contains (for checking the API's answers)
 const dishAllergenNames = (itemId) => allergenNames(dishes.find((d) => d.item_id === itemId).allergenIds);
 
-module.exports = { install, state, allergens, dishes, children, stalls, dishAllergenNames };
+module.exports = { install, state, allergens, dishes, children, stalls, dishAllergenNames, mentionsFood };

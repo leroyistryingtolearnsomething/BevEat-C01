@@ -86,6 +86,23 @@ export const deletePhoto = (token, photoId) => request(`/photos/${photoId}`, { m
 export const setAllergies = (token, childId, allergens) =>
   request(`/children/${childId}/allergies`, { method: "PUT", body: { allergens }, token });
 
+// Live in the backend: the parent's Menu screen. Every dish with allergyBlocked and locked flags,
+// and lock / unlock a dish (the kid's menu then shows it as "Mum says no")
+export const getChildMenu = (token, childId) => request(`/children/${childId}/menu`, { token });
+
+export const setDishLocked = (token, childId, itemId, locked) =>
+  request(`/children/${childId}/blocked-items/${itemId}`, { method: "PUT", body: { locked }, token });
+
+// Live in the backend: allergies the parent types in themselves (Leslie, migration 005)
+// list/add -> { customAllergies: [{ id, label, icon, blockedDishes: ["Dish name", ...] }] }
+export const listCustomAllergies = (token, childId) => request(`/children/${childId}/custom-allergies`, { token });
+
+export const addCustomAllergy = (token, childId, label) =>
+  request(`/children/${childId}/custom-allergies`, { method: "POST", body: { label }, token });
+
+export const removeCustomAllergy = (token, childId, customAllergyId) =>
+  request(`/children/${childId}/custom-allergies/${customAllergyId}`, { method: "DELETE", token });
+
 export const setDailyLimit = (token, childId, dailyLimitCents) =>
   request(`/children/${childId}/daily-limit`, { method: "PUT", body: { dailyLimitCents }, token });
 
@@ -133,10 +150,17 @@ export const getAskMum = (token, itemId) => request(`/ask-mum/${encodeURICompone
 // Live in the backend: My tray (Raghav). Sends ids and quantities only; the server prices it.
 export const quoteTray = (token, items) => request("/tray/quote", { method: "POST", body: { items }, token });
 
-// MOCK: replace when Leroy's checkout endpoint is ready (docs/api-contracts.md §2e).
-// The real one will be: request("/checkout", { method: "POST", body: { items }, token })
+// Pay for the tray from the wallet. The server prices it again, so only the dishes are sent.
 //   -> { orders: [{ orderId, stallId, stallName, queueNumber, total }], total, walletBalance }
-// Same arguments as the real call, but it never reaches the server, so nothing is saved or paid.
-export const checkout = async (_token, _items) => {
-  throw new ApiError(501, "Paying with your wallet is coming soon! Your tray is saved.");
-};
+export const checkout = (token, items) => request("/checkout", { method: "POST", body: { items }, token });
+
+// Live in the backend: parent macros + order history (Leslie, CB69-50). date / start look like "2026-11-06"
+export const getMacrosDay = (token, childId, date) =>
+  request(`/children/${childId}/macros/day${date ? `?date=${date}` : ""}`, { token });
+
+export const getMacrosWeek = (token, childId, start) =>
+  request(`/children/${childId}/macros/week${start ? `?start=${start}` : ""}`, { token });
+
+// range: "this_week" | "last_week" | "this_month"
+export const getChildOrders = (token, childId, range = "this_week") =>
+  request(`/children/${childId}/orders?range=${range}`, { token });

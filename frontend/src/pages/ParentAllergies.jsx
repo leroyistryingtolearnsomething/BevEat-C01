@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { setAllergies } from "../api.js";
+import CustomAllergies from "../components/CustomAllergies.jsx";
 import { ALLERGENS, KidSwitcher, PageHeader, ParentTabs, useKids } from "../components/ParentShell.jsx";
 import tickIcon from "../assets/figma/tick.svg";
 import plusIcon from "../assets/figma/plus-dark.svg";
@@ -72,6 +73,8 @@ export default function ParentAllergies() {
           <button className="btn btn--primary" onClick={save} disabled={status.busy}>
             {status.busy ? "Saving…" : "Save allergies"}
           </button>
+
+          <CustomAllergies token={token} kid={kid} />
         </>
       )}
 

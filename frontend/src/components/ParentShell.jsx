@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { listChildren } from "../api.js";
 import { clearSession, getSession } from "../session.js";
+import { refractFilter } from "../glassRefract.js";
 import BackButton from "./BackButton.jsx";
 import homeIcon from "../assets/figma/tab-home.svg";
 import homeOnIcon from "../assets/figma/tab-home-on.svg";
 import allergiesIcon from "../assets/figma/tab-allergies.svg";
 import allergiesOnIcon from "../assets/figma/tab-allergies-on.svg";
 import menuIcon from "../assets/figma/tab-menu.svg";
+import menuOnIcon from "../assets/figma/tab-menu-on.svg";
 import limitIcon from "../assets/figma/tab-limit.svg";
 import limitOnIcon from "../assets/figma/tab-limit-on.svg";
 
@@ -62,25 +64,106 @@ export function KidSwitcher({ kids, kid, onSelect }) {
 const TABS = [
   { key: "home", label: "Home", to: "/parent/home", icon: homeIcon, iconOn: homeOnIcon },
   { key: "allergies", label: "Allergies", to: "/parent/allergies", icon: allergiesIcon, iconOn: allergiesOnIcon },
-  { key: "menu", label: "Menu", icon: menuIcon }, // shortcut: no menu preview yet, add `to` when that screen exists
+  { key: "menu", label: "Menu", to: "/parent/menu", icon: menuIcon, iconOn: menuOnIcon },
   { key: "limit", label: "Limit", to: "/parent/limit", icon: limitIcon, iconOn: limitOnIcon },
 ];
 
+// The glass capsule is driven by a spring (not a CSS transition) so it follows the finger continuously, stretches
+// with speed, stays inside the bar, and can be grabbed mid-flight, like the iOS tab bar.
+const PAD = 6;
+const CANCEL_PULL = 70; // let go this far above/below the bar and nothing is selected
+const reduceMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 export function ParentTabs({ active, kidId }) {
+  const navigate = useNavigate();
+  const nav = useRef(null);
+  const pill = useRef(null);
+  const sim = useRef({ x: null, y: 0, vx: 0, vy: 0, tx: 0, ty: 0, raf: 0, last: 0 });
+  const [over, setOver] = useState(null); // tab under the finger or mouse
+  const [down, setDown] = useState(false);
+  const activeIndex = TABS.findIndex((t) => t.key === active);
+  const lens = over ?? activeIndex;
+  const href = (t) => (kidId ? `${t.to}?kid=${kidId}` : t.to);
+
+  const itemW = () => (nav.current.clientWidth - PAD * 2) / TABS.length;
+  const draw = (s, stretch = 1) => {
+    pill.current.style.transform = `translate(${s.x}px, ${s.y}px) scale(${stretch}, ${1 / Math.sqrt(stretch)})`;
+  };
+  const tick = (t) => {
+    const s = sim.current;
+    const dt = Math.min(0.032, (t - s.last) / 1000 || 0.016);
+    s.last = t;
+    s.vx += (380 * (s.tx - s.x) - 28 * s.vx) * dt; // spring: slightly bouncy, settles fast
+    s.vy += (380 * (s.ty - s.y) - 28 * s.vy) * dt;
+    s.x += s.vx * dt;
+    s.y += s.vy * dt;
+    const still = Math.abs(s.tx - s.x) < 0.1 && Math.abs(s.ty - s.y) < 0.1 && Math.abs(s.vx) + Math.abs(s.vy) < 5;
+    if (still) { Object.assign(s, { x: s.tx, y: s.ty, vx: 0, vy: 0, raf: 0 }); return draw(s); }
+    draw(s, 1 + Math.min(Math.hypot(s.vx, s.vy) / 2600, 0.1)); // stretches in the direction of travel
+    s.raf = requestAnimationFrame(tick);
+  };
+  const aim = (x, y = 0) => {
+    const s = sim.current;
+    s.tx = x; s.ty = y;
+    if (s.x === null || reduceMotion()) { Object.assign(s, { x, y, vx: 0, vy: 0 }); return draw(s); }
+    if (!s.raf) { s.last = performance.now(); s.raf = requestAnimationFrame(tick); }
+  };
+  const rest = (i) => aim(PAD + itemW() * i);
+
+  // not dragging: rest on the hovered/active tab. dragging: follow the finger (set in follow())
+  useEffect(() => { if (!down) rest(lens); }, [lens, down]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => cancelAnimationFrame(sim.current.raf), []);
+  useEffect(() => { // Chromium: the bar bends what is behind its rim, like iOS 26
+    const r = nav.current.getBoundingClientRect();
+    const f = refractFilter(r.width, r.height, 36, 16, 18);
+    if (f) nav.current.style.backdropFilter = `${f} blur(8px) saturate(1.8)`;
+  }, []);
+
+  const indexAt = (e) => {
+    const r = nav.current.getBoundingClientRect();
+    return Math.min(TABS.length - 1, Math.max(0, Math.floor(((e.clientX - r.left) / r.width) * TABS.length)));
+  };
+  const pull = (e) => { // how far the finger is above/below the bar's middle
+    const r = nav.current.getBoundingClientRect();
+    const dy = e.clientY - (r.top + r.height / 2);
+    return Math.sign(dy) * Math.max(0, Math.abs(dy) - r.height / 2);
+  };
+  const follow = (e) => {
+    const r = nav.current.getBoundingClientRect();
+    const lo = PAD, hi = r.width - PAD - itemW();
+    const x = e.clientX - r.left - itemW() / 2;
+    aim(Math.min(hi, Math.max(lo, x)), 0); // stays inside the bar: no overshoot past the ends, no lifting out of it
+  };
+  const move = (e) => {
+    if (down) { follow(e); setOver(indexAt(e)); }
+    else if (e.pointerType === "mouse") setOver(indexAt(e));
+  };
+  const release = (e) => {
+    if (!down) return;
+    const i = indexAt(e);
+    const cancelled = Math.abs(pull(e)) > CANCEL_PULL; // dragged away: springs back, selects nothing
+    setDown(false);
+    setOver(null);
+    if (!cancelled && i !== activeIndex) navigate(href(TABS[i]));
+    else rest(activeIndex);
+  };
+
   return (
-    <nav className="tabs" aria-label="Parent app">
-      {TABS.map((t) => {
+    <nav
+      ref={nav} className="tabs" aria-label="Parent app" data-dragging={down || undefined}
+      onPointerDown={(e) => { if (e.button) return; e.currentTarget.setPointerCapture(e.pointerId); setDown(true); setOver(indexAt(e)); follow(e); }}
+      onPointerMove={move} onPointerUp={release}
+      onPointerCancel={() => { setDown(false); setOver(null); }} onPointerLeave={() => !down && setOver(null)}
+      // a pointer tap is handled on release; keyboard activation (detail 0) still follows the link
+      onClick={(e) => { if (e.detail) e.preventDefault(); }}
+    >
+      <span ref={pill} className="tabs__lens" aria-hidden="true" />
+      {TABS.map((t, i) => {
         const on = t.key === active;
-        const inner = (
-          <>
-            <span className="tabs__pill"><img src={on ? t.iconOn : t.icon} alt="" width="30" height="30" /></span>
-            {t.label}
-          </>
-        );
-        if (!t.to) return <span key={t.key} className="tabs__item" aria-disabled="true" title="Coming soon">{inner}</span>;
         return (
-          <Link key={t.key} to={kidId ? `${t.to}?kid=${kidId}` : t.to} className="tabs__item" aria-current={on ? "page" : undefined}>
-            {inner}
+          <Link key={t.key} to={href(t)} className="tabs__item" aria-current={on ? "page" : undefined} data-lens={i === lens || undefined} draggable="false">
+            <span className="tabs__pill"><img src={i === lens ? t.iconOn : t.icon} alt="" width="30" height="30" draggable="false" /></span>
+            {t.label}
           </Link>
         );
       })}

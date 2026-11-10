@@ -33,10 +33,17 @@ async function getSpentToday(childId){
 async function getRules(childId) {
     const {rows} = await pool.query
     (
-        `SELECT a.name, a.icon, ca.severity
-        FROM child_allergies ca
-        JOIN allergens a ON a.allergen_id = ca.allergen_id
-        WHERE ca.child_id = $1 ORDER BY a.name`, [childId]
+        `SELECT name, icon, severity FROM (
+            SELECT a.name, a.icon, ca.severity, 0 AS custom
+            FROM child_allergies ca
+            JOIN allergens a ON a.allergen_id = ca.allergen_id
+            WHERE ca.child_id = $1
+            UNION ALL
+            -- allergies the parent typed in themselves (Leslie, migration 005)
+            SELECT cc.label, cc.icon, 'avoid', 1
+            FROM child_custom_allergies cc
+            WHERE cc.child_id = $1) r
+        ORDER BY custom, name`, [childId]
     );
     return rows; // to return all the allergies from the whole array
 }
@@ -49,10 +56,9 @@ async function getTopPics(childId, limit = 10) {
         p.photo_id, m.item_id, m.name, m.price, p.image_url,
         COUNT(v.user_id) AS likes,
         m.item_id IN (
-        SELECT mia.item_id
-        FROM menu_item_allergens mia
-        JOIN child_allergies ca ON ca.allergen_id = mia.allergen_id
-        WHERE ca.child_id = $1)
+        SELECT b.item_id
+        FROM v_child_blocked_items b -- preset + custom allergies (migration 005)
+        WHERE b.child_id = $1)
         AS blocked
         FROM photos p
         JOIN menu_items m ON m.item_id = p.item_id
@@ -72,10 +78,9 @@ async function getStalls(childId) {
     (
         `SELECT s.stall_id, s.name, s.unit_no, s.cover_image_url,
          COUNT(m.item_id) FILTER (WHERE m.item_id NOT IN (
-         SELECT mia.item_id
-            FROM menu_item_allergens mia
-            JOIN child_allergies ca ON ca.allergen_id = mia.allergen_id
-                WHERE ca.child_id = $1)) AS safe_picks
+         SELECT b.item_id
+            FROM v_child_blocked_items b -- preset + custom allergies (migration 005)
+                WHERE b.child_id = $1)) AS safe_picks
             FROM stalls s
             LEFT JOIN menu_items m ON m.stall_id = s.stall_id AND
             m.is_available

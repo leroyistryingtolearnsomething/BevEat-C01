@@ -45,6 +45,10 @@ export default function ParentHome() {
           <KidSwitcher kids={kids} kid={kid} onSelect={select} />
           <ParentAlerts token={token} />
           <Today kid={kid} />
+          <Link to={`/parent/macros?kid=${kid.id}`} className="m-home-link">
+            <span>{kid.name}'s food and nutrients</span>
+            <span aria-hidden="true">›</span>
+          </Link>
 
           <div className="seg" role="group" aria-label="Show">
             {[["allergies", "Allergies"], ["limit", "Daily limit"]].map(([key, label]) => (

@@ -18,6 +18,9 @@ app.use("/api", require("./leroy/routes/parentAuthRoutes"));
 // parent adds a kid
 app.use("/api", require("./leroy/routes/childRoutes"));
 
+// parent locks dishes on a kid's menu
+app.use("/api", require("./leroy/routes/foodRuleRoutes"));
+
 // NETS QR wallet top-ups
 app.use("/api", require("./leroy/routes/topUpRoutes"));
 
@@ -36,11 +39,20 @@ app.use("/api", require("./raghav/routes/menuRoutes"));
 // tray quote (Raghav)
 app.use("/api", require("./raghav/routes/trayRoutes"));
 
+// pay for the tray from the wallet (Leroy)
+app.use("/api", require("./leroy/routes/checkoutRoutes"));
+
 // live queue + order ready ping
 app.use("/api", require("./xinsheng/routes/orderQueueRoutes"));
 
 // weekday limits, spending report, low money alerts
 app.use("/api", require("./xinsheng/routes/parentMoneyRoutes"));
+
+// parent macros + order history (CB69-50)
+app.use("/api", require("./leslie/routes/macrosRoutes"));
+
+// parent's own allergy words for a kid (custom allergies)
+app.use("/api", require("./leslie/routes/customAllergyRoutes"));
 
 // error handler
 app.use((err, req, res, next) => {
