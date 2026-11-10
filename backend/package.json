@@ -9,7 +9,7 @@
     "test": "node test/childAuth.test.js && node test/parentAuth.test.js && node test/addChild.test.js && node test/topUp.test.js && node test/orderQueue.test.js && node test/pinLockout.test.js && node test/parentMoney.test.js && node test/stalls.test.js && node test/dishSafety.test.js && node test/menu.test.js && node test/askMum.test.js && node test/homePics.test.js && node test/tray.test.js && node test/checkout.test.js && node test/foodRules.test.js && node test/macros.test.js && node test/customAllergy.test.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^1.6.0",
+    "@google/genai": "^3.0.0",
     "@supabase/supabase-js": "^2.119.0",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { getMyDishes, uploadPhoto } from "../api.js";
+import { Link, useSearchParams } from "react-router-dom";
+import { deletePhoto, getMyDishes, uploadPhoto } from "../api.js";
 import { getSession } from "../session.js";
 import BackCircle from "../components/menu/BackCircle.jsx"
 import {useCamera, snapVideo, shrinkFile} from "../camera.js"
@@ -19,6 +19,7 @@ export default function Snap() { // a page is a function that returns html
     const [facing, setFacing] = useState("environment");
     const [photo, setPhoto] = useState(null);
     const [preview, setPreview] = useState("");
+    const [result, setResult] = useState(null); //what the upload sent back: {photo, check}
     const camError = useCamera(videoRef, facing, !photo && dishes?.length > 0);
     useEffect(() => {
         getMyDishes(token)
@@ -52,7 +53,10 @@ function keepPhoto(blob) {
 
   const dish = dishes.find((d) => d.item === itemId);   // the picked dish, which also has its order number
   uploadPhoto(token, blob, dish.item, dish.order)
-    .then(() => setStatus("sent"))
+    .then((data) => {
+  setStatus("sent");
+  setResult(data);      // this makes the page switch to the "AI says yum" screen
+})
     .catch(showError);
 }
 
@@ -61,6 +65,82 @@ function showError(err) {
   setMessage(err.message);
 }
 
+function retake(){
+  if (result) deletePhoto(token, result.photo.photo).catch(() =>
+  {});
+    setResult(null);
+    setPhoto(null);
+    setStatus("");
+}
+
+if (result) {
+  const check = result.check;                               // the AI's 3 answers (null if Bao couldn't check)
+  const passed = result.photo.aiStatus === "passed";
+  const dish = dishes.find((d) => d.item === itemId);       // for its name
+    const rows = check ? [
+    {
+      ok: check.isFood,
+      title: check.isFood ? "It's food!" : "Hmm, that's not food",
+      note: `Bao is ${check.confidence}% sure`,
+    },
+    {
+      ok: check.matchesDish,
+      title: check.matchesDish ? `Looks like ${dish.dish}` : `Doesn't look like ${dish.dish}`,
+      note: check.matchesDish ? "Matches what you ordered" : `Bao sees: ${check.label}`,
+    },
+    {
+      ok: !check.hasFaces,
+      title: check.hasFaces ? "There's a face in the pic" : "No faces in the pic",
+      note: check.hasFaces ? "Take one with just the food" : "Keeps everyone private",
+    },
+  ] : [{
+    ok: false, title: "Bao couldn't check your pic", note: "Please try again in a moment"
+  }, ];
+  
+
+  return (
+    <main className="screen kid yum-kid">
+      <div className="blob blob--yum" aria-hidden="true" />
+      <div className="yum-head"><BackCircle to="/kid/home" /></div>
+
+      <div className="yum-polaroid">
+        <span className={passed ? "yum-sticker" : "yum-sticker yum-sticker--bad"}>
+          {passed ? "✓ YUM! It's food" : "✕ Hmm, try again"}
+        </span>
+        <div className="yum-polaroid__card">
+          <img src={preview} alt="Your photo" />
+          <p>My {dish.dish}!</p>
+        </div>
+      </div>
+
+      <section className="yum-checks"> 
+      {
+        rows.map((r) => (
+          <div key={r.title} className={r.ok ? "yum-row" : "yum-row yum-row--bad"}>
+            <span className={r.ok ? "yum-dot" : "yum-dot yum-dot--bad"}>{r.ok ? "✓" : "✕"}</span>
+            <div>
+              <h3>{r.title}</h3>
+              <p>{r.note}</p>
+            </div>
+          </div>
+        ))
+      }
+      
+      </section>
+
+      <div className="yum-footer">
+      {passed ? (
+          <>
+            <Link to="/kid/home" className="yum-post">Post my pic!</Link>
+            <button className="yum-retake" onClick={retake}>Retake</button>
+          </>
+        ) : (
+          <button className="yum-post" onClick={retake}>Try again 📷</button>
+        )}
+      </div>
+    </main>
+  );
+}
 
   //That’s a whole working page. React calls the function and puts what it returns on the screen.
   // The HTML-looking part is called JSX. It’s basically HTML, except class is written className.
