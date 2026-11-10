@@ -103,10 +103,11 @@ export default function Tray() {
     setPaying(true);
     setPayMessage("");
     try {
-      // Leroy's checkout prices the tray again on the server (the same priceTray as the quote)
-      await checkout(token, toQuoteItems(lines));
+      // the server prices the tray again (the same priceTray as the quote) and takes the money
+      const done = await checkout(token, toQuoteItems(lines));
       saveTray(token, []);
-      navigate("/kid/home"); // 07 Pickup number isn't built yet, so go Home for now
+      // replace: Back from the success page must not return to an empty tray
+      navigate("/kid/order-done", { replace: true, state: { done } });
     } catch (err) {
       setPayMessage(err.message);
     } finally {

@@ -1,0 +1,68 @@
+/* Motion for the kid app. Every rule here is inside "no-preference", so with reduced motion the app is simply still.
+   Purposes: screens settle in (spatial consistency), presses answer (feedback), the money bar fills (state), and the
+   order-successful page celebrates (delight: it is rare, so it gets the budget). Only transform and opacity move.
+   Curve: strong ease-out. Nothing on a screen the kid sees dozens of times a day lasts longer than 300ms. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .kid { --k-ease-out: cubic-bezier(0.23, 1, 0.32, 1); --k-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+  /* --- screens: the top-level blocks rise in one after another (first 8 only, 40ms apart) --- */
+  @keyframes k-rise { from { opacity: 0; transform: translateY(12px); } }
+  .kid:not(.od) > :not(.blob, .hk-tabbar, .km-footer, .km-undo, .od-confetti, [popover], dialog) {
+    animation: k-rise 280ms var(--k-ease-out) both; animation-delay: calc(var(--i, 0) * 40ms);
+  }
+  .kid > :nth-child(2) { --i: 1; } .kid > :nth-child(3) { --i: 2; } .kid > :nth-child(4) { --i: 3; } .kid > :nth-child(5) { --i: 4; }
+  .kid > :nth-child(6) { --i: 5; } .kid > :nth-child(7) { --i: 6; } .kid > :nth-child(n+8) { --i: 7; }
+
+  /* --- dish grids and tray rows: each card settles in after the one before it --- */
+  .km-grid > *, .hk-pics__row > *, .km-tray-row { animation: k-rise 260ms var(--k-ease-out) both; animation-delay: calc(var(--j, 0) * 35ms); }
+  :is(.km-grid, .hk-pics__row) > :nth-child(2) { --j: 1; } :is(.km-grid, .hk-pics__row) > :nth-child(3) { --j: 2; }
+  :is(.km-grid, .hk-pics__row) > :nth-child(4) { --j: 3; } :is(.km-grid, .hk-pics__row) > :nth-child(5) { --j: 4; }
+  :is(.km-grid, .hk-pics__row) > :nth-child(6) { --j: 5; } :is(.km-grid, .hk-pics__row) > :nth-child(n+7) { --j: 6; }
+
+  /* --- the money bar fills from empty to what is left --- */
+  @keyframes k-fill { from { transform: scaleX(0); } }
+  .hk-meter__fill, .km-meter__fill { transform-origin: left center; animation: k-fill 650ms var(--k-ease-out) 180ms both; }
+
+  /* --- press feedback: everything tappable answers within 120ms --- */
+  .kid :is(.km-big, .km-back, .km-chip, .km-tray-remove, .km-heart, .hk-tab, a.hk-stall, a.km-card, .km-qty button, .km-tray-qty button) {
+    transition: transform 140ms var(--k-ease-out), filter 140ms ease-out, background-color 200ms ease-out;
+  }
+  .kid :is(.km-big, .km-back, .km-chip, .km-tray-remove, .km-heart, a.hk-stall, a.km-card):active:not(:disabled) { transform: scale(0.97); }
+  .kid .hk-tab:active { transform: scale(0.93); }
+  /* the open tab's glass capsule pops in when a tab screen opens */
+  @keyframes k-capsule { from { opacity: 0; transform: scale(0.85); } }
+  .kid .hk-tab--active { animation: k-capsule 320ms var(--k-spring) 120ms both; }
+
+  /* hover lift only where there is a real mouse; it is subtle on purpose (seen dozens of times a day) */
+  @media (hover: hover) and (pointer: fine) {
+    .kid :is(a.hk-stall, a.km-card):hover { transform: translateY(-2px); }
+  }
+
+  /* --- toasts and menus come from where they live --- */
+  @keyframes k-toast { from { opacity: 0; transform: translate(-50%, 14px); } }
+  .kid.km-screen > .km-undo { animation: k-toast 220ms var(--k-ease-out) both; }
+  @keyframes k-menu { from { opacity: 0; transform: scale(0.95); } }
+  .kid-menu:popover-open { transform-origin: top left; animation: k-menu 160ms var(--k-ease-out) both; }
+
+  /* --- Order successful: Bao pops in and hops twice, the title and pickup number follow, the bar fills, confetti bursts --- */
+  @keyframes k-pop-in { from { opacity: 0; transform: scale(0.4); } }
+  @keyframes k-hop { 0% { transform: translateY(0); } 35% { transform: translateY(-14px) rotate(-3deg); } 70% { transform: translateY(0) rotate(2deg); } 100% { transform: none; } }
+  @keyframes k-burst { 0% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(0.6); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1); } }
+  .od-bao { animation: k-pop-in 520ms var(--k-spring) 100ms both, k-hop 700ms var(--k-ease-out) 640ms 2; }
+  .od-title { animation: k-rise 360ms var(--k-ease-out) 260ms both; }
+  .od-sub { animation: k-rise 360ms var(--k-ease-out) 340ms both; }
+  .od-pills { animation: k-pop-in 420ms var(--k-spring) 460ms both; }
+  .od-paid { animation: k-rise 360ms var(--k-ease-out) 560ms both; }
+  .od-status { animation: k-rise 360ms var(--k-ease-out) 640ms both; }
+  .od-progress i { transform-origin: left center; animation: k-fill 700ms var(--k-ease-out) 900ms both; }
+  .od-actions { animation: k-rise 360ms var(--k-ease-out) 760ms both; }
+  .od-confetti i { animation: k-burst 1400ms var(--k-ease-out) both; animation-delay: calc(380ms + var(--i) * 18ms); }
+  .od-confetti i:nth-child(1) { --dx: -150px; --dy: -70px; --rot: 200deg; } .od-confetti i:nth-child(2) { --dx: -110px; --dy: 60px; --rot: -160deg; }
+  .od-confetti i:nth-child(3) { --dx: -60px; --dy: -120px; --rot: 120deg; } .od-confetti i:nth-child(4) { --dx: 130px; --dy: -80px; --rot: -220deg; }
+  .od-confetti i:nth-child(5) { --dx: 100px; --dy: 70px; --rot: 180deg; } .od-confetti i:nth-child(6) { --dx: 60px; --dy: -130px; --rot: -120deg; }
+  .od-confetti i:nth-child(7) { --dx: -170px; --dy: 10px; --rot: 90deg; } .od-confetti i:nth-child(8) { --dx: 165px; --dy: 0; --rot: -90deg; }
+  .od-confetti i:nth-child(9) { --dx: -30px; --dy: 100px; --rot: 240deg; } .od-confetti i:nth-child(10) { --dx: 40px; --dy: 105px; --rot: -240deg; }
+  .od-confetti i:nth-child(11) { --dx: -90px; --dy: -150px; --rot: 160deg; } .od-confetti i:nth-child(12) { --dx: 90px; --dy: -150px; --rot: -160deg; }
+  .od-confetti i:nth-child(13) { --dx: -140px; --dy: -20px; --rot: 60deg; } .od-confetti i:nth-child(14) { --dx: 140px; --dy: 30px; --rot: -60deg; }
+}
