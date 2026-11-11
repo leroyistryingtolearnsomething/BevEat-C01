@@ -473,3 +473,23 @@ span.km-big { cursor: default; }
   flex-shrink: 0; min-width: 44px; min-height: 44px; padding: 8px 16px; border-radius: 14px; border: 0;
   background: var(--k-sun); color: var(--k-ink); font-family: var(--km-font); font-size: 16px; font-weight: 600; cursor: pointer;
 }
+
+/* ========== Cart button on kid Home (TrayButton.jsx) ==========
+   Sticker Pop round button: sun fill, ink outline and the hard ink shadow, 48px so it's an easy tap */
+.km-traybtn {
+  position: relative; flex: none; display: grid; place-items: center;
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--k-sun); border: var(--k-line); box-shadow: 0 3px 0 var(--k-ink);
+  font-size: 24px; line-height: 1; text-decoration: none;
+}
+.km-traybtn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--k-ink); }
+.km-traybtn:focus-visible { outline: 3px solid var(--k-ink); outline-offset: 3px; }
+.km-traybtn__badge {
+  position: absolute; top: -6px; right: -6px; min-width: 22px; height: 22px; padding: 0 5px;
+  display: grid; place-items: center; border-radius: 11px;
+  background: var(--k-coral); color: var(--k-ink); border: 2px solid var(--k-ink); /* ink on coral: 6:1 */
+  font-family: var(--km-font); font-size: 12px; font-weight: 700;
+}
+@media (prefers-reduced-motion: reduce) {
+  .km-traybtn:active { transform: none; }
+}
