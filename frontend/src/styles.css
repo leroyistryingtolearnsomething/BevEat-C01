@@ -168,15 +168,15 @@ legend { padding: 0; margin-bottom: 8px; }
   padding: 18px 18px 18px 16px; border-radius: 22px; text-decoration: none;
   transition: transform 120ms ease-out, box-shadow 120ms ease-out;
 }
-.choice__icon { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; }
+.choice__icon { flex: none; display: grid; place-items: center; width: 56px; height: 56px; } /* the Bao sits straight on the button, no badge behind it */
 .choice__text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .choice__text strong { font-family: "Fredoka", system-ui, sans-serif; font-size: 21px; font-weight: 600; }
 .choice__text span { font-size: 14px; line-height: 1.35; }
 .choice--parent { background: var(--p-green); color: #fff; box-shadow: 0 6px 16px rgb(35 122 51 / 0.25); }
-.choice--parent .choice__icon { background: rgb(255 255 255 / 0.16); }
+
 .choice--parent .choice__text span { color: var(--p-mint); }
 .choice--kid { background: var(--k-sun); color: var(--k-ink); border: var(--k-line); box-shadow: var(--k-shadow); }
-.choice--kid .choice__icon { background: #fff; border: var(--k-line); }
+
 .choice:active { transform: translateY(2px); }
 .choice--kid:active { box-shadow: 0 2px 0 var(--k-ink); }
 
@@ -542,18 +542,6 @@ a.hk-stall:active { transform: scale(.97); }
   font-size: 26px;
 }
 
-/* a tab that isn't built yet: faded, can't be tapped, small lock badge on its icon */
-.hk-tab--locked { position: relative; cursor: not-allowed; }
-.hk-tab--locked .hk-tab__icon { opacity: 0.35; filter: grayscale(1); }
-.hk-tab--locked .hk-tab__label { opacity: 0.5; }
-/* the badge sits next to the icon (not inside it) so the fading above doesn't fade the lock too */
-.hk-tab__lock {
-  position: absolute; top: 16px; left: calc(50% + 8px);
-  display: grid; place-items: center;
-  width: 20px; height: 20px; border-radius: 50%;
-  background: #fff; border: 2px solid var(--k-ink);
-  font-size: 10px;
-}
 
 /* ---------- Kid Wallet tab ---------- */
 .hk-tab__svg { flex: none; background: currentColor; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }
@@ -792,3 +780,22 @@ button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
   font-family: "Fredoka", system-ui, sans-serif; font-size: 15px; font-weight: 600; color: var(--k-soft);
 }
 .yum-retake--main { color: var(--k-ink); font-size: 17px; text-decoration: underline; }
+
+/* ---------- "Being built" card for tabs that aren't ready (components/ComingSoon.jsx) ---------- */
+/* .kid > * sets position: relative on every child of the screen; a modal dialog must stay fixed */
+.kid > dialog.soon, dialog.soon {
+  position: fixed; inset: 0; width: min(92vw, 360px); max-width: none; margin: auto auto calc(24px + env(safe-area-inset-bottom));
+  padding: 0; border: 0; background: transparent; color: var(--k-ink); overflow: visible;
+}
+.soon::backdrop { background: rgb(31 32 65 / 0.45); }
+.soon__card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 20px 20px; text-align: center;
+  background: #fff; border: var(--k-line); border-radius: 28px; box-shadow: var(--k-shadow);
+}
+.soon__card h2 { margin: 4px 0 0; font-size: 24px; font-weight: 600; line-height: 1.15; }
+.soon__card p { margin: 0 0 10px; font-size: 16px; line-height: 1.4; color: var(--k-muted); text-wrap: balance; }
+.soon__ok {
+  width: 100%; min-height: 52px; border: var(--k-line); border-radius: 18px; background: var(--k-sun); color: var(--k-ink);
+  font: 600 19px "Fredoka", system-ui, sans-serif; box-shadow: var(--k-shadow); cursor: pointer;
+}
+.soon__ok:active { transform: translateY(2px); }

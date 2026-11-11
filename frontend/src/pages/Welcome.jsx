@@ -17,7 +17,7 @@ export default function Welcome() {
       <section className="welcome__who" aria-labelledby="who">
         <h2 id="who">Who's using KiddyEats?</h2>
         <Link to="/parent/login" className="choice choice--parent">
-          <span className="choice__icon"><Icon name="users" size={28} /></span>
+          <span className="choice__icon"><Bao size={56} elder /></span>
           <span className="choice__text">
             <strong>I'm a parent</strong>
             <span>Set limits, block foods and top up the wallet</span>
@@ -25,7 +25,7 @@ export default function Welcome() {
           <Icon name="chevronRight" />
         </Link>
         <Link to="/kid/login" className="choice choice--kid">
-          <span className="choice__icon"><Bao size={45} /></span>
+          <span className="choice__icon"><Bao size={56} /></span>
           <span className="choice__text">
             <strong>I'm a kid</strong>
             <span>Pick your food and pay with your wallet</span>

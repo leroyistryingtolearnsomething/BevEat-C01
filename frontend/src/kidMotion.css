@@ -40,6 +40,12 @@
   @keyframes k-menu { from { opacity: 0; transform: scale(0.95); } }
   .kid-menu:popover-open { transform-origin: top left; animation: k-menu 160ms var(--k-ease-out) both; }
 
+  /* --- the "being built" card slides up from the bottom, the backdrop fades in (opening is rare, so it can have a little life) --- */
+  @keyframes k-sheet { from { opacity: 0; transform: translateY(24px) scale(0.97); } }
+  @keyframes k-dim { from { opacity: 0; } }
+  .soon[open] { animation: k-sheet 260ms var(--k-ease-out) both; }
+  .soon[open]::backdrop { animation: k-dim 200ms ease-out both; }
+
   /* --- Order successful: Bao pops in and hops twice, the title and pickup number follow, the bar fills, confetti bursts --- */
   @keyframes k-pop-in { from { opacity: 0; transform: scale(0.4); } }
   @keyframes k-hop { 0% { transform: translateY(0); } 35% { transform: translateY(-14px) rotate(-3deg); } 70% { transform: translateY(0) rotate(2deg); } 100% { transform: none; } }
