@@ -115,7 +115,7 @@ button { cursor: pointer; }
 }
 .btn:disabled { opacity: 0.6; cursor: default; }
 .btn--primary { background: var(--p-green); color: #fff; }
-.btn--primary:not(:disabled):hover { background: var(--p-green-dark); }
+.btn--primary:not(:disabled):active { background: var(--p-green-dark); }
 .btn--secondary { background: #fff; color: var(--p-ink); border: 1.5px solid var(--p-border); }
 .btn--text { min-height: 44px; background: none; color: var(--p-green); }
 
@@ -255,7 +255,7 @@ legend { padding: 0; margin-bottom: 8px; }
   display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 10px;
   border: 0; border-radius: 10px; background: none; color: var(--p-ink); font-size: 15px; font-weight: 700; text-decoration: none;
 }
-.account-menu__item:hover { background: var(--p-bg); }
+.account-menu__item:active { background: var(--p-bg); }
 .account-menu__item:focus-visible { outline: 3px solid var(--p-green); outline-offset: -3px; }
 .hello h1 { font-size: 22px; }
 .hello .lead { margin-top: 2px; font-size: 14px; }
@@ -571,7 +571,7 @@ button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
   width: 100%; min-height: 44px; padding: 0 10px; border: 0; border-radius: 12px; background: none; text-align: left;
   font: inherit; font-size: 16px; font-weight: 600; color: var(--k-error); cursor: pointer;
 }
-.kid-menu__item:hover { background: var(--k-bg); }
+.kid-menu__item:active { background: var(--k-bg); }
 .kid .kw-confirm { color: var(--k-ink); border: var(--k-line); box-shadow: var(--k-shadow); text-align: center; }
 .kid .kw-confirm p { color: var(--k-muted); }
 .kid .kw-confirm .btn--kid { max-width: none; }
