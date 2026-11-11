@@ -1,5 +1,6 @@
 const express = require("express");
-const {getMyDishes, createPhoto, removePhoto} = require("../controllers/photoController") //takes function out of controller exports
+const {getMyDishes, createPhoto, removePhoto,getDishPhotos, votePhoto, unvotePhoto} = require("../controllers/photoController")
+//takes function out of controller exports
 const {requireAuth, requireRole} = require("../../middleware/auth");
 const uploadPhoto = require("../middleware/uploadPhoto");
 
@@ -9,6 +10,10 @@ const router = express.Router(); //makes a mini-app that holds all the routes
 router.get("/photos/my-dishes", requireAuth, requireRole("child"), getMyDishes); // handles GET requests to photo
 router.post("/photos", requireAuth, requireRole("child"), uploadPhoto, createPhoto);
 router.delete("/photos/:id", requireAuth, requireRole("child"), removePhoto);
+router.get("/dishes/:itemId/photos", requireAuth, requireRole("child"), getDishPhotos);
+///api/dishes/3/photos gives req.params.itemId === "3"
+router.post("/photos/:photoId/vote", requireAuth, requireRole("child"), votePhoto);
+router.delete("/photos/:photoId/vote", requireAuth, requireRole("child"), unvotePhoto);
 //requireAuth checks if theres a valid token and sets req.user for req.user.id
 //requireRole("child") only lets child accounts through, parents results in a 403 error
 //getHome only runs if the 2 requireAuth and requireRole is checked and passed
