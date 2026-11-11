@@ -1,5 +1,5 @@
 // Ask Mum (Kids Figma 05b): the child asks Mum to allow a dish that one of Mum's rules blocks.
-// Leroy's parent app approves or denies it (docs/api-contracts.md §2f).
+// Leslie's parent side approves or denies it (docs/api-contracts.md §2f).
 const Menu = require("../models/menuModel");
 const AskMum = require("../models/askMumModel");
 const { STATUS, decideDish } = require("../services/dishSafety");

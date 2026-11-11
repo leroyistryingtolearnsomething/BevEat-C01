@@ -139,7 +139,7 @@ async function run() {
   check(res.body.money.canSpend === 2 && byId(res, 11).overBudget === true,
     "the weekday limit (child_day_limits) is used instead of the normal daily limit");
 
-  // Mum's rules (Leroy's function is still a mock, so swap it in this test)
+  // Mum's rules (swapped in for this test; the no_fried block below uses real child_food_rules rows)
   const realRules = Teammates.getFoodRules;
   Teammates.getFoodRules = async (childId) =>
     childId === CHLOE ? [{ type: "blocked_item", itemId: 10, label: "No Milo on school days" }] : [];
@@ -155,6 +155,30 @@ async function run() {
   check(byId(res, 10).status === "allowed", "Mum's rule for one child doesn't affect another child");
   Teammates.getFoodRules = realRules;
 
+  // Mum's "No fried food" (rule_type no_fried), end to end: a child_food_rules row goes through
+  // Leroy's listRulesForChild, Raghav's getFoodRules and menu_items.is_fried
+  db.foodRuleRows.push({ child_id: AISYAH, rule_type: "no_fried", item_id: null });
+  const allDishes = [];
+  for (const id of STALL_IDS) allDishes.push(...(await menu(id, AISYAH, "all")).body.dishes);
+  const fried = allDishes.filter((x) => db.FRIED.has(x.id));
+  const notFried = allDishes.filter((x) => !db.FRIED.has(x.id));
+  check(fried.length === db.FRIED.size && fried.every((x) => x.status === "blocked_parent"),
+    `no_fried: all ${db.FRIED.size} fried dishes are blocked_parent`);
+  check(fried.every((x) => x.parentRule.type === "no_fried" && x.parentRule.label === "No fried food"),
+    'no_fried: the rule comes with the label "No fried food" (05b copy)');
+  check(notFried.length > 0 && notFried.every((x) => x.status === "allowed"),
+    `no_fried: the ${notFried.length} dishes that aren't fried stay allowed`);
+  let safeFried = 0;
+  for (const id of STALL_IDS) safeFried += (await menu(id, AISYAH)).body.dishes.filter((x) => db.FRIED.has(x.id)).length;
+  check(safeFried === 0, '"Safe for me" shows 0 fried dishes to a no_fried child');
+  res = await get("/api/menu-items/5", AISYAH); // Mee Goreng, fried
+  check(res.body.dish.status === "blocked_parent" && res.body.dish.addOns.length === 0, "food detail of a fried dish is locked");
+  res = await get("/api/menu-items/6", AISYAH); // Plain Nasi Lemak, not fried
+  check(res.body.dish.status === "allowed" && res.body.dish.safeChecks.includes("Not fried"),
+    'a dish known not to be fried says "Not fried" on Food detail');
+  check(byId(await menu(2, ETHAN, "all"), 5).status !== "blocked_parent", "one child's no_fried rule doesn't touch another child");
+  db.foodRuleRows.length = 0;
+
   // ===== Food detail =====
   res = await get("/api/menu-items/2", ETHAN);
   const d = res.body.dish;
@@ -162,7 +186,8 @@ async function run() {
     d.status === "allowed" && typeof d.description === "string", "food detail has the dish and its stall");
   check(d.photo && d.photo.photoId === 1 && d.photo.uploaderUsername === "kai_snaps" && d.photo.hearts === 3 &&
     d.photo.totalPics === 2 && d.photo.likedByMe === true, "photo: uploader, hearts, approved pic count, liked by me");
-  check(d.safeChecks.join() === "No peanuts,No shellfish", '"Safe for you!" ticks list Ethan\'s allergies');
+  check(d.safeChecks.join() === "No peanuts,No shellfish,Not fried",
+    '"Safe for you!" ticks list Ethan\'s allergies, then "Not fried" (is_fried = false)');
   check(d.healthScore === null && Array.isArray(d.ingredients) && d.ingredients.length === 0,
     "health score and ingredients are empty until their columns exist");
 

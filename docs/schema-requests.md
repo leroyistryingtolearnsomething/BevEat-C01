@@ -122,7 +122,7 @@ ALTER TABLE public.menu_items
 
 ## 8. Parent food rules ("Mum says no") (HIGH, needed for 05b)
 
-**Why:** PRODUCT.md lists "Mum's rules (allergies, blocked items)", and the 05b screen says *"Mum picked 'No fried food' for school days"*. No table exists, so no dish can be `blocked_parent`. **Owner: Leroy** (parent food rules and the parent-side approval).
+**Why:** PRODUCT.md lists "Mum's rules (allergies, blocked items)", and the 05b screen says *"Mum picked 'No fried food' for school days"*. No table exists, so no dish can be `blocked_parent`. **Owner: Leroy** (parent food rules). The parent-side Ask Mum approval (#9) is **Leslie's**.
 
 ```sql
 CREATE TABLE public.child_food_rules (
@@ -141,7 +141,7 @@ ALTER TABLE public.child_food_rules ENABLE ROW LEVEL SECURITY;
 
 ## 9. Ask Mum requests (MEDIUM, needed for the 05b "Ask Mum" button)
 
-**Why:** 05b has an **Ask Mum** button: *"Mum gets a ping on her phone and can say yes just this once."* The kid's button and request endpoints are **Raghav's**. Notifying and approving/denying on the parent side is **Leroy's**. An approval lets the child order that one dish **today only**, and it can only lift a parent food rule (#8). **An allergy block can never be lifted this way.**
+**Why:** 05b has an **Ask Mum** button: *"Mum gets a ping on her phone and can say yes just this once."* The kid's button and request endpoints are **Raghav's**. Notifying and approving/denying on the parent side is **Leslie's**. An approval lets the child order that one dish **today only**, and it can only lift a parent food rule (#8). **An allergy block can never be lifted this way.**
 
 ```sql
 CREATE TABLE public.ask_mum_requests (
@@ -168,7 +168,7 @@ CREATE INDEX ask_mum_child_date ON public.ask_mum_requests (child_id, request_da
 ALTER TABLE public.ask_mum_requests ENABLE ROW LEVEL SECURITY;
 ```
 
-Who writes what: Raghav's API only **INSERTs** `pending` rows. Leroy's API only **UPDATEs** `status` + `decided_at` on rows that are still `pending`. Contract: `docs/api-contracts.md` §2f.
+Who writes what: Raghav's API only **INSERTs** `pending` rows. Leslie's API only **UPDATEs** `status` + `decided_at` on rows that are still `pending`. Contract: `docs/api-contracts.md` §2f.
 
 ## 10. Data fix: hidden egg in "Add vanilla ice cream" (HIGH, safety, no schema change)
 

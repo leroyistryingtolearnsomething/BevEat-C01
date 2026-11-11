@@ -37,7 +37,9 @@ function toDishFacts(row) {
     itemId: row.item_id,
     price: Number(row.price),
     allergenNames: row.allergen_names,
-    isFried: row.is_fried, // undefined until schema request #7, which dishSafety treats as unknown
+    // true / false from menu_items.is_fried. If a query ever leaves it out (undefined),
+    // dishSafety treats "fried?" as unknown and a "No fried food" rule keeps the dish locked.
+    isFried: row.is_fried,
   };
 }
 

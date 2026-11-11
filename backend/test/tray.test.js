@@ -149,21 +149,30 @@ async function run() {
     firstProblem(res).reason === "stall_closed", "a dish from a stall that just closed gives 409 stall_closed");
   wongsStall.is_open = true;
 
-  // Mum's rules + Ask Mum (Leroy's rules are still a mock, so swap them in for this test)
+  // Mum's rules + Ask Mum (swap in Mum's rules for this test; the fixture has no child_food_rules rows)
   const realRules = Teammates.getFoodRules;
   Teammates.getFoodRules = async (childId) =>
     childId === AISYAH ? [{ type: "blocked_item", itemId: MILO, label: "No Milo" }]
       : childId === ETHAN ? [{ type: "blocked_item", itemId: NASI_LEMAK, label: "No nasi lemak" }] : [];
   res = await quoteItems([line(MILO)]);
   check(res.status === 409 && firstProblem(res).reason === "parent_rule", "a Mum-blocked dish gives 409 parent_rule");
-  AskMum.mockDecide((await AskMum.create(AISYAH, MILO)).request_id, "approved");
+  db.askMum.decide((await AskMum.create(AISYAH, MILO)).request_id, "approved");
   res = await quoteItems([line(MILO)]);
   check(res.status === 200 && res.body.total === 1.8, "Mum's yes today unlocks it in the tray too");
-  AskMum.mockDecide((await AskMum.create(ETHAN, NASI_LEMAK)).request_id, "approved");
+  db.askMum.decide((await AskMum.create(ETHAN, NASI_LEMAK)).request_id, "approved");
   res = await quoteItems([line(NASI_LEMAK)], ETHAN);
   check(res.status === 409 && firstProblem(res).reason === "allergy", "an approval never unlocks an allergy dish");
   Teammates.getFoodRules = realRules;
-  AskMum.mockReset();
+  db.askMum.reset();
+
+  // "No fried food" is re-checked in the tray too (a real child_food_rules row + menu_items.is_fried)
+  db.foodRuleRows.push({ child_id: AISYAH, rule_type: "no_fried", item_id: null });
+  res = await quoteItems([line(CHICKEN_RICE), line(5)]); // Mee Goreng is fried
+  check(res.status === 409 && problems(res).length === 1 && firstProblem(res).lineIndex === 1 &&
+    firstProblem(res).reason === "parent_rule", "no_fried: a fried dish in the tray gives 409 parent_rule");
+  res = await quoteItems([line(CHICKEN_RICE)]);
+  check(res.status === 200, "no_fried: a dish that isn't fried can still be paid for");
+  db.foodRuleRows.length = 0;
 
   // ===== Bad bodies -> 400 =====
   const badBodies = [

@@ -1,7 +1,7 @@
 // Ask Mum endpoint tests (Raghav)
-// Uses the fake database (test/fixtures/raghavMenuDb.js) and the in-memory Ask Mum mock.
-// Leroy's food rules and his approve/deny endpoint don't exist yet, so this test swaps in a rule
-// and uses the mock's helpers to stand in for Mum's decision.
+// Uses the fake database (test/fixtures/raghavMenuDb.js), which answers the real askMumModel's
+// SQL on ask_mum_requests, including the unique index's error. The test swaps in Mum's food
+// rules, and uses the fixture's db.askMum helpers to stand in for Leslie's parent-side approve/deny.
 // Run with: npm test   (or just this file: node test/askMum.test.js)
 
 process.env.JWT_SECRET = "test-secret";
@@ -48,7 +48,7 @@ const miloOnMenu = async (childId = CHLOE) => {
 
 async function run() {
   let res;
-  AskMum.mockReset();
+  db.askMum.reset();
 
   // ----- nothing asked yet -----
   res = await status(MILO);
@@ -69,21 +69,21 @@ async function run() {
   res = await ask({ itemId: MILO });
   check(res.status === 200 && res.body.requestId === firstId, "asking again while pending returns the same request (no new ping)");
 
-  AskMum.mockDecide(firstId, "denied");
+  db.askMum.decide(firstId, "denied");
   res = await ask({ itemId: MILO });
   check(res.status === 200 && res.body.requestId === firstId && res.body.status === "denied",
     "after Mum says no, asking again the same day returns the denied request (no spamming Mum)");
   check((await miloOnMenu()).status === "blocked_parent", "a denied request keeps the dish locked");
 
   // ----- Mum says yes: allowed today only -----
-  AskMum.mockDecide(firstId, "approved");
+  db.askMum.decide(firstId, "approved");
   const milo = await miloOnMenu();
   check(milo.status === "allowed" && milo.askMumApproved === true, "Mum's yes unlocks the dish today, flagged askMumApproved");
   res = await request(app).get(`/api/menu-items/${MILO}`).set("Authorization", tokenFor(CHLOE));
   check(res.body.dish.status === "allowed" && res.body.dish.addOns.length > 0, "approved dish's food detail now has its add-ons");
   check((await miloOnMenu(ETHAN)).askMumApproved === undefined, "Chloe's approval doesn't touch another child's menu");
 
-  AskMum.mockSetDate(firstId, "2020-01-01"); // the approval is from an earlier day
+  db.askMum.setDate(firstId, "2020-01-01"); // the approval is from an earlier day
   check((await miloOnMenu()).status === "blocked_parent", "yesterday's yes doesn't count: locked again ('just this once')");
   res = await ask({ itemId: MILO });
   check(res.status === 201 && res.body.requestId !== firstId, "a new day allows one new request");
@@ -94,7 +94,7 @@ async function run() {
     "asking about an allergy dish is refused with 409, even when Mum also has a rule for it");
 
   const sneaky = await AskMum.create(CHLOE, EGG_PRATA); // pretend a request got approved anyway
-  AskMum.mockDecide(sneaky.request_id, "approved");
+  db.askMum.decide(sneaky.request_id, "approved");
   res = await request(app).get("/api/stalls/3/menu?view=all").set("Authorization", tokenFor(CHLOE));
   check(res.body.dishes.find((d) => d.id === EGG_PRATA).status === "blocked_allergy",
     "even an approved request leaves an allergy dish locked");
@@ -103,10 +103,37 @@ async function run() {
   check(res.status === 409 && res.body.error === "This dish isn't locked", "asking about an allowed dish gives 409");
 
   // ----- two taps at the same moment -----
-  AskMum.mockReset();
+  db.askMum.reset();
   const [a, b] = await Promise.all([ask({ itemId: MILO }), ask({ itemId: MILO })]);
   check([a.status, b.status].sort().join() === "200,201" && a.body.requestId === b.body.requestId,
     "two taps at once: one 201, one 200, both the same request");
+
+  // The exact race: the second tap's "did I ask today?" check runs before the first tap's row
+  // lands, so it tries to INSERT too. The unique index refuses it (23505) and the kid gets the
+  // first request back, not an error, and Mum gets only one ping.
+  db.askMum.hideNextLookup();
+  res = await ask({ itemId: MILO });
+  check(res.status === 200 && res.body.requestId === a.body.requestId,
+    "unique index hit (already asked today): 200 with the existing request");
+  check(db.askMum.rows().filter((r) => r.child_id === CHLOE && r.item_id === MILO).length === 1,
+    "...and there is still only one row");
+
+  // ----- the real SQL -----
+  const askMumSql = db.state.queries.filter((q) => q.sql.includes("ask_mum_requests"));
+  check(askMumSql.length > 0 && askMumSql.every((q) => !/\b(4|10)\b/.test(q.sql) && q.params.length > 0),
+    "ask_mum_requests queries pass the child and dish as $ parameters, never in the SQL text");
+  check(askMumSql.every((q) => q.sql.includes("(now() AT TIME ZONE 'Asia/Singapore')::date") || q.sql.includes("INSERT")),
+    "'today' is the Singapore day, worked out by the database");
+
+  // ----- fail closed: approvals can't load -----
+  db.askMum.decide(a.body.requestId, "approved");
+  db.state.failAskMum = true;
+  const realError = console.error;
+  console.error = () => {}; // keep the server's expected error log out of the test output
+  res = await request(app).get("/api/stalls/4/menu?view=all").set("Authorization", tokenFor(CHLOE));
+  console.error = realError;
+  check(res.status === 500 && !res.body.dishes, "if Mum's approvals can't be read, the menu is a 500, not a guess");
+  db.state.failAskMum = false;
 
   // ----- validation and access -----
   for (const body of [{}, { itemId: "10" }, { itemId: 0 }, { itemId: -3 }, { itemId: 1.5 }, { itemId: true }, { itemId: [10] }]) {
