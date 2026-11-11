@@ -1,6 +1,6 @@
-// Drag/hover-to-select for the parent app's single-choice button groups (kid chips, Allergies/Daily limit, Menu filter,
+// Drag-to-select for the parent app's single-choice button groups (kid chips, Allergies/Daily limit, Menu filter,
 // Macros Today/Week, limit presets). A white glass capsule sits under the buttons, like the tab bar's pill: press and drag
-// (or just hover with a mouse) and it follows on a spring, stretches with speed, and the option it is on reads as the main
+// and it follows on a spring, stretches with speed, and the option it is on reads as the main
 // one. Release to select it. A plain tap is left alone (normal click). Works on the DOM, not React state, so no page needs
 // changing. The multi-select allergy chips are not included.
 const GROUPS = ".seg, .m-seg, .kid-switch, .presets";
@@ -95,7 +95,6 @@ function settle(sim, rect) {
 
 export function installGlassDrag() {
   let drag = null; // press in progress: { group, down, buttons, sx, sy, active, hot, sim }
-  let hover = null; // mouse resting over a group: { group, buttons, hot, sim }
   let swallow = false;
 
   const setHot = (o, button) => {
@@ -121,32 +120,8 @@ export function installGlassDrag() {
     return { b, dy, rect: { x: clamped, y: r.top, w: r.width, h: r.height } };
   };
 
-  // ---- hover (mouse): the capsule slides to the option under the pointer, which then reads as the main one ----
-  const stopHover = (immediate) => {
-    const h = hover;
-    if (!h) return;
-    hover = null;
-    h.group.removeAttribute("data-drag");
-    h.hot?.removeAttribute("data-lens");
-    if (immediate) { cancelAnimationFrame(h.sim.raf); h.sim.el.remove(); return; }
-    settle(h.sim, rectOf(pressedIn(h.buttons) ?? h.buttons[0]));
-  };
-  const hoverMove = (e) => {
-    const btn = e.target instanceof Element ? e.target.closest("button[aria-pressed]:not(:disabled)") : null;
-    const group = btn?.closest(GROUPS);
-    if (!btn || !group) return stopHover();
-    if (hover && hover.group !== group) stopHover();
-    if (!hover) {
-      const buttons = [...group.querySelectorAll("button[aria-pressed]:not(:disabled)")];
-      hover = { group, buttons, hot: null, sim: makeLens(group, pressedIn(buttons) ?? btn) };
-    }
-    setHot(hover, btn);
-    place(hover.sim, rectOf(btn));
-  };
-
   // ---- drag ----
   const begin = (e) => {
-    stopHover(true);
     drag.active = true;
     drag.group.setPointerCapture(e.pointerId);
     drag.sim = makeLens(drag.group, pressedIn(drag.buttons) ?? drag.down);
@@ -154,7 +129,6 @@ export function installGlassDrag() {
 
   // a lens left behind by a lost pointerup (window blur, release outside the page) is cleaned up on the next move or press
   const reset = () => {
-    stopHover(true);
     if (!drag) return;
     drag.hot?.removeAttribute("data-lens");
     drag.group.removeAttribute("data-drag");
@@ -173,7 +147,7 @@ export function installGlassDrag() {
   };
 
   const onMove = (e) => {
-    if (!drag) { if (e.pointerType === "mouse" && !e.buttons) hoverMove(e); return; }
+    if (!drag) return;
     if (!e.buttons && e.pointerType === "mouse") return reset(); // button released somewhere we did not see
     if (!drag.active) {
       if (Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < START) return;

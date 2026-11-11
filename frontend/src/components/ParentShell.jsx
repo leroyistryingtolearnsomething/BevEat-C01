@@ -110,7 +110,7 @@ export function ParentTabs({ active, kidId }) {
   };
   const rest = (i) => aim(PAD + itemW() * i);
 
-  // not dragging: rest on the hovered/active tab. dragging: follow the finger (set in follow())
+  // not dragging: rest on the active tab. dragging: follow the finger (set in follow())
   useEffect(() => { if (!down) rest(lens); }, [lens, down]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => cancelAnimationFrame(sim.current.raf), []);
   useEffect(() => { // Chromium: the bar bends what is behind its rim, like iOS 26
@@ -135,8 +135,7 @@ export function ParentTabs({ active, kidId }) {
     aim(Math.min(hi, Math.max(lo, x)), 0); // stays inside the bar: no overshoot past the ends, no lifting out of it
   };
   const move = (e) => {
-    if (down) { follow(e); setOver(indexAt(e)); }
-    else if (e.pointerType === "mouse") setOver(indexAt(e));
+    if (down) { follow(e); setOver(indexAt(e)); } // a mouse that is only hovering does nothing
   };
   const release = (e) => {
     if (!down) return;

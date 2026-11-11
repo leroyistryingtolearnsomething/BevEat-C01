@@ -34,11 +34,6 @@
   @keyframes k-capsule { from { opacity: 0; transform: scale(0.85); } }
   .kid .hk-tab--active { animation: k-capsule 320ms var(--k-spring) 120ms both; }
 
-  /* hover lift only where there is a real mouse; it is subtle on purpose (seen dozens of times a day) */
-  @media (hover: hover) and (pointer: fine) {
-    .kid :is(a.hk-stall, a.km-card):hover { transform: translateY(-2px); }
-  }
-
   /* --- toasts and menus come from where they live --- */
   @keyframes k-toast { from { opacity: 0; transform: translate(-50%, 14px); } }
   .kid.km-screen > .km-undo { animation: k-toast 220ms var(--k-ease-out) both; }
