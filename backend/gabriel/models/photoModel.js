@@ -65,4 +65,53 @@ async function getDishName(itemId) {
     return rows[0]?.name; // ?. means if theres no rows give undefined instead of crashing
 }
 
-module.exports = {getMyDishes, didOrder, addPhoto, setAiResults, deletePhoto, getDishName}
+async function getDishPhotos(itemId, viewerId){
+    const {rows} = await pool.query(
+        `SELECT p.photo_id, p.image_url, p.uploaded_by, u.username,
+            COUNT(v.user_id) AS hearts,
+            COALESCE(BOOL_OR(v.user_id = $2), false) AS liked_by_me
+        FROM photos p
+        JOIN users u ON u.user_id = p.uploaded_by
+        LEFT JOIN photo_votes v ON v.photo_id = p.photo_id
+        WHERE p.item_id = $1
+            AND p.ai_status = 'passed' AND p.approval_status IN ('approved', 'not_needed')
+            GROUP BY p.photo_id, u.username
+            ORDER BY hearts DESC, p.uploaded_at DESC`, [itemId, viewerId]
+    )
+    return rows;
+}
+
+async function getVotablePhoto(photoId) {
+    const {rows} = await pool.query(
+        `SELECT p.photo_id, p.uploaded_by
+        FROM photos p
+        WHERE p.photo_id = $1
+        AND ai_status = 'passed' AND approval_status IN ('approved', 'not_needed')
+        `, [photoId]
+    )
+    return rows[0];
+}
+
+async function addVote(photoId, userId){
+    const {rows} = await pool.query(
+        `INSERT INTO photo_votes (photo_id, user_id) VALUES ($1, $2)
+        ON CONFLICT DO NOTHING` , [photoId, userId]
+    )
+}
+
+async function removeVote(photoId, userId){
+    const {rows} = await pool.query(
+        `DELETE FROM photo_votes WHERE photo_id = $1 AND user_id = $2`, [photoId, userId]
+    )
+}
+
+async function countHearts(photoId){
+    const {rows} = await pool.query(
+        `SELECT COUNT(*) AS hearts,
+        FROM photo_votes WHERE photo_id = $1` , [photoId]
+    )
+    return Number(rows[0].hearts)
+}
+
+module.exports = {getMyDishes, didOrder, addPhoto, setAiResults, deletePhoto, 
+    getDishName, getDishPhotos, getVotablePhoto, addVote, removeVote, countHearts}
