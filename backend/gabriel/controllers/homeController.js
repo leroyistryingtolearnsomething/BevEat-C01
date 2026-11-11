@@ -1,6 +1,13 @@
 const homeModel = require('../models/homeModel');
 const Menu = require('../../raghav/models/menuModel');
 const { loadChildContext, buildDishCards } = require('../../raghav/services/menuService');
+const FoodRuleSettings = require('../../leslie/models/foodRuleSettingsModel');
+
+// Mum's rules switches (Leslie, CB69-18) as chips: the page shows "No " + label
+const FOOD_RULE_CHIPS = [
+    { type: "no_fried", label: "fried food", icon: "🍟" },
+    { type: "no_sugary", label: "sugary drinks", icon: "🧋" },
+];
 
 const HOME_PICS = 10; // the row on Home
 const ALL_PICS = 50;  // the "See all" page
@@ -44,6 +51,10 @@ async function getHome(req, res, next) {
             severity: r.severity,
             type: "allergy", // this is a fixed text thats why its in ""
         }));
+        const foodRulesOn = await FoodRuleSettings.listForChild(childId);
+        for (const r of FOOD_RULE_CHIPS) {
+            if (foodRulesOn.has(r.type)) ruleChips.push({ label: r.label, icon: r.icon, type: "parent" });
+        }
         const stallCards = stalls.map((s) => ({
             stall: s.stall_id,
             name: s.name,

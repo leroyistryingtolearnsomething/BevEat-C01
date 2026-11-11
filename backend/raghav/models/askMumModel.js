@@ -1,69 +1,49 @@
-// MOCK: replace when Leslie creates ask_mum_requests (docs/schema-requests.md #9).
-// Same function names and row shapes (snake_case, like pg rows) as the real model will have,
-// so only this file changes when the table exists. Rows live in memory and are lost on restart.
+// Model: ask_mum_requests (migration 006, docs/schema-requests.md #9).
+// Kid side (Raghav): findToday, create, approvedItemIdsToday. Parent side (Leslie, CB69-26) lives in
+// leslie/models/askMumParentModel.js. Rows come back as plain pg rows (snake_case).
 //
-// The real table's unique index allows ONE request per child, per dish, per Singapore day,
-// whatever Mum answered. create() below copies that rule, including Postgres's error code.
+// The tests set ASK_MUM_MEMORY=1 so they use the in-memory copy (askMumModel.memory.js) and need
+// no database. Both files export the same functions with the same row shapes.
+if (process.env.ASK_MUM_MEMORY === "1") {
+  module.exports = require("./askMumModel.memory");
+} else {
+  const pool = require("../../config/db");
 
-const requests = [];
-let nextId = 1;
+  // "today" is always the Singapore calendar day, worked out by Postgres so it matches request_date
+  const TODAY = `(now() AT TIME ZONE 'Asia/Singapore')::date`;
+  const COLUMNS = `request_id, child_id, item_id, status, to_char(request_date, 'YYYY-MM-DD') AS request_date,
+                   parent_note, created_at, decided_at`;
 
-// "YYYY-MM-DD" for the current day in Singapore (en-CA formats dates that way).
-// Same idea as the column default: (now() AT TIME ZONE 'Asia/Singapore')::date
-function singaporeToday(now = new Date()) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Singapore" }).format(now);
-}
+  // "YYYY-MM-DD" for the current day in Singapore (en-CA formats dates that way)
+  const singaporeToday = (now = new Date()) =>
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Singapore" }).format(now);
 
-// Copies, so a caller can't change the stored row by accident
-const copy = (row) => (row ? { ...row } : undefined);
-
-async function findToday(childId, itemId) {
-  const today = singaporeToday();
-  return copy(requests.find((r) => r.child_id === childId && r.item_id === itemId && r.request_date === today));
-}
-
-async function create(childId, itemId) {
-  if (await findToday(childId, itemId)) {
-    const err = new Error("duplicate key value violates unique constraint \"ask_mum_one_per_day\"");
-    err.code = "23505"; // what pg throws, so the controller's handling works unchanged later
-    throw err;
+  async function findToday(childId, itemId) {
+    const { rows } = await pool.query(
+      `SELECT ${COLUMNS} FROM ask_mum_requests WHERE child_id = $1 AND item_id = $2 AND request_date = ${TODAY}`,
+      [childId, itemId]
+    );
+    return rows[0];
   }
-  const row = {
-    request_id: nextId++,
-    child_id: childId,
-    item_id: itemId,
-    status: "pending",
-    request_date: singaporeToday(),
-    created_at: new Date(),
-    decided_at: null,
-  };
-  requests.push(row);
-  return copy(row);
+
+  // A second request for the same dish today breaks the unique index: pg throws code 23505,
+  // which the controller already handles
+  async function create(childId, itemId) {
+    const { rows } = await pool.query(
+      `INSERT INTO ask_mum_requests (child_id, item_id) VALUES ($1, $2) RETURNING ${COLUMNS}`,
+      [childId, itemId]
+    );
+    return rows[0];
+  }
+
+  // Dishes Mum said yes to TODAY. Yesterday's yes doesn't count ("just this once").
+  async function approvedItemIdsToday(childId) {
+    const { rows } = await pool.query(
+      `SELECT item_id FROM ask_mum_requests WHERE child_id = $1 AND status = 'approved' AND request_date = ${TODAY}`,
+      [childId]
+    );
+    return rows.map((r) => r.item_id);
+  }
+
+  module.exports = { findToday, create, approvedItemIdsToday, singaporeToday };
 }
-
-// Dishes Mum said yes to TODAY. Yesterday's yes doesn't count ("just this once").
-async function approvedItemIdsToday(childId) {
-  const today = singaporeToday();
-  return requests
-    .filter((r) => r.child_id === childId && r.status === "approved" && r.request_date === today)
-    .map((r) => r.item_id);
-}
-
-// ---- Test helpers only: stand-ins for Leroy's parent-side approve/deny (§2f) ----
-
-function mockDecide(requestId, status) {
-  const row = requests.find((r) => r.request_id === requestId);
-  if (row) Object.assign(row, { status, decided_at: new Date() });
-}
-
-function mockSetDate(requestId, requestDate) {
-  const row = requests.find((r) => r.request_id === requestId);
-  if (row) row.request_date = requestDate;
-}
-
-function mockReset() {
-  requests.length = 0;
-  nextId = 1;
-}
-
-module.exports = { findToday, create, approvedItemIdsToday, singaporeToday, mockDecide, mockSetDate, mockReset };

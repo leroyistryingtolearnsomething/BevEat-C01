@@ -33,6 +33,10 @@ app.use("/api", require("./gabriel/routes/photoRoutes"));
 // stall discovery (Raghav)
 app.use("/api", require("./raghav/routes/stallRoutes"));
 
+// Ask Mum, parent side + Mum's rules switches (Leslie, CB69-26 / CB69-18). Before Raghav's
+// menu routes so GET /ask-mum/pending isn't read as his GET /ask-mum/:itemId
+app.use("/api", require("./leslie/routes/askMumParentRoutes"));
+
 // stall menu, food detail and Ask Mum (Raghav)
 app.use("/api", require("./raghav/routes/menuRoutes"));
 

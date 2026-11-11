@@ -19,6 +19,7 @@ import Tray from "./pages/Tray.jsx";
 import KidPickup from "./pages/KidPickup.jsx";
 import ParentSpending from "./pages/ParentSpending.jsx";
 import ParentPin from "./pages/ParentPin.jsx";
+import ParentAskMum from "./pages/ParentAskMum.jsx";
 import ParentMacros from "./pages/ParentMacros.jsx";
 import ParentOrders from "./pages/ParentOrders.jsx";
 import ReadyPing from "./components/ReadyPing.jsx";
@@ -51,6 +52,7 @@ export default function App() {
       <Route path="/parent/menu" element={<RequireRole role="parent"><ParentMenu /></RequireRole>} />
       <Route path="/parent/spending" element={<RequireRole role="parent"><ParentSpending /></RequireRole>} />
       <Route path="/parent/pin" element={<RequireRole role="parent"><ParentPin /></RequireRole>} />
+      <Route path="/parent/ask-mum/:requestId" element={<RequireRole role="parent"><ParentAskMum /></RequireRole>} />
       <Route path="/kid/pickup/:orderId" element={<RequireRole role="child"><KidPickup /></RequireRole>} />
       <Route path="/parent/macros" element={<RequireRole role="parent"><ParentMacros /></RequireRole>} />
       <Route path="/parent/orders" element={<RequireRole role="parent"><ParentOrders /></RequireRole>} />

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { clearSession, getSession } from "../session.js";
 import { KidSwitcher, ParentTabs, money, useKids } from "../components/ParentShell.jsx";
 import ParentAlerts from "../components/ParentAlerts.jsx";
+import { AskMumBell, AskMumPings, useAskMumPending } from "../components/AskMum.jsx";
 import Icon from "../components/Icon.jsx";
 import walletIcon from "../assets/figma/wallet.svg";
 import warningIcon from "../assets/figma/warning.svg";
@@ -15,6 +16,7 @@ export default function ParentHome() {
   const { name } = getSession();
   const { kids, kid, select, error, token } = useKids();
   const [section, setSection] = useState("allergies");
+  const askMum = useAskMumPending(token); // Ask Mum requests waiting for an answer (Leslie, CB69-26)
 
   const logOut = () => {
     clearSession();
@@ -29,6 +31,7 @@ export default function ParentHome() {
           <h1>Hi {name}!</h1>
           <p className="lead">Your kids' limits for today</p>
         </div>
+        <AskMumBell requests={askMum} />
       </header>
 
       {error && <p className="form-error" role="alert">{error}</p>}
@@ -43,6 +46,7 @@ export default function ParentHome() {
       {kid && (
         <>
           <KidSwitcher kids={kids} kid={kid} onSelect={select} />
+          <AskMumPings requests={askMum} />
           <ParentAlerts token={token} />
           <Today kid={kid} />
           <Link to={`/parent/macros?kid=${kid.id}`} className="m-home-link">

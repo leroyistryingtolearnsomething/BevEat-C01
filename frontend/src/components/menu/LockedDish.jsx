@@ -90,6 +90,7 @@ function AllergyWords({ dish }) {
 function ruleText(dish) {
   const { type, label } = dish.parentRule;
   if (type === "no_fried") return `${dish.name} is fried, and Mum picked “No fried food” for school days.`;
+  if (type === "no_sugary") return `${dish.name} has lots of sugar, and Mum picked “No sugary drinks” for school days.`;
   return `Mum picked “${label}”.`;
 }
 

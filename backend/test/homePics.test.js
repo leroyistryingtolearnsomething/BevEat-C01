@@ -3,6 +3,7 @@
 // Run with: npm test
 
 process.env.JWT_SECRET = "test-secret";
+process.env.ASK_MUM_MEMORY = "1"; // in-memory Ask Mum store (raghav/models/askMumModel.memory.js), no database
 
 const jwt = require("jsonwebtoken");
 const request = require("supertest");

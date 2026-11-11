@@ -37,7 +37,9 @@ function toDishFacts(row) {
     itemId: row.item_id,
     price: Number(row.price),
     allergenNames: row.allergen_names,
-    isFried: row.is_fried, // undefined until schema request #7, which dishSafety treats as unknown
+    isFried: row.is_fried, // null/undefined = unknown, which dishSafety treats as fried (fail closed)
+    isLowSugar: row.is_low_sugar,
+    sugarG: row.sugar_g === null || row.sugar_g === undefined ? row.sugar_g : Number(row.sugar_g),
   };
 }
 
