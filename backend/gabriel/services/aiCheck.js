@@ -10,8 +10,16 @@
 require("dotenv").config();
 const { GoogleGenAI } = require("@google/genai");
 
-// which Gemini model to use. Change it in .env with GEMINI_MODEL=... without touching the code
-const MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+// Which Gemini models to try, in order. The free tier gives EACH model its own small daily limit
+// (e.g. 20 checks/day on gemini-3.6-flash), so if one is used up (error 429) we try the next one.
+// GEMINI_MODEL in .env puts your choice first, without touching the code.
+const MODELS = [
+  ...(process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : []),
+  "gemini-3.5-flash-lite", // fastest and cheapest, and plenty for a yes/no food check
+  "gemini-3.1-flash-lite",
+  "gemini-3.6-flash",
+].filter((m, i, list) => list.indexOf(m) === i); // no duplicates
+const MODEL = MODELS[0];
 
 const apiKey = process.env.GEMINI_API_KEY;
 const client = apiKey ? new GoogleGenAI({ apiKey }): null ;
@@ -41,8 +49,36 @@ async function checkPhoto(photo, mediaType, dishName) {
     return { isFood: true, matchesDish: true, hasFaces: false, confidence: 98, label: dishName, demo: true };
   }
 
-  const interaction = await client.interactions.create({
-    model: MODEL,
+  // try each model until one isn't over its daily limit
+  let interaction;
+  for (const model of MODELS) {
+    try {
+      interaction = await askGemini(model, photo, mediaType, dishName);
+      break;
+    } catch (err) {
+      const usedUp = err.status === 429;
+      if (!usedUp || model === MODELS[MODELS.length - 1]) throw err; // other errors, or every model used up
+      console.warn(`AI check: ${model} hit its daily limit, trying the next model`);
+    }
+  }
+
+  if (!interaction.output_text) return null; // no answer (e.g. blocked by safety filters): leave it pending
+
+  const r = JSON.parse(interaction.output_text);
+  return {
+    isFood: r.is_food,
+    matchesDish: r.matches_dish,
+    hasFaces: r.has_faces,
+    confidence: Math.max(0, Math.min(100, r.confidence)),
+    label: r.label,
+    demo: false,
+  };
+}
+
+// one call to one Gemini model
+function askGemini(model, photo, mediaType, dishName) {
+  return client.interactions.create({
+    model,
     system_instruction: SYSTEM,
     store: false, // don't keep kids' photos on Google's side
     response_format: { type: "text", mime_type: "application/json", schema: RESULT_SCHEMA },
@@ -66,18 +102,6 @@ async function checkPhoto(photo, mediaType, dishName) {
       },
     ],
   });
-
-  if (!interaction.output_text) return null; // no answer (e.g. blocked by safety filters): leave it pending
-
-  const r = JSON.parse(interaction.output_text);
-  return {
-    isFood: r.is_food,
-    matchesDish: r.matches_dish,
-    hasFaces: r.has_faces,
-    confidence: Math.max(0, Math.min(100, r.confidence)),
-    label: r.label,
-    demo: false,
-  };
 }
 
 // passed = all 3 checks are good
