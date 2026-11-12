@@ -23,7 +23,8 @@ import ParentPin from "./pages/ParentPin.jsx";
 import ParentMacros from "./pages/ParentMacros.jsx";
 import ParentOrders from "./pages/ParentOrders.jsx";
 import ReadyPing from "./components/ReadyPing.jsx";
-import Snap from "./pages/Snap.jsx"
+import Snap from "./pages/Snap.jsx";
+import DishPics from "./pages/DishPics.jsx";
 
 // UI guard only; the API checks the token's role on every request
 function RequireRole({ role, children }) {
@@ -65,6 +66,7 @@ export default function App() {
       <Route path="/kid/dishes/:itemId" element={<RequireRole role="child"><FoodDetail /></RequireRole>} />
       <Route path="/kid/tray" element={<RequireRole role="child"><Tray /></RequireRole>} />
       <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/kid/dishes/:itemId/pics" element={<RequireRole role = "child"><DishPics/></RequireRole>} />
     </Routes>
     </>
   );

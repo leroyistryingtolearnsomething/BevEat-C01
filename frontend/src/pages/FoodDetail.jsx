@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { getDish } from "../api.js";
 import { getSession } from "../session.js";
 import { addLine, loadTray, saveTray, formatSgd, moneyLeftCents, toCents as cents, MAX_QTY } from "../tray.js";
@@ -99,10 +99,10 @@ function DishDetail({ dish, canSpend, token }) {
         <DishPhoto src={dish.imageUrl} name={dish.name} className="km-hero__img" />
         <BackCircle to={`/kid/stalls/${dish.stallId}`} back className="km-hero__back" />
         {photo && photo.totalPics > 0 && (
-          // Gabriel's "All pics" page isn't built yet, so this pill isn't a link yet
-          <span className="km-hero__pics" aria-disabled="true">
+          // Updated it to a link since i made the all pics page already - gab
+          <Link to={`/kid/dishes/${dish.id}/pics`} className="km-hero__pics">
             See all {photo.totalPics} {photo.totalPics === 1 ? "pic" : "pics"}
-          </span>
+          </Link>
         )}
         {photo && (
           <>

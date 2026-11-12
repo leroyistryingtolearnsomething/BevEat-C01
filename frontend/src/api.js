@@ -82,6 +82,11 @@ export function uploadPhoto(token, photo, itemId, orderId) {
 }
 // Retake: delete the kid's own photo (the row and the picture file)
 export const deletePhoto = (token, photoId) => request(`/photos/${photoId}`, { method: "DELETE", token });
+// All pics of one dish (most hearts first): { photos: [{ photo, imageUrl, hearts, likedByMe, uploaderUsername, mine }] }
+export const getDishPhotos = (token, itemId) => request(`/dishes/${itemId}/photos`, { token });
+// Heart / un-heart a photo: both return { photoId, hearts, likedByMe }
+export const votePhoto = (token, photoId) => request(`/photos/${photoId}/vote`, { method: "POST", token });
+export const unvotePhoto = (token, photoId) => request(`/photos/${photoId}/vote`, { method: "DELETE", token });
 // Live in the backend: change a kid's allergies (keys like "peanut") and daily food money
 export const setAllergies = (token, childId, allergens) =>
   request(`/children/${childId}/allergies`, { method: "PUT", body: { allergens }, token });
