@@ -65,6 +65,14 @@ function fakeQuery(sql, params = []) {
     };
   }
 
+  if (sql.includes("WHERE o.child_id = $1 AND o.collected_at IS NULL")) {
+    return {
+      rows: orders
+        .filter((o) => o.child_id === params[0] && !o.collected_at && o.status !== "cancelled")
+        .map((o) => ({ ...o, stall_name: stallOf(o).name, avg_prep_minutes: stallOf(o).avg_prep_minutes })),
+    };
+  }
+
   if (sql.includes("WHERE s.owner_id = $1")) {
     return {
       rows: orders
@@ -177,6 +185,13 @@ async function run() {
   res = await get("/stall/orders", kid);
   check(res.status === 403, "kid cannot see the stall's orders");
 
+  // kid home card: today's orders, cancelled one left out
+  res = await get("/me/orders", kid);
+  check(res.status === 200 && res.body.orders.length === 1, "kid home shows the order still cooking");
+  check(res.body.orders[0].ahead === 2 && res.body.orders[0].waitMinutes === 12, "kid home has the queue and wait time");
+  res = await get("/me/orders", parent);
+  check(res.status === 403, "my orders is only for kids");
+
   res = await put("/orders/3/ready", otherOwner);
   check(res.status === 404, "other stall cannot mark the order ready");
 
@@ -240,6 +255,9 @@ async function run() {
 
   res = await get("/me/ready-orders", kid);
   check(res.body.orders.length === 0, "ping stops after it's collected");
+
+  res = await get("/me/orders", kid);
+  check(res.body.orders.length === 0, "collected order leaves kid home");
 
   console.log(failed ? `\n${failed} failed` : "\nall passed");
   process.exitCode = failed ? 1 : 0;

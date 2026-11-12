@@ -45,7 +45,9 @@ async function getFoodRules(childId) {
   return rows.map((r) => ({
     type: r.rule_type,
     itemId: r.item_id ?? undefined,
-    label: r.name ?? undefined, // "Mum picked “Fishball soup”."
+    // blocked_item: the dish's name ("Mum picked “Fishball soup”."). A no_fried row has no dish,
+    // so it gets the rule's own name from the contract (§2b).
+    label: r.rule_type === "no_fried" ? "No fried food" : r.name ?? undefined,
   }));
 }
 

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  addLine, unitCents, lineCents, trayCount, trayCents, formatSgd, moneyLeftCents, MAX_QTY,
+  addLine, unitCents, lineCents, trayCount, trayBadge, trayCents, formatSgd, moneyLeftCents, MAX_QTY,
   lineKey, setQuantity, removeLine, restoreLine, toQuoteItems, lineSubtitle, linesInStallOrder, problemsByKey, problemMessage,
 } from "./tray.js";
 
@@ -134,4 +134,11 @@ test("every problem reason has kid-friendly words", () => {
   assert.equal(problemMessage({ reason: "sold_out" }), "Sold out now");
   assert.equal(problemMessage({ reason: "stall_closed" }), "This stall just closed");
   assert.equal(problemMessage({ reason: "something_new" }), "Can't order this now");
+});
+
+test("Home cart badge: none when empty, the item count, 9+ past 9", () => {
+  assert.equal(trayBadge([]), null);
+  assert.equal(trayBadge([chickenRice(2), { ...chickenRice(1), itemId: 2 }]), "3", "counts portions, not lines");
+  assert.equal(trayBadge([chickenRice(9)]), "9");
+  assert.equal(trayBadge([chickenRice(10)]), "9+");
 });

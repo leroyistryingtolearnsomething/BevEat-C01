@@ -57,8 +57,8 @@ function decideDish(dish, child) {
 function findParentRule(dish, rules) {
   const broken = rules.find((rule) => {
     if (rule.type === "blocked_item") return rule.itemId === dish.itemId;
-    // isFried stays unknown (undefined) until menu_items.is_fried exists (schema request #7).
-    // Fail closed: if Mum said "no fried food" and we can't tell, keep the dish locked.
+    // Only a dish we KNOW isn't fried (is_fried = false) passes. Fail closed: if Mum said
+    // "no fried food" and we can't tell (undefined / null), keep the dish locked.
     if (rule.type === "no_fried") return dish.isFried !== false;
     return true; // a rule type this code doesn't know yet: lock rather than ignore it
   });
@@ -81,7 +81,7 @@ function decideAddOn(addOn, child) {
 // The ticks on Food detail's "Safe for you!" card, e.g. ["No shellfish", "No peanuts", "Not fried"]
 function safeChecks(dish, child) {
   const checks = child.allergies.map((a) => `No ${a.name.toLowerCase()}`);
-  if (dish.isFried === false) checks.push("Not fried"); // only once is_fried exists
+  if (dish.isFried === false) checks.push("Not fried"); // never claimed when we can't tell
   return checks;
 }
 
