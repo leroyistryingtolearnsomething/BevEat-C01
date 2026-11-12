@@ -107,7 +107,7 @@ async function removeVote(photoId, userId){
 
 async function countHearts(photoId){
     const {rows} = await pool.query(
-        `SELECT COUNT(*) AS hearts,
+        `SELECT COUNT(*) AS hearts
         FROM photo_votes WHERE photo_id = $1` , [photoId]
     )
     return Number(rows[0].hearts)

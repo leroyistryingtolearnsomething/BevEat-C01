@@ -99,7 +99,7 @@ async function getDishPhotos(req, res, next){
         const itemId = Number(req.params.itemId);
 
         const rows = await photoModel.getDishPhotos(itemId, viewerId)
-        const photo = rows.map((r)=>({
+        const photos = rows.map((r)=>({
             photo: r.photo_id,
             imageUrl: r.image_url,
             hearts: Number(r.hearts),
@@ -107,7 +107,7 @@ async function getDishPhotos(req, res, next){
             uploaderUsername: r.username || "a kiddyEats kid", //fall back for if Null parent
             mine: r.uploaded_by === viewerId
         }))
-            res.json({ photo });
+            res.json({ photos });
     }
     catch(err){
         next(err);
