@@ -4,6 +4,7 @@ import { clearSession, getSession } from "../session.js";
 import KidTabs from "../components/KidTabs.jsx";
 import KidAvatarMenu from "../components/KidAvatarMenu.jsx";
 import DishCard from "../components/menu/DishCard.jsx";
+import MyOrdersCard from "../components/MyOrdersCard.jsx";
 import TrayButton from "../components/menu/TrayButton.jsx";
 import { Link, useNavigate } from "react-router-dom";
 // Kid Home page: shows the data from GET /api/home
@@ -44,6 +45,9 @@ export default function Home() {
         </div>
         <TrayButton token={token} />
       </header>
+
+      {/* today's orders + live queue, only shows if there are any */}
+      <MyOrdersCard />
 
       {/* Money card: what's left today, and the meter */}
       <section className="hk-money">
