@@ -1,69 +1,50 @@
-// MOCK: replace when Leslie creates ask_mum_requests (docs/schema-requests.md #9).
-// Same function names and row shapes (snake_case, like pg rows) as the real model will have,
-// so only this file changes when the table exists. Rows live in memory and are lost on restart.
-//
-// The real table's unique index allows ONE request per child, per dish, per Singapore day,
-// whatever Mum answered. create() below copies that rule, including Postgres's error code.
+// Model: ask_mum_requests (Leslie's table, docs/schema-requests.md #9). SQL only, returns plain rows.
+// Raghav's API only INSERTs pending requests and reads them. Leslie's parent side does the
+// approve / deny UPDATE (docs/api-contracts.md §2f).
+const pool = require("../../config/db");
 
-const requests = [];
-let nextId = 1;
+// "Today" is the Singapore calendar day, worked out by Postgres. It's the same expression as the
+// request_date column default, so a request made at 11:59pm and the check at 12:01am both use
+// the database's clock and can never disagree with the server's time zone.
+const SG_TODAY = `(now() AT TIME ZONE 'Asia/Singapore')::date`;
 
-// "YYYY-MM-DD" for the current day in Singapore (en-CA formats dates that way).
-// Same idea as the column default: (now() AT TIME ZONE 'Asia/Singapore')::date
-function singaporeToday(now = new Date()) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Singapore" }).format(now);
-}
+const REQUEST_COLUMNS = `request_id, child_id, item_id, status, created_at, decided_at`;
 
-// Copies, so a caller can't change the stored row by accident
-const copy = (row) => (row ? { ...row } : undefined);
-
+// This child's request about this dish today, or undefined. The unique index
+// ask_mum_one_per_day means there is at most one.
 async function findToday(childId, itemId) {
-  const today = singaporeToday();
-  return copy(requests.find((r) => r.child_id === childId && r.item_id === itemId && r.request_date === today));
+  const { rows } = await pool.query(
+    `SELECT ${REQUEST_COLUMNS}
+       FROM ask_mum_requests
+      WHERE child_id = $1 AND item_id = $2 AND request_date = ${SG_TODAY}`,
+    [childId, itemId]
+  );
+  return rows[0];
 }
 
+// A new pending request. status, request_date and created_at come from the column defaults.
+// If the child already asked about this dish today, the unique index ask_mum_one_per_day makes
+// Postgres throw error code 23505, which the controller turns into "here's your existing request".
 async function create(childId, itemId) {
-  if (await findToday(childId, itemId)) {
-    const err = new Error("duplicate key value violates unique constraint \"ask_mum_one_per_day\"");
-    err.code = "23505"; // what pg throws, so the controller's handling works unchanged later
-    throw err;
-  }
-  const row = {
-    request_id: nextId++,
-    child_id: childId,
-    item_id: itemId,
-    status: "pending",
-    request_date: singaporeToday(),
-    created_at: new Date(),
-    decided_at: null,
-  };
-  requests.push(row);
-  return copy(row);
+  const { rows } = await pool.query(
+    `INSERT INTO ask_mum_requests (child_id, item_id)
+     VALUES ($1, $2)
+     RETURNING ${REQUEST_COLUMNS}`,
+    [childId, itemId]
+  );
+  return rows[0];
 }
 
 // Dishes Mum said yes to TODAY. Yesterday's yes doesn't count ("just this once").
+// A database error THROWS, so the menu fails with a 500 rather than guessing.
 async function approvedItemIdsToday(childId) {
-  const today = singaporeToday();
-  return requests
-    .filter((r) => r.child_id === childId && r.status === "approved" && r.request_date === today)
-    .map((r) => r.item_id);
+  const { rows } = await pool.query(
+    `SELECT item_id
+       FROM ask_mum_requests
+      WHERE child_id = $1 AND status = 'approved' AND request_date = ${SG_TODAY}`,
+    [childId]
+  );
+  return rows.map((r) => r.item_id);
 }
 
-// ---- Test helpers only: stand-ins for Leroy's parent-side approve/deny (§2f) ----
-
-function mockDecide(requestId, status) {
-  const row = requests.find((r) => r.request_id === requestId);
-  if (row) Object.assign(row, { status, decided_at: new Date() });
-}
-
-function mockSetDate(requestId, requestDate) {
-  const row = requests.find((r) => r.request_id === requestId);
-  if (row) row.request_date = requestDate;
-}
-
-function mockReset() {
-  requests.length = 0;
-  nextId = 1;
-}
-
-module.exports = { findToday, create, approvedItemIdsToday, singaporeToday, mockDecide, mockSetDate, mockReset };
+module.exports = { findToday, create, approvedItemIdsToday };

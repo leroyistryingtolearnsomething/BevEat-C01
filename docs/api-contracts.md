@@ -46,8 +46,8 @@ getFoodRules(childId) -> Promise<Array<
 ```
 
 - Used for the `blocked_parent` status and the 05b copy: *"{Dish} is fried, and Mum picked "No fried food" for school days."*
-- **Today:** no table, model or endpoint exists. See `docs/schema-requests.md` #7 and #8.
-  `// MOCK: replace when Leroy's getFoodRules is ready`, which returns `[]`, so no dish shows "Mum says no" until the real rules exist.
+- **Today (2026-11-12): live.** `child_food_rules` (`docs/schema-requests.md` #8) and `menu_items.is_fried` (#7) exist. Raghav's `getFoodRules` in `backend/raghav/services/teammates.js` reads Leroy's `backend/leroy/models/foodRuleModel.js → listRulesForChild(childId)` (read-only reuse). A `no_fried` row has no dish, so `getFoodRules` gives it the label `"No fried food"`. A dish is blocked by `no_fried` unless `is_fried` is `false`; if it is unknown, the dish stays locked (fail closed).
+  Leroy's parent Menu screen can only create `blocked_item` rules so far, so `no_fried` works in the API and tests, but parents can't switch it on yet.
 
 ### 2c. Money left today: Xin Sheng (daily spending limit)
 
@@ -139,11 +139,13 @@ body: { items: [{ itemId: number, quantity: number, addOnIds: number[] }] }
    WHERE child_id = $2 AND wallet_balance >= $1
   ```
 - **Decided (2026-11-06): a tray may hold dishes from more than one stall** (the Figma tray does). `orders` holds one stall per order, so checkout creates **one order per stall**, each with its own `queue_number`, all inside **one transaction** together with the single wallet deduction for the whole tray total. If any part fails (e.g. a dish became locked, or not enough money), nothing is saved and the wallet is not touched. The response lists every order so the kid sees one pickup number per stall.
-- **Today:** `// MOCK: replace when Leroy's checkout endpoint is ready`. The button calls the mock, which only shows a "coming soon" message. It never writes to the database.
+- **Today (2026-11-12): live.** `backend/leroy/routes/checkoutRoutes.js` → `controllers/checkoutController.js` → `models/checkoutModel.js`, tested in `backend/test/checkout.test.js`. The 06 "Slide to pay" control calls it through `checkout()` in `frontend/src/api.js`, then shows 08 "Yay! Order sent".
 
-### 2f. Ask Mum: Raghav (kid side) + Leroy (parent side)
+### 2f. Ask Mum: Raghav (kid side) + Leslie (parent side)
 
-**How it works:** on 05b ("Mum says not today") the child taps **Ask Mum**. Raghav's API saves a `pending` row in `ask_mum_requests` (`docs/schema-requests.md` #9). Leroy's parent app shows it, and the parent approves or denies it. An approval makes that one dish `allowed` for that child **for that Singapore day only** ("just this once").
+**Who owns what:** Raghav owns the kid side (05b button, `POST /api/ask-mum`, `GET /api/ask-mum/:itemId`). **Leslie** owns the parent side (listing pending requests, approve / deny, and showing them in the parent app). Leroy owns only the food rules that make a dish "Mum says no" (§2b).
+
+**How it works:** on 05b ("Mum says not today") the child taps **Ask Mum**. Raghav's API saves a `pending` row in `ask_mum_requests` (`docs/schema-requests.md` #9). Leslie's parent screen shows it, and the parent approves or denies it. An approval makes that one dish `allowed` for that child **for that Singapore day only** ("just this once").
 
 **Safety rules, enforced in Raghav's `dishSafety` and re-checked by `priceTray` at checkout:**
 - Ask Mum can only lift a **parent food rule** (`blocked_parent`). A `blocked_allergy` dish stays locked even if a request for it is somehow approved. Raghav's API also refuses to create a request for one.
@@ -151,41 +153,97 @@ body: { items: [{ itemId: number, quantity: number, addOnIds: number[] }] }
 
 **Kid endpoints (Raghav):** see §3d and §3e.
 
-**Parent endpoints (Leroy).** These are what the parent app needs. Both are `requireAuth, requireRole("parent")`, and the parent can only see or decide requests for their own children:
+**Parent endpoints (Leslie).** These are the two endpoints the parent app needs. Both use the team middleware in `backend/middleware/auth.js`: `requireAuth, requireRole("parent")`. A parent can only see or decide requests for **their own** children. Errors use the team shape `{ "error": "message" }`.
+
+#### 1. List a child's Ask Mum requests for today
 
 ```
-GET /api/children/:childId/ask-mum?status=pending        (requireOwnChild)
-200 → { "requests": [{
-          "requestId": 7, "itemId": 5, "dishName": "Mee Goreng", "stallName": "Mariam Nasi Lemak",
-          "price": 3.5, "ruleLabel": "No fried food", "createdAt": "2026-11-19T07:05:00Z"
-        }] }
-        // only today's requests (request_date = today in Asia/Singapore), newest first
+GET /api/children/:childId/ask-mum?status=pending          requireAuth, requireRole("parent"), requireOwnChild
 
-PUT /api/ask-mum/:requestId        body: { "decision": "approved" | "denied" }
+query  status = "pending" (default) | "all"     // "all" = today's pending, approved and denied
+
+200 → { "requests": [{
+          "requestId":  7,
+          "itemId":     5,
+          "dishName":   "Mee Goreng",
+          "stallName":  "Mariam Nasi Lemak",
+          "price":      3.5,                       // number, from menu_items.price
+          "ruleLabel":  "No fried food",           // the Mum rule that locked it, or null (see below)
+          "status":     "pending",                 // "pending" | "approved" | "denied"
+          "note":       null,                      // the kid's note (string) or null. Always null until #11
+          "createdAt":  "2026-11-19T07:05:00Z",
+          "decidedAt":  null                       // set once Mum answers
+        }] }
+       // only TODAY's requests (request_date = today in Asia/Singapore), newest first.
+       // An empty list is { "requests": [] }, not a 404.
+400 → status is not "pending" or "all", or a bad childId (from requireOwnChild)
+404 → { "error": "Child not found" } from requireOwnChild: not this parent's child
+403 → a child's token (requireRole("parent"))
+```
+
+- **`note`:** the kid's optional message from 05b, at most 100 characters, already trimmed by Raghav's API. It lives in `ask_mum_requests.child_note` (`docs/schema-requests.md` #11). **Until that column exists, return `"note": null` for every request**, so the parent screen can be built now and starts showing notes as soon as Leslie runs #11. Show it as **plain text** (React's `{note}`, never `dangerouslySetInnerHTML`): it's typed by a child and is not trusted.
+- **`ruleLabel`:** why the dish was locked, so Mum remembers her own rule. The simplest way to get it is Raghav's `getFoodRules(childId)` in `backend/raghav/services/teammates.js` (read-only reuse). It returns `[{ type, itemId?, label }]`: a `blocked_item` rule matches by `itemId`, and a `no_fried` rule (label "No fried food") matches a dish with `menu_items.is_fried` not `false`. Use `null` if Mum has removed the rule since the kid asked.
+- **`parent_note`:** the live table also has this column (#9 note). It isn't part of this contract, and the kid side never reads it.
+
+A query that gives every field except `ruleLabel` (`$1` = childId, `$2` = `'pending'`, or NULL for `all`):
+
+```sql
+SELECT r.request_id, r.item_id, m.name AS dish_name, s.name AS stall_name, m.price,
+       r.status, r.created_at, r.decided_at,
+       NULL::text AS note            -- after #11: r.child_note AS note
+  FROM ask_mum_requests r
+  JOIN menu_items m ON m.item_id = r.item_id
+  JOIN stalls     s ON s.stall_id = m.stall_id
+ WHERE r.child_id = $1
+   AND r.request_date = (now() AT TIME ZONE 'Asia/Singapore')::date
+   AND ($2::text IS NULL OR r.status = $2)
+ ORDER BY r.created_at DESC;
+```
+
+#### 2. Approve or deny a request
+
+```
+PUT /api/ask-mum/:requestId        requireAuth, requireRole("parent")
+body: { "decision": "approved" | "denied" }
+
 200 → { "requestId": 7, "status": "approved", "decidedAt": "2026-11-19T07:06:10Z" }
-400 → decision is not "approved" or "denied"
-404 → no such request, or it belongs to another parent's child (same 404, so ids can't be probed)
+400 → requestId is not a positive integer, or decision is not "approved" / "denied"
+404 → no such request, OR it belongs to another parent's child (the same 404, so request ids can't be probed)
 409 → already decided, or it's from an earlier day (expired)
 ```
 
-Leroy's UPDATE must change only a row that is still pending, from today, and belongs to this parent's child, so a double tap or a stale screen can't flip a decision:
+**The UPDATE rule.** Leslie's UPDATE must change a row **only if all four are true**: it's still `pending`, it's from **today** (Singapore day), it belongs to **this parent's** child, and the id matches. Every check is inside the one UPDATE, so a double tap, two parents' phones, or a stale screen can't flip a decision that's already made. A second "approve" simply matches 0 rows.
 
 ```sql
 UPDATE ask_mum_requests r
-   SET status = $2, decided_at = now()
+   SET status = $2, decided_at = now()           -- $2 = 'approved' | 'denied' (validated first)
   FROM child_profiles c
  WHERE r.request_id = $1
    AND r.status = 'pending'
    AND r.request_date = (now() AT TIME ZONE 'Asia/Singapore')::date
    AND c.child_id = r.child_id
-   AND c.parent_id = $3
+   AND c.parent_id = $3                          -- $3 = req.user.id
 RETURNING r.request_id, r.status, r.decided_at;
 ```
 
-The "ping" on Mum's phone is the parent app polling the GET above, the same way the kid app polls `/api/me/ready-orders`.
+- **1 row returned → 200.** The table's CHECK `(status = 'pending') = (decided_at IS NULL)` is why `decided_at` is set in the same statement.
+- **0 rows → find out why, without leaking other families' data.** Look the row up for this parent only:
+  ```sql
+  SELECT r.status, r.request_date = (now() AT TIME ZONE 'Asia/Singapore')::date AS is_today
+    FROM ask_mum_requests r
+    JOIN child_profiles c ON c.child_id = r.child_id
+   WHERE r.request_id = $1 AND c.parent_id = $2;
+  ```
+  No row → **404**. A row that's no longer `pending`, or isn't from today → **409**.
+- **Approving is always safe for allergies.** Leslie doesn't need to check them. Raghav's `dishSafety` ignores an approval for a `blocked_allergy` dish, and Raghav's API never creates a request for one.
+- **What happens next:** an approval takes effect on the kid's next menu or tray load. `approvedItemIdsToday` reads it, the dish shows `"status": "allowed", "askMumApproved": true`, and checkout's `priceTray` accepts it today only. A denial keeps the dish locked, and 05b says *"Mum said no this time. You can ask again tomorrow!"*
 
-**Today:** the table doesn't exist yet. Raghav's kid endpoints use an in-memory store:
-`// MOCK: replace when Leslie creates ask_mum_requests`. It has the same functions and return shapes as the real model, and is emptied when the server restarts. Leroy's food rules are also still a mock that returns `[]` (§2b), so no dish is `blocked_parent` yet and 05b can't be reached from real data. The tests drive 05b and Ask Mum through the mocks.
+The "ping" on Mum's phone is the parent app polling `GET …/ask-mum?status=pending`, the same way the kid app polls `/api/me/ready-orders`.
+
+**Today (2026-11-12):**
+- **Kid side: live.** `ask_mum_requests` exists (#9, plus a `parent_note` column). Raghav's `backend/raghav/models/askMumModel.js` reads and inserts real rows with parameterised SQL. "Today" is worked out by Postgres as `(now() AT TIME ZONE 'Asia/Singapore')::date`, the same as the `request_date` default. The unique index `ask_mum_one_per_day` backs up "one request per dish per day": a second INSERT fails with `23505`, and the API answers 200 with the existing request.
+- **Food rules: live** (§2b), so 05b can be reached with real data. For example, the two `blocked_item` rows on Plain Prata with Dhal (item 7).
+- **Parent side: not built yet (Leslie).** Nothing can approve or deny a request until the two endpoints above exist. Raghav's tests stand in for them by changing the fake database's rows directly (`test/fixtures/raghavMenuDb.js → askMum.decide`).
 
 ---
 
