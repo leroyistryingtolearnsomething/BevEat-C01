@@ -20,6 +20,14 @@ export const lineCents = (line) => unitCents(line) * line.quantity;
 
 export const trayCount = (lines) => lines.reduce((n, l) => n + l.quantity, 0);
 
+// The number on the Home cart badge: null when the tray is empty (no badge at all), and "9+"
+// past 9 so a big tray can't stretch the little circle
+export function trayBadge(lines) {
+  const count = trayCount(lines);
+  if (count === 0) return null;
+  return count > 9 ? "9+" : String(count);
+}
+
 export const trayCents = (lines) => lines.reduce((sum, l) => sum + lineCents(l), 0);
 
 // What the child can still spend once the food already in their tray is counted.

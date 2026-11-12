@@ -48,6 +48,7 @@ async function getFoodRules(childId) {
   return rows.map((r) => ({
     type: r.rule_type,
     itemId: r.item_id ?? undefined,
+    // blocked_item: the dish name. Food-kind rules (no_fried / no_sugary) use RULE_LABELS (§2b).
     label: r.name ?? RULE_LABELS[r.rule_type], // "Mum picked “Fishball soup”." / "No fried food"
   }));
 }

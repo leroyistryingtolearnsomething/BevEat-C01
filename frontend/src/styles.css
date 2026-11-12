@@ -115,7 +115,7 @@ button { cursor: pointer; }
 }
 .btn:disabled { opacity: 0.6; cursor: default; }
 .btn--primary { background: var(--p-green); color: #fff; }
-.btn--primary:not(:disabled):hover { background: var(--p-green-dark); }
+.btn--primary:not(:disabled):active { background: var(--p-green-dark); }
 .btn--secondary { background: #fff; color: var(--p-ink); border: 1.5px solid var(--p-border); }
 .btn--text { min-height: 44px; background: none; color: var(--p-green); }
 
@@ -168,15 +168,15 @@ legend { padding: 0; margin-bottom: 8px; }
   padding: 18px 18px 18px 16px; border-radius: 22px; text-decoration: none;
   transition: transform 120ms ease-out, box-shadow 120ms ease-out;
 }
-.choice__icon { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; }
+.choice__icon { flex: none; display: grid; place-items: center; width: 56px; height: 56px; } /* the Bao sits straight on the button, no badge behind it */
 .choice__text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .choice__text strong { font-family: "Fredoka", system-ui, sans-serif; font-size: 21px; font-weight: 600; }
 .choice__text span { font-size: 14px; line-height: 1.35; }
 .choice--parent { background: var(--p-green); color: #fff; box-shadow: 0 6px 16px rgb(35 122 51 / 0.25); }
-.choice--parent .choice__icon { background: rgb(255 255 255 / 0.16); }
+
 .choice--parent .choice__text span { color: var(--p-mint); }
 .choice--kid { background: var(--k-sun); color: var(--k-ink); border: var(--k-line); box-shadow: var(--k-shadow); }
-.choice--kid .choice__icon { background: #fff; border: var(--k-line); }
+
 .choice:active { transform: translateY(2px); }
 .choice--kid:active { box-shadow: 0 2px 0 var(--k-ink); }
 
@@ -255,7 +255,7 @@ legend { padding: 0; margin-bottom: 8px; }
   display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 10px;
   border: 0; border-radius: 10px; background: none; color: var(--p-ink); font-size: 15px; font-weight: 700; text-decoration: none;
 }
-.account-menu__item:hover { background: var(--p-bg); }
+.account-menu__item:active { background: var(--p-bg); }
 .account-menu__item:focus-visible { outline: 3px solid var(--p-green); outline-offset: -3px; }
 .hello h1 { font-size: 22px; }
 .hello .lead { margin-top: 2px; font-size: 14px; }
@@ -542,18 +542,6 @@ a.hk-stall:active { transform: scale(.97); }
   font-size: 26px;
 }
 
-/* a tab that isn't built yet: faded, can't be tapped, small lock badge on its icon */
-.hk-tab--locked { position: relative; cursor: not-allowed; }
-.hk-tab--locked .hk-tab__icon { opacity: 0.35; filter: grayscale(1); }
-.hk-tab--locked .hk-tab__label { opacity: 0.5; }
-/* the badge sits next to the icon (not inside it) so the fading above doesn't fade the lock too */
-.hk-tab__lock {
-  position: absolute; top: 16px; left: calc(50% + 8px);
-  display: grid; place-items: center;
-  width: 20px; height: 20px; border-radius: 50%;
-  background: #fff; border: 2px solid var(--k-ink);
-  font-size: 10px;
-}
 
 /* ---------- Kid Wallet tab ---------- */
 .hk-tab__svg { flex: none; background: currentColor; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }
@@ -571,7 +559,7 @@ button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
   width: 100%; min-height: 44px; padding: 0 10px; border: 0; border-radius: 12px; background: none; text-align: left;
   font: inherit; font-size: 16px; font-weight: 600; color: var(--k-error); cursor: pointer;
 }
-.kid-menu__item:hover { background: var(--k-bg); }
+.kid-menu__item:active { background: var(--k-bg); }
 .kid .kw-confirm { color: var(--k-ink); border: var(--k-line); box-shadow: var(--k-shadow); text-align: center; }
 .kid .kw-confirm p { color: var(--k-muted); }
 .kid .kw-confirm .btn--kid { max-width: none; }
@@ -811,3 +799,94 @@ button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
 .am-ping__note { margin: 0; padding: 8px 10px; border-radius: 10px; background: #efe8ff; color: #3d2d73; font-size: 13px; font-weight: 600; }
 .am-kidnote { margin: 0; padding: 10px 12px; border-radius: 14px 14px 14px 4px; background: #efe8ff; color: #3d2d73; font-size: 14px; }
 .am-kidnote__who { display: block; font-size: 12px; font-weight: 700; color: #6a52c7; }
+
+/* =============================================================================
+   Kid "AI says yum!" result screen (Gabriel). Figma "10 AI says yum!". Prefix: yum-
+   ============================================================================= */
+.kid.yum-kid { background: #d9f7ed; gap: 16px; align-items: center; padding-top: max(20px, env(safe-area-inset-top)); }
+.blob--yum { width: 200px; height: 200px; top: -60px; right: -50px; background: rgba(46,196,160,.25); }
+.yum-head { align-self: stretch; display: flex; align-items: center; }
+
+/* the photo as a tilted Polaroid, with a sticker on its corner */
+.yum-polaroid { position: relative; width: 290px; max-width: 100%; padding-top: 14px; margin: 8px 0 4px; }
+.yum-polaroid__card {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 12px 12px 14px; background: #fff;
+  border: var(--k-line); box-shadow: 0 5px 0 var(--k-ink); border-radius: 14px;
+  transform: rotate(3deg);
+}
+.yum-polaroid__card img { width: 100%; aspect-ratio: 250 / 220; object-fit: cover; border-radius: 10px; display: block; }
+.yum-polaroid__card p { margin: 0; font-family: "Fredoka", system-ui, sans-serif; font-size: 18px; font-weight: 600; line-height: 22px; color: var(--k-ink); text-align: center; }
+.yum-sticker {
+  position: absolute; top: -8px; right: -14px; z-index: 2;
+  display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px;
+  background: #2ec4a0; color: var(--k-ink); border: var(--k-line); box-shadow: 0 3px 0 var(--k-ink);
+  font-family: "Fredoka", system-ui, sans-serif; font-size: 16px; font-weight: 700; line-height: 19px; white-space: nowrap;
+  transform: rotate(-8deg);
+}
+.yum-sticker--bad { background: #ff6b5b; }
+
+/* the AI check rows */
+.yum-checks {
+  align-self: stretch; display: flex; flex-direction: column; gap: 12px; padding: 16px;
+  background: #fff; border: var(--k-line); box-shadow: 0 4px 0 var(--k-ink); border-radius: 24px;
+}
+.yum-row { display: flex; align-items: flex-start; gap: 10px; }
+.yum-dot {
+  flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 14px;
+  background: #2ec4a0; border: var(--k-line); color: var(--k-ink);
+  font-size: 15px; font-weight: 900; line-height: 1;
+}
+.yum-dot--bad { background: #ff6b5b; }
+.yum-row h3 { margin: 0; font-family: "Fredoka", system-ui, sans-serif; font-size: 16px; font-weight: 600; line-height: 19px; color: var(--k-ink); }
+.yum-row p { margin: 0; font-family: "Nunito", system-ui, sans-serif; font-size: 12px; font-weight: 700; line-height: 16px; color: var(--k-soft); }
+.yum-row--bad h3 { color: #d84a3b; }
+
+/* footer: Post my pic! + Retake */
+.yum-footer { margin-top: auto; align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 12px; }
+.yum-post {
+  align-self: stretch; display: flex; justify-content: center; align-items: center; padding: 16px 24px;
+  background: #ff6b5b; color: var(--k-ink); border: var(--k-line); box-shadow: 0 5px 0 var(--k-ink); border-radius: 18px;
+  font-family: "Fredoka", system-ui, sans-serif; font-size: 19px; font-weight: 600; line-height: 23px; text-decoration: none;
+  transition: transform .1s, box-shadow .1s;
+}
+.yum-post:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--k-ink); }
+.yum-retake {
+  min-height: 44px; padding: 0 12px; background: none; border: 0; cursor: pointer;
+  font-family: "Fredoka", system-ui, sans-serif; font-size: 15px; font-weight: 600; color: var(--k-soft);
+}
+.yum-retake--main { color: var(--k-ink); font-size: 17px; text-decoration: underline; }
+
+/* ---------- "Being built" card for tabs that aren't ready (components/ComingSoon.jsx) ---------- */
+/* .kid > * sets position: relative on every child of the screen; a modal dialog must stay fixed */
+.kid > dialog.soon, dialog.soon {
+  position: fixed; inset: 0; width: min(92vw, 360px); max-width: none; margin: auto auto calc(24px + env(safe-area-inset-bottom));
+  padding: 0; border: 0; background: transparent; color: var(--k-ink); overflow: visible;
+}
+.soon::backdrop { background: rgb(31 32 65 / 0.45); }
+.soon__card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 20px 20px; text-align: center;
+  background: #fff; border: var(--k-line); border-radius: 28px; box-shadow: var(--k-shadow);
+}
+.soon__card h2 { margin: 4px 0 0; font-size: 24px; font-weight: 600; line-height: 1.15; }
+.soon__card p { margin: 0 0 10px; font-size: 16px; line-height: 1.4; color: var(--k-muted); text-wrap: balance; }
+.soon__ok {
+  width: 100%; min-height: 52px; border: var(--k-line); border-radius: 18px; background: var(--k-sun); color: var(--k-ink);
+  font: 600 19px "Fredoka", system-ui, sans-serif; box-shadow: var(--k-shadow); cursor: pointer;
+}
+.soon__ok:active { transform: translateY(2px); }
+
+/* ---------- My orders card on kid home (Xin Sheng) ---------- */
+.my-orders { display: flex; flex-direction: column; gap: 10px; }
+.my-orders h2 { font-size: 19px; font-weight: 600; }
+.my-orders__row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  background: #fff7d6;
+  border: var(--k-line); border-radius: 20px; box-shadow: var(--k-shadow);
+  color: inherit; text-decoration: none;
+}
+.my-orders__row--ready { background: #d9f7e8; }
+.my-orders__num { font-family: "Fredoka", system-ui, sans-serif; font-size: 22px; font-weight: 700; }
+.my-orders__text { flex: 1; display: flex; flex-direction: column; }
+.my-orders__text small { font-size: 13px; color: var(--k-soft); }

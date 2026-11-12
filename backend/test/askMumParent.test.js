@@ -4,7 +4,6 @@
 // Run with: npm test   (or just this file: node test/askMumParent.test.js)
 
 process.env.JWT_SECRET = "test-secret";
-delete process.env.ASK_MUM_MEMORY; // this file tests the real SQL model
 
 const jwt = require("jsonwebtoken");
 const request = require("supertest");
@@ -69,9 +68,11 @@ fakePool.query = async (sql, params = []) => {
     asks.push(row);
     return { rows: [{ ...row }] };
   }
-  if (sql.includes("SELECT item_id FROM ask_mum_requests"))
+  // match on flat SQL: the kid model splits its queries over several lines
+  const flat = sql.replace(/\s+/g, " ");
+  if (flat.includes("SELECT item_id FROM ask_mum_requests"))
     return { rows: asks.filter((a) => a.child_id === p1 && a.status === "approved" && a.request_date === today()) };
-  if (sql.includes("FROM ask_mum_requests WHERE child_id = $1 AND item_id = $2"))
+  if (flat.includes("FROM ask_mum_requests WHERE child_id = $1 AND item_id = $2"))
     return { rows: asks.filter((a) => a.child_id === p1 && a.item_id === p2 && a.request_date === today()).map((a) => ({ ...a })) };
 
   // Ask Mum, parent side (Leslie's model)

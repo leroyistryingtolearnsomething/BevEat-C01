@@ -43,6 +43,9 @@ app.use("/api", require("./raghav/routes/menuRoutes"));
 // tray quote (Raghav)
 app.use("/api", require("./raghav/routes/trayRoutes"));
 
+// pay for the tray from the wallet (Leroy)
+app.use("/api", require("./leroy/routes/checkoutRoutes"));
+
 // live queue + order ready ping
 app.use("/api", require("./xinsheng/routes/orderQueueRoutes"));
 

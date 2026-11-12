@@ -1,21 +1,30 @@
-// AI photo check for "Snap your food" (Gabriel).
-// Sends the kid's photo + the dish they say it is to Claude, and gets back 3 answers:
+// AI photo check for "Snap your food" (Gabriel). Uses Google Gemini.
+// Sends the kid's photo + the dish they say it is to Gemini, and gets back 3 answers:
 //   isFood       is the photo actually food or a drink?
 //   matchesDish  does it look like the dish they ordered?
 //   hasFaces     is there a person's face in it? (we don't post faces, privacy)
-// plus confidence (0-100, how sure it's food) and label (what Claude thinks it is).
+// plus confidence (0-100, how sure it's food) and label (what Gemini thinks it is).
 //
-// No ANTHROPIC_API_KEY on this server -> DEMO MODE: always says "yes it's food, matches, no faces",
-// so the pages can be built and tested before the team has a key. Add the key to .env and it's real.
+// No GEMINI_API_KEY on this server -> DEMO MODE: always says "yes it's food, matches, no faces",
+// so the pages work before the key is set. Add the key to .env (and Vercel) and it's real.
 require("dotenv").config();
-const Anthropic = require("@anthropic-ai/sdk");
+const { GoogleGenAI } = require("@google/genai");
 
-const MODEL = "claude-opus-5-5"; // change to "claude-haiku-5-5" for ~30x cheaper checks
+// Which Gemini models to try, in order. The free tier gives EACH model its own small daily limit
+// (e.g. 20 checks/day on gemini-3.6-flash), so if one is used up (error 429) we try the next one.
+// GEMINI_MODEL in .env puts your choice first, without touching the code.
+const MODELS = [
+  ...(process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : []),
+  "gemini-3.5-flash-lite", // fastest and cheapest, and plenty for a yes/no food check
+  "gemini-3.1-flash-lite",
+  "gemini-3.6-flash",
+].filter((m, i, list) => list.indexOf(m) === i); // no duplicates
+const MODEL = MODELS[0];
 
-const hasKey = !!process.env.ANTHROPIC_API_KEY;
-const client = hasKey ? new (Anthropic.default || Anthropic)() : null;
+const apiKey = process.env.GEMINI_API_KEY;
+const client = apiKey ? new GoogleGenAI({ apiKey }): null ;
 
-// the exact JSON shape Claude must answer with (structured output, so it can't reply in free text)
+// the exact JSON shape Gemini must answer with, so it can't reply in free text
 const RESULT_SCHEMA = {
   type: "object",
   properties: {
@@ -26,7 +35,6 @@ const RESULT_SCHEMA = {
     label: { type: "string" },
   },
   required: ["is_food", "matches_dish", "has_faces", "confidence", "label"],
-  additionalProperties: false,
 };
 
 const SYSTEM =
@@ -41,21 +49,45 @@ async function checkPhoto(photo, mediaType, dishName) {
     return { isFood: true, matchesDish: true, hasFaces: false, confidence: 98, label: dishName, demo: true };
   }
 
-  const response = await client.beta.messages.create({
-    model: MODEL,
-    max_tokens: 4000,
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default", // if Claude's safety filter declines, Anthropic retries on a fallback model
-    system: SYSTEM,
-    output_config: {
-      effort: "low", // a simple yes/no check, doesn't need deep thinking
-      format: { type: "json_schema", schema: RESULT_SCHEMA },
-    },
-    messages: [
+  // try each model until one isn't over its daily limit
+  let interaction;
+  for (const model of MODELS) {
+    try {
+      interaction = await askGemini(model, photo, mediaType, dishName);
+      break;
+    } catch (err) {
+      const usedUp = err.status === 429;
+      if (!usedUp || model === MODELS[MODELS.length - 1]) throw err; // other errors, or every model used up
+      console.warn(`AI check: ${model} hit its daily limit, trying the next model`);
+    }
+  }
+
+  if (!interaction.output_text) return null; // no answer (e.g. blocked by safety filters): leave it pending
+
+  const r = JSON.parse(interaction.output_text);
+  return {
+    isFood: r.is_food,
+    matchesDish: r.matches_dish,
+    hasFaces: r.has_faces,
+    confidence: Math.max(0, Math.min(100, r.confidence)),
+    label: r.label,
+    demo: false,
+  };
+}
+
+// one call to one Gemini model
+function askGemini(model, photo, mediaType, dishName) {
+  return client.interactions.create({
+    model,
+    system_instruction: SYSTEM,
+    store: false, // don't keep kids' photos on Google's side
+    response_format: { type: "text", mime_type: "application/json", schema: RESULT_SCHEMA },
+    // the v1 API wants the photo + text wrapped in one "user_input" turn
+    input: [
       {
-        role: "user",
+        type: "user_input",
         content: [
-          { type: "image", source: { type: "base64", media_type: mediaType, data: photo.toString("base64") } },
+          { type: "image", data: photo.toString("base64"), mime_type: mediaType },
           {
             type: "text",
             text:
@@ -70,20 +102,6 @@ async function checkPhoto(photo, mediaType, dishName) {
       },
     ],
   });
-
-  if (response.stop_reason === "refusal") return null; // declined, leave the photo for a person to check
-  const text = response.content.find((b) => b.type === "text");
-  if (!text) return null;
-
-  const r = JSON.parse(text.text);
-  return {
-    isFood: r.is_food,
-    matchesDish: r.matches_dish,
-    hasFaces: r.has_faces,
-    confidence: Math.max(0, Math.min(100, r.confidence)),
-    label: r.label,
-    demo: false,
-  };
 }
 
 // passed = all 3 checks are good

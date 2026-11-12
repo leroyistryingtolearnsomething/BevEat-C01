@@ -1,49 +1,50 @@
-// Model: ask_mum_requests (migration 006, docs/schema-requests.md #9).
-// Kid side (Raghav): findToday, create, approvedItemIdsToday. Parent side (Leslie, CB69-26) lives in
-// leslie/models/askMumParentModel.js. Rows come back as plain pg rows (snake_case).
-//
-// The tests set ASK_MUM_MEMORY=1 so they use the in-memory copy (askMumModel.memory.js) and need
-// no database. Both files export the same functions with the same row shapes.
-if (process.env.ASK_MUM_MEMORY === "1") {
-  module.exports = require("./askMumModel.memory");
-} else {
-  const pool = require("../../config/db");
+// Model: ask_mum_requests (Leslie's table, docs/schema-requests.md #9). SQL only, returns plain rows.
+// Raghav's API only INSERTs pending requests and reads them. Leslie's parent side does the
+// approve / deny UPDATE (docs/api-contracts.md §2f).
+const pool = require("../../config/db");
 
-  // "today" is always the Singapore calendar day, worked out by Postgres so it matches request_date
-  const TODAY = `(now() AT TIME ZONE 'Asia/Singapore')::date`;
-  const COLUMNS = `request_id, child_id, item_id, status, to_char(request_date, 'YYYY-MM-DD') AS request_date,
-                   parent_note, created_at, decided_at`;
+// "Today" is the Singapore calendar day, worked out by Postgres. It's the same expression as the
+// request_date column default, so a request made at 11:59pm and the check at 12:01am both use
+// the database's clock and can never disagree with the server's time zone.
+const SG_TODAY = `(now() AT TIME ZONE 'Asia/Singapore')::date`;
 
-  // "YYYY-MM-DD" for the current day in Singapore (en-CA formats dates that way)
-  const singaporeToday = (now = new Date()) =>
-    new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Singapore" }).format(now);
+const REQUEST_COLUMNS = `request_id, child_id, item_id, status, created_at, decided_at`;
 
-  async function findToday(childId, itemId) {
-    const { rows } = await pool.query(
-      `SELECT ${COLUMNS} FROM ask_mum_requests WHERE child_id = $1 AND item_id = $2 AND request_date = ${TODAY}`,
-      [childId, itemId]
-    );
-    return rows[0];
-  }
-
-  // A second request for the same dish today breaks the unique index: pg throws code 23505,
-  // which the controller already handles
-  async function create(childId, itemId) {
-    const { rows } = await pool.query(
-      `INSERT INTO ask_mum_requests (child_id, item_id) VALUES ($1, $2) RETURNING ${COLUMNS}`,
-      [childId, itemId]
-    );
-    return rows[0];
-  }
-
-  // Dishes Mum said yes to TODAY. Yesterday's yes doesn't count ("just this once").
-  async function approvedItemIdsToday(childId) {
-    const { rows } = await pool.query(
-      `SELECT item_id FROM ask_mum_requests WHERE child_id = $1 AND status = 'approved' AND request_date = ${TODAY}`,
-      [childId]
-    );
-    return rows.map((r) => r.item_id);
-  }
-
-  module.exports = { findToday, create, approvedItemIdsToday, singaporeToday };
+// This child's request about this dish today, or undefined. The unique index
+// ask_mum_one_per_day means there is at most one.
+async function findToday(childId, itemId) {
+  const { rows } = await pool.query(
+    `SELECT ${REQUEST_COLUMNS}
+       FROM ask_mum_requests
+      WHERE child_id = $1 AND item_id = $2 AND request_date = ${SG_TODAY}`,
+    [childId, itemId]
+  );
+  return rows[0];
 }
+
+// A new pending request. status, request_date and created_at come from the column defaults.
+// If the child already asked about this dish today, the unique index ask_mum_one_per_day makes
+// Postgres throw error code 23505, which the controller turns into "here's your existing request".
+async function create(childId, itemId) {
+  const { rows } = await pool.query(
+    `INSERT INTO ask_mum_requests (child_id, item_id)
+     VALUES ($1, $2)
+     RETURNING ${REQUEST_COLUMNS}`,
+    [childId, itemId]
+  );
+  return rows[0];
+}
+
+// Dishes Mum said yes to TODAY. Yesterday's yes doesn't count ("just this once").
+// A database error THROWS, so the menu fails with a 500 rather than guessing.
+async function approvedItemIdsToday(childId) {
+  const { rows } = await pool.query(
+    `SELECT item_id
+       FROM ask_mum_requests
+      WHERE child_id = $1 AND status = 'approved' AND request_date = ${SG_TODAY}`,
+    [childId]
+  );
+  return rows.map((r) => r.item_id);
+}
+
+module.exports = { findToday, create, approvedItemIdsToday };

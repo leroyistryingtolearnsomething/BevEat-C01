@@ -84,8 +84,8 @@
 .m-chart__bar { width: 100%; max-width: 44px; border-radius: 8px; background: #c4e0bf; }
 .m-chart__day[aria-current="date"] .m-chart__bar { background: var(--p-green); }
 .m-chart__day[aria-current="date"] .m-chart__lbl { color: var(--p-green); font-weight: 700; }
-.m-chart__day:hover .m-chart__bar { background: #9fcf98; }
-.m-chart__day[aria-current="date"]:hover .m-chart__bar { background: var(--p-green-dark); }
+.m-chart__day:active .m-chart__bar { background: #9fcf98; }
+.m-chart__day[aria-current="date"]:active .m-chart__bar { background: var(--p-green-dark); }
 .m-chart__lbl { font-size: 12px; }
 
 .m-tip { display: flex; gap: 8px; padding: 12px 14px; border-radius: 14px; background: var(--m-warn); color: var(--m-warn-ink); font-size: 13px; line-height: 1.4; }

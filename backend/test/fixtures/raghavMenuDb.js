@@ -34,9 +34,11 @@ const dishRows = [
   [29, 5, "Grilled Chicken with Mashed Potato", "5.80", [3, 7, 8]], [30, 5, "Mac & Cheese", "4.50", [3, 8]],
   [31, 1, "Sold-out Special", "3.00", [7]], // not on the live menu: tests is_available = false
 ];
+// menu_items.is_fried = true on the live database (2026-11-11). Every other dish is false.
+const FRIED = new Set([4, 5, 17, 21, 25, 26, 28]);
 const dishes = dishRows.map(([item_id, stall_id, name, price, ids]) => ({
   item_id, stall_id, name, price, allergenIds: ids, description: `${name} description`,
-  default_image_url: `/images/menu/dish-${item_id}.jpg`, is_available: item_id !== 31,
+  default_image_url: `/images/menu/dish-${item_id}.jpg`, is_available: item_id !== 31, is_fried: FRIED.has(item_id),
 }));
 
 // A few add-ons (live data, incl. ones with and without an allergen)
@@ -92,14 +94,76 @@ const photos = [
 ];
 const votes = [[1, 3], [1, 4], [1, 5], [2, 4], [3, 3], [3, 4], [3, 5], [3, 6], [4, 3]]; // [photo_id, user_id]
 
-const state = { queries: [], failAllergies: false };
+const state = { queries: [], failAllergies: false, failAskMum: false };
+
+// child_food_rules rows: { child_id, rule_type: "no_fried" | "blocked_item", item_id | null }
+const foodRuleRows = [];
+
+// ask_mum_requests rows. request_date is a "YYYY-MM-DD" string for the Singapore day, like the
+// column default (now() AT TIME ZONE 'Asia/Singapore')::date.
+const askMumRows = [];
+let nextRequestId = 1;
+let hideNextAskMumLookup = false;
+const sgToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Singapore" }).format(new Date());
+const requestColumns = ({ request_id, child_id, item_id, status, created_at, decided_at }) =>
+  ({ request_id, child_id, item_id, status, created_at, decided_at });
+
+function askMumQuery(sql, [p1, p2]) {
+  if (state.failAskMum) throw new Error("ask_mum_requests unreachable (expected in this test)");
+  const today = sgToday();
+  if (sql.includes("INSERT INTO ask_mum_requests")) {
+    // the real unique index ask_mum_one_per_day, with the error code pg throws
+    if (askMumRows.some((r) => r.child_id === p1 && r.item_id === p2 && r.request_date === today)) {
+      const err = new Error('duplicate key value violates unique constraint "ask_mum_one_per_day"');
+      err.code = "23505";
+      throw err;
+    }
+    const row = { request_id: nextRequestId++, child_id: p1, item_id: p2, status: "pending",
+      request_date: today, created_at: new Date(), decided_at: null };
+    askMumRows.push(row);
+    return { rows: [requestColumns(row)] };
+  }
+  if (sql.includes("status = 'approved'")) {
+    return { rows: askMumRows.filter((r) => r.child_id === p1 && r.status === "approved" && r.request_date === today)
+      .map((r) => ({ item_id: r.item_id })) };
+  }
+  // findToday
+  if (hideNextAskMumLookup) {
+    hideNextAskMumLookup = false;
+    return { rows: [] };
+  }
+  return { rows: askMumRows.filter((r) => r.child_id === p1 && r.item_id === p2 && r.request_date === today).map(requestColumns) };
+}
+
+// Test helpers: stand-ins for Leslie's parent-side approve / deny (docs/api-contracts.md §2f)
+const askMum = {
+  decide(requestId, status) {
+    const row = askMumRows.find((r) => r.request_id === requestId);
+    if (row) Object.assign(row, { status, decided_at: new Date() });
+  },
+  setDate(requestId, requestDate) {
+    const row = askMumRows.find((r) => r.request_id === requestId);
+    if (row) row.request_date = requestDate;
+  },
+  reset() {
+    askMumRows.length = 0;
+    nextRequestId = 1;
+    hideNextAskMumLookup = false;
+  },
+  // The next "did I ask today?" lookup misses, as if another tap's INSERT landed a moment later.
+  // That's the race the unique index catches.
+  hideNextLookup() {
+    hideNextAskMumLookup = true;
+  },
+  rows: () => askMumRows.map((r) => ({ ...r })),
+};
 
 const allergenNames = (ids) => [...ids].sort((a, b) => a - b).map((id) => allergens[id].name);
 
 function dishRow(d) {
   return {
     item_id: d.item_id, stall_id: d.stall_id, name: d.name, description: d.description, price: d.price,
-    default_image_url: d.default_image_url, allergen_names: allergenNames(d.allergenIds),
+    default_image_url: d.default_image_url, allergen_names: allergenNames(d.allergenIds), is_fried: d.is_fried,
   };
 }
 
@@ -154,6 +218,9 @@ function fakeQuery(sql, params = []) {
       .map((a) => ({ add_on_id: a.add_on_id, label, icon: "⚠️" }))) };
   }
 
+  // Raghav's askMumModel
+  if (sql.includes("ask_mum_requests")) return askMumQuery(sql, params);
+
   // Raghav's stallModel
   if (sql.includes("FROM stalls WHERE stall_id = $1")) return { rows: stalls.filter((s) => s.stall_id === p1) };
 
@@ -197,9 +264,14 @@ function fakeQuery(sql, params = []) {
     return { rows: d ? [{ ...dishRow(d), stall_name: stalls.find((s) => s.stall_id === d.stall_id).name }] : [] };
   }
 
-  // Leroy's parent locks (child_food_rules): none here. Tests that need a "Mum says no" dish
-  // replace Teammates.getFoodRules instead.
-  if (sql.includes("FROM child_food_rules")) return { rows: [] };
+  // Leroy's listRulesForChild (child_food_rules). Empty unless a test pushes rows into
+  // foodRuleRows, which runs the REAL Teammates.getFoodRules on them.
+  if (sql.includes("FROM child_food_rules")) {
+    return { rows: foodRuleRows.filter((r) => r.child_id === p1).map((r) => ({
+      rule_type: r.rule_type, item_id: r.item_id,
+      name: r.item_id ? dishes.find((d) => d.item_id === r.item_id).name : null, // the LEFT JOIN on menu_items
+    })) };
+  }
 
   throw new Error("Fake DB got an unexpected query: " + sql.slice(0, 80));
 }
@@ -218,4 +290,4 @@ function install() {
 // Which allergen names a dish really contains (for checking the API's answers)
 const dishAllergenNames = (itemId) => allergenNames(dishes.find((d) => d.item_id === itemId).allergenIds);
 
-module.exports = { install, state, allergens, dishes, children, stalls, dishAllergenNames, mentionsFood };
+module.exports = { install, state, allergens, dishes, children, stalls, dishAllergenNames, mentionsFood, askMum, FRIED, foodRuleRows };

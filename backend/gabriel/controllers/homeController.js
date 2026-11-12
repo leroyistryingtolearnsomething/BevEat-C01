@@ -1,6 +1,7 @@
 const homeModel = require('../models/homeModel');
 const Menu = require('../../raghav/models/menuModel');
-const { loadChildContext, buildDishCards } = require('../../raghav/services/menuService');
+const { loadChildContext, buildDishCards, toDishFacts, isAllowed } = require('../../raghav/services/menuService');
+const {decideDish} = require('../../raghav/services/dishSafety');
 const FoodRuleSettings = require('../../leslie/models/foodRuleSettingsModel');
 
 // Mum's rules switches (Leslie, CB69-18) as chips: the page shows "No " + label
@@ -26,6 +27,18 @@ async function topPicCards(childId, limit) {
     return pics.map((p) => cards.get(p.item_id)).filter(Boolean); // most hearts first; sold-out dishes drop out
 }
 
+async function countSafePicks(childId, stalls) {
+    const child = await loadChildContext(childId)
+    const counts = {};
+    if (!child) return counts;
+    for (const s of stalls){
+        const dishes = await Menu.getAvailableDishesForStall(s.stall_id)
+        counts[s.stall_id] = dishes.filter((d) =>
+        isAllowed(decideDish(toDishFacts(d), child))).length
+    }
+    return counts;
+}
+
 async function getHome(req, res, next) {
     try{
         const childId = req.user.id; // who is requesting
@@ -39,6 +52,7 @@ async function getHome(req, res, next) {
         const rules = await homeModel.getRules(childId);
         const stalls = await homeModel.getStalls(childId);
         const pics = await topPicCards(childId, HOME_PICS);
+        const safeCounts = await countSafePicks(childId, stalls);
 
         const dailyLimit = Number(child.daily_limit);
         const spentToday = Number(spent); // Number function turns it from a text to a number
@@ -60,7 +74,7 @@ async function getHome(req, res, next) {
             name: s.name,
             unit: s.unit_no,
             image: s.cover_image_url,
-            safePicks : Number(s.safe_picks)
+            safePicks : safeCounts[s.stall_id] ?? 0,
         }));
 
         res.json({ // respond with data pulled using the query

@@ -9,6 +9,7 @@ import {
 import BackCircle from "../components/menu/BackCircle.jsx";
 import TrayRow from "../components/menu/TrayRow.jsx";
 import MoneyCheck from "../components/menu/MoneyCheck.jsx";
+import SlideToPay from "../components/menu/SlideToPay.jsx";
 import baoHappy from "../assets/figma/menu/bao-happy.svg";
 import blobTray from "../assets/figma/menu/blob-tray.svg";
 import "./kidMenu.css";
@@ -100,13 +101,15 @@ export default function Tray() {
   }
 
   async function pay() {
+    if (paying) return; // the slider already blocks a second slide; this is a second lock
     setPaying(true);
     setPayMessage("");
     try {
-      // Leroy's checkout prices the tray again on the server (the same priceTray as the quote)
-      await checkout(token, toQuoteItems(lines));
+      // the server prices the tray again (the same priceTray as the quote) and takes the money
+      const done = await checkout(token, toQuoteItems(lines));
       saveTray(token, []);
-      navigate("/kid/home"); // 07 Pickup number isn't built yet, so go Home for now
+      // replace: Back from the success page must not return to an empty tray
+      navigate("/kid/order-done", { replace: true, state: { done } });
     } catch (err) {
       setPayMessage(err.message);
     } finally {
@@ -165,7 +168,9 @@ export default function Tray() {
   const priced = new Map(
     (quote ? quote.data.stalls.flatMap((s) => s.lines) : []).map((l) => [lineKey(l), sgd(l.lineTotal)])
   );
-  const canPay = fresh && quote.data.canPay && !paying;
+  // A fresh quote for THIS tray that says the money is enough, and no problem rows
+  // (a 409 leaves no quote, so `fresh` is false then). Paying is passed to the slider separately.
+  const canPay = fresh && quote.data.canPay;
 
   return (
     <main className="screen kid km-screen" aria-busy={busy}>
@@ -218,9 +223,7 @@ export default function Tray() {
       {undoToast}
 
       <footer className="km-footer">
-        <button type="button" className="km-big km-big--mint" onClick={pay} disabled={!canPay} aria-busy={paying}>
-          {fresh ? `Pay with my wallet  ·  ${sgd(quote.data.total)}` : "Pay with my wallet"}
-        </button>
+        <SlideToPay amount={fresh ? sgd(quote.data.total) : null} disabled={!canPay} paying={paying} onComplete={pay} />
       </footer>
     </main>
   );

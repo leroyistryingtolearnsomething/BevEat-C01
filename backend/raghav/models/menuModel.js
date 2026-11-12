@@ -5,6 +5,7 @@ const pool = require("../../config/db");
 // One row per dish, with its allergen names collected into an array.
 // LEFT JOINs keep a dish that has no allergen rows; FILTER turns its [NULL] into an empty array,
 // which is what dishSafety needs to spot "allergens unknown" and fail closed.
+// is_fried / is_low_sugar / sugar_g are what Mum's food rules check (schema request #7, migration 006).
 const DISH_COLUMNS = `m.item_id, m.stall_id, m.name, m.description, m.price, m.default_image_url,
        m.is_fried, m.is_low_sugar, m.sugar_g,
        COALESCE(array_agg(a.name ORDER BY a.allergen_id) FILTER (WHERE a.allergen_id IS NOT NULL), '{}') AS allergen_names`;

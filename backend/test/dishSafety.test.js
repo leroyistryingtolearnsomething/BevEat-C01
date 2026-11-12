@@ -60,7 +60,9 @@ check(v.status === STATUS.BLOCKED_ALLERGY, "an allergy is checked before Mum's r
 
 const noFried = [{ type: "no_fried", label: "No fried food" }];
 check(decideDish(dish(4, 4, ["Egg"]), makeChild({ foodRules: noFried })).status === STATUS.BLOCKED_PARENT,
-  "no_fried locks a dish whose fried status is unknown (fail closed until is_fried exists)");
+  "no_fried locks a dish whose fried status is unknown (fail closed)");
+check(decideDish(dish(4, 4, ["Egg"], { isFried: null }), makeChild({ foodRules: noFried })).status === STATUS.BLOCKED_PARENT,
+  "no_fried locks a dish whose is_fried is NULL (fail closed)");
 check(decideDish(dish(4, 4, ["Egg"], { isFried: true }), makeChild({ foodRules: noFried })).status === STATUS.BLOCKED_PARENT,
   "no_fried locks a fried dish");
 check(decideDish(dish(1, 3.5, ["Soy"], { isFried: false }), makeChild({ foodRules: noFried })).status === STATUS.ALLOWED,
