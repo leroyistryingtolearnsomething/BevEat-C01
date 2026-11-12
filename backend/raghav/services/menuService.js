@@ -37,9 +37,11 @@ function toDishFacts(row) {
     itemId: row.item_id,
     price: Number(row.price),
     allergenNames: row.allergen_names,
-    // true / false from menu_items.is_fried. If a query ever leaves it out (undefined),
-    // dishSafety treats "fried?" as unknown and a "No fried food" rule keeps the dish locked.
+    // true / false from menu_items.is_fried. null/undefined = unknown, which dishSafety treats as
+    // fried (fail closed), so a "No fried food" rule keeps the dish locked.
     isFried: row.is_fried,
+    isLowSugar: row.is_low_sugar,
+    sugarG: row.sugar_g === null || row.sugar_g === undefined ? row.sugar_g : Number(row.sugar_g),
   };
 }
 

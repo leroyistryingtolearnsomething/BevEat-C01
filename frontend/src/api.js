@@ -172,3 +172,21 @@ export const getMacrosWeek = (token, childId, start) =>
 // range: "this_week" | "last_week" | "this_month"
 export const getChildOrders = (token, childId, range = "this_week") =>
   request(`/children/${childId}/orders?range=${range}`, { token });
+
+// Live in the backend: Ask Mum, parent side + Mum's rules switches (Leslie, CB69-26 / CB69-18)
+// pending -> { requests: [{ requestId, childId, childName, itemId, dishName, stallName, price, imageUrl,
+//              ruleLabel, status, parentNote, createdAt, decidedAt }] }  (today, all of this parent's kids)
+export const getAskMumPending = (token) => request("/ask-mum/pending", { token });
+
+export const getAskMumRequest = (token, requestId) => request(`/ask-mum/requests/${encodeURIComponent(requestId)}`, { token });
+
+// decision = "approved" | "denied", note is optional (max 200 characters)
+export const decideAskMum = (token, requestId, decision, note) =>
+  request(`/ask-mum/${encodeURIComponent(requestId)}`, { method: "PUT", body: { decision, note }, token });
+
+// -> { noFried, noSugary }
+export const getFoodRules = (token, childId) => request(`/children/${childId}/food-rules`, { token });
+
+// rules = { noFried?: boolean, noSugary?: boolean } -> { noFried, noSugary }
+export const setFoodRules = (token, childId, rules) =>
+  request(`/children/${childId}/food-rules`, { method: "PUT", body: rules, token });

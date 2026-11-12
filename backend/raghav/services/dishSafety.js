@@ -15,7 +15,8 @@ const toCents = (amount) => Math.round(Number(amount) * 100);
 const isOverBudget = (price, canSpend) => toCents(price) > toCents(canSpend);
 
 /**
- * dish:  { itemId, price, allergenNames: string[], isFried?: boolean | null }
+ * dish:  { itemId, price, allergenNames: string[], isFried?: boolean | null,
+ *          isLowSugar?: boolean | null, sugarG?: number | null }
  * child: { allergies: [{ name, icon }], customBlocks?: { items: Map<itemId, [{ name, icon }]>, addOns: Set<addOnId> },
  *          foodRules: [...], approvedItemIds: Set<number>, canSpend: number }
  *
@@ -53,6 +54,15 @@ function decideDish(dish, child) {
   return verdict;
 }
 
+// "Sugary" for Mum's "No sugary drinks" rule: SUGARY_GRAMS or more sugar, unless the stall marked it
+// low sugar. Fail closed like no_fried: unknown sugar counts as sugary.
+const SUGARY_GRAMS = 15;
+function isSugary(dish) {
+  if (dish.isLowSugar === true) return false;
+  if (dish.sugarG === null || dish.sugarG === undefined || Number.isNaN(Number(dish.sugarG))) return true;
+  return Number(dish.sugarG) >= SUGARY_GRAMS;
+}
+
 // The first of Mum's rules this dish breaks, or null
 function findParentRule(dish, rules) {
   const broken = rules.find((rule) => {
@@ -60,6 +70,7 @@ function findParentRule(dish, rules) {
     // Only a dish we KNOW isn't fried (is_fried = false) passes. Fail closed: if Mum said
     // "no fried food" and we can't tell (undefined / null), keep the dish locked.
     if (rule.type === "no_fried") return dish.isFried !== false;
+    if (rule.type === "no_sugary") return isSugary(dish);
     return true; // a rule type this code doesn't know yet: lock rather than ignore it
   });
   return broken ? { type: broken.type, label: broken.label } : null;
@@ -85,4 +96,4 @@ function safeChecks(dish, child) {
   return checks;
 }
 
-module.exports = { STATUS, decideDish, decideAddOn, safeChecks, isOverBudget, toCents };
+module.exports = { STATUS, decideDish, decideAddOn, safeChecks, isOverBudget, toCents, findParentRule, isSugary, SUGARY_GRAMS };
