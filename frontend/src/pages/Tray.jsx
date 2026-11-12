@@ -16,6 +16,7 @@ import "./kidMenu.css";
 
 const QUOTE_DELAY_MS = 300; // wait until the kid stops tapping + / - before asking the server
 const UNDO_MS = 5000;
+const PAID_MS = 400; // how long the slider shows "Paid!" before the order-sent screen
 
 const sgd = (amount) => formatSgd(toCents(amount));
 
@@ -33,6 +34,7 @@ export default function Tray() {
   const [retry, setRetry] = useState(0);
   const [undo, setUndo] = useState(null); // the line just removed, so it can come back
   const [paying, setPaying] = useState(false);
+  const [paid, setPaid] = useState(false);
   const [payMessage, setPayMessage] = useState("");
 
   // The tray as the server sees it. A new key = the tray changed = ask for a new quote.
@@ -108,6 +110,10 @@ export default function Tray() {
       // the server prices the tray again (the same priceTray as the quote) and takes the money
       const done = await checkout(token, toQuoteItems(lines));
       saveTray(token, []);
+      // Green "Paid!" on the slider for a moment before moving on. The money is already taken,
+      // so this pause is only for the kid to see it worked.
+      setPaid(true);
+      await new Promise((resolve) => setTimeout(resolve, PAID_MS));
       // replace: Back from the success page must not return to an empty tray
       navigate("/kid/order-done", { replace: true, state: { done } });
     } catch (err) {
@@ -223,7 +229,7 @@ export default function Tray() {
       {undoToast}
 
       <footer className="km-footer">
-        <SlideToPay amount={fresh ? sgd(quote.data.total) : null} disabled={!canPay} paying={paying} onComplete={pay} />
+        <SlideToPay amount={fresh ? sgd(quote.data.total) : null} disabled={!canPay} paying={paying} paid={paid} onComplete={pay} />
       </footer>
     </main>
   );
