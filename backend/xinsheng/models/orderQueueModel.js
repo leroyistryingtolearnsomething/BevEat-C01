@@ -2,7 +2,9 @@
 // an order is still in the queue until ready_at is set
 const pool = require("../../config/db");
 
-const IN_QUEUE = `o.ready_at IS NULL AND o.collected_at IS NULL AND o.status <> 'cancelled'`;
+// only today's orders (Singapore time), old ones never marked ready shouldn't block the queue
+const TODAY = `o.placed_at >= date_trunc('day', now() AT TIME ZONE 'Asia/Singapore') AT TIME ZONE 'Asia/Singapore'`;
+const IN_QUEUE = `o.ready_at IS NULL AND o.collected_at IS NULL AND o.status <> 'cancelled' AND ${TODAY}`;
 
 async function getOrder(orderId) {
   const { rows } = await pool.query(
@@ -52,6 +54,19 @@ async function getReadyForChild(childId) {
   return rows;
 }
 
+// kid's orders today that aren't picked up yet (for the card on kid home)
+async function getActiveForChild(childId) {
+  const { rows } = await pool.query(
+    `SELECT o.order_id, o.stall_id, o.queue_number, o.placed_at, o.ready_at, o.pickup_code,
+            s.name AS stall_name, s.avg_prep_minutes
+     FROM orders o JOIN stalls s ON s.stall_id = o.stall_id
+     WHERE o.child_id = $1 AND o.collected_at IS NULL AND o.status <> 'cancelled' AND ${TODAY}
+     ORDER BY o.placed_at`,
+    [childId]
+  );
+  return rows;
+}
+
 // stall owner's screen: waiting orders first, then ready ones
 async function getForOwner(ownerId) {
   const { rows } = await pool.query(
@@ -83,4 +98,4 @@ async function markCollected(orderId) {
   return rows[0];
 }
 
-module.exports = { getOrder, countAhead, getStallQueue, getReadyForChild, getForOwner, markReady, markCollected };
+module.exports = { getOrder, countAhead, getStallQueue, getReadyForChild, getActiveForChild, getForOwner, markReady, markCollected };

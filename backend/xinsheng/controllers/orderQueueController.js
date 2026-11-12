@@ -89,6 +89,29 @@ async function getMyReadyOrders(req, res, next) {
   }
 }
 
+// GET /api/me/orders  (kid home shows today's orders and their place in the queue)
+async function getMyOrders(req, res, next) {
+  try {
+    const rows = await Queue.getActiveForChild(req.user.id);
+    const orders = [];
+    for (const o of rows) {
+      const ahead = o.ready_at ? 0 : await Queue.countAhead(o.stall_id, o.placed_at, o.order_id);
+      orders.push({
+        orderId: o.order_id,
+        queueNumber: o.queue_number,
+        stallName: o.stall_name,
+        ready: !!o.ready_at,
+        ahead,
+        waitMinutes: o.ready_at ? 0 : (ahead + 1) * prepMins(o),
+        ...pickupInfo(req.user, o),
+      });
+    }
+    res.json({ orders });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // GET /api/stall/orders
 async function getStallOrders(req, res, next) {
   try {
@@ -157,4 +180,4 @@ async function markCollected(req, res, next) {
   }
 }
 
-module.exports = { getOrderQueue, getStallWait, getMyReadyOrders, getStallOrders, markReady, markCollected };
+module.exports = { getOrderQueue, getStallWait, getMyReadyOrders, getMyOrders, getStallOrders, markReady, markCollected };

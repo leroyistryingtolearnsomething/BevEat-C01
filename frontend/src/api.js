@@ -128,6 +128,9 @@ export const getStallWait = (token, stallId) => request(`/stalls/${stallId}/wait
 
 export const getReadyOrders = (token) => request("/me/ready-orders", { token });
 
+// kid home card: today's orders not picked up yet
+export const getMyOrders = (token) => request("/me/orders", { token });
+
 export const getStallOrders = (token) => request("/stall/orders", { token });
 
 export const markOrderReady = (token, orderId) =>
