@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { clearSession, getSession } from "../session.js";
 import { KidSwitcher, ParentTabs, money, useKids } from "../components/ParentShell.jsx";
 import ParentAlerts from "../components/ParentAlerts.jsx";
+import ParentOrdersCard from "../components/ParentOrdersCard.jsx";
 import Icon from "../components/Icon.jsx";
 import walletIcon from "../assets/figma/wallet.svg";
 import warningIcon from "../assets/figma/warning.svg";
@@ -15,6 +16,7 @@ export default function ParentHome() {
   const { name } = getSession();
   const { kids, kid, select, error, token } = useKids();
   const [section, setSection] = useState("allergies");
+  const [lowWallets, setLowWallets] = useState(null); // low_wallet alerts, null until loaded
 
   const logOut = () => {
     clearSession();
@@ -43,8 +45,9 @@ export default function ParentHome() {
       {kid && (
         <>
           <KidSwitcher kids={kids} kid={kid} onSelect={select} />
-          <ParentAlerts token={token} />
-          <Today kid={kid} />
+          <ParentAlerts token={token} onLowWallets={setLowWallets} />
+          <ParentOrdersCard token={token} />
+          <Today kid={kid} lowAlert={lowWallets?.find((a) => a.childId === kid.id)} alertsLoaded={!!lowWallets} />
           <Link to={`/parent/macros?kid=${kid.id}`} className="m-home-link">
             <span>{kid.name}'s food and nutrients</span>
             <span aria-hidden="true">›</span>
@@ -128,10 +131,11 @@ function AccountMenu({ name, onLogOut }) {
   );
 }
 
-function Today({ kid }) {
+function Today({ kid, lowAlert, alertsLoaded }) {
   const left = Math.max(0, kid.dailyLimit - kid.spentToday);
   const spentPct = kid.dailyLimit ? Math.min(100, (kid.spentToday / kid.dailyLimit) * 100) : 0;
-  const low = kid.walletBalance < kid.dailyLimit;
+  // alerts know the amount the parent picked, until they load use one day's limit
+  const low = alertsLoaded ? !!lowAlert : kid.walletBalance < kid.dailyLimit;
   const topUp = `/parent/top-up?kid=${kid.id}`;
 
   return (
@@ -148,7 +152,9 @@ function Today({ kid }) {
           <img src={warningIcon} alt="" width="22" height="22" />
           <div className="wallet__text">
             <p className="wallet__strong">Wallet low: {money(kid.walletBalance)}</p>
-            <p className="wallet__small">Under tomorrow's {money(kid.dailyLimit)} limit</p>
+            <p className="wallet__small">
+              {lowAlert?.picked ? `Under the ${money(lowAlert.alertBelow)} you picked` : `Under tomorrow's ${money(kid.dailyLimit)} limit`}
+            </p>
           </div>
           <Link to={topUp} className="wallet__btn wallet__btn--dark"><img src={plusWhite} alt="" width="16" height="16" />Top up</Link>
         </div>

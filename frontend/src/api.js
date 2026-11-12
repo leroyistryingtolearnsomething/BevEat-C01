@@ -112,6 +112,11 @@ export const getSpending = (token, childId, period) =>
 
 export const getParentAlerts = (token) => request("/children/alerts", { token });
 
+// low wallet alert amount, null = one day's limit
+export const getWalletAlert = (token, childId) => request(`/children/${childId}/wallet-alert`, { token });
+export const setWalletAlert = (token, childId, alertBelowCents) =>
+  request(`/children/${childId}/wallet-alert`, { method: "PUT", body: { alertBelowCents }, token });
+
 export const getDayLimits = (token, childId) => request(`/children/${childId}/day-limits`, { token });
 
 // days = { mon: 300, fri: 600 } in cents, null = normal limit
@@ -130,6 +135,9 @@ export const getReadyOrders = (token) => request("/me/ready-orders", { token });
 
 // kid home card: today's orders not picked up yet
 export const getMyOrders = (token) => request("/me/orders", { token });
+
+// parent home card: all their kids' orders not picked up yet
+export const getKidsOrders = (token) => request("/children/live-orders", { token });
 
 export const getStallOrders = (token) => request("/stall/orders", { token });
 

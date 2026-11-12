@@ -89,24 +89,38 @@ async function getMyReadyOrders(req, res, next) {
   }
 }
 
-// GET /api/me/orders  (kid home shows today's orders and their place in the queue)
+// today's orders with their place in the queue (kid home + parent home cards)
+async function withQueue(user, rows) {
+  const orders = [];
+  for (const o of rows) {
+    const ahead = o.ready_at ? 0 : await Queue.countAhead(o.stall_id, o.placed_at, o.order_id);
+    orders.push({
+      orderId: o.order_id,
+      ...(o.child_name && { childId: o.child_id, childName: o.child_name }),
+      queueNumber: o.queue_number,
+      stallName: o.stall_name,
+      ready: !!o.ready_at,
+      ahead,
+      waitMinutes: o.ready_at ? 0 : (ahead + 1) * prepMins(o),
+      ...pickupInfo(user, o),
+    });
+  }
+  return orders;
+}
+
+// GET /api/me/orders  (kid)
 async function getMyOrders(req, res, next) {
   try {
-    const rows = await Queue.getActiveForChild(req.user.id);
-    const orders = [];
-    for (const o of rows) {
-      const ahead = o.ready_at ? 0 : await Queue.countAhead(o.stall_id, o.placed_at, o.order_id);
-      orders.push({
-        orderId: o.order_id,
-        queueNumber: o.queue_number,
-        stallName: o.stall_name,
-        ready: !!o.ready_at,
-        ahead,
-        waitMinutes: o.ready_at ? 0 : (ahead + 1) * prepMins(o),
-        ...pickupInfo(req.user, o),
-      });
-    }
-    res.json({ orders });
+    res.json({ orders: await withQueue(req.user, await Queue.getActiveForChild(req.user.id)) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// GET /api/children/live-orders  (parent, all their kids)
+async function getKidsOrders(req, res, next) {
+  try {
+    res.json({ orders: await withQueue(req.user, await Queue.getActiveForParent(req.user.id)) });
   } catch (err) {
     next(err);
   }
@@ -180,4 +194,4 @@ async function markCollected(req, res, next) {
   }
 }
 
-module.exports = { getOrderQueue, getStallWait, getMyReadyOrders, getMyOrders, getStallOrders, markReady, markCollected };
+module.exports = { getOrderQueue, getStallWait, getMyReadyOrders, getMyOrders, getKidsOrders, getStallOrders, markReady, markCollected };

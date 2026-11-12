@@ -73,6 +73,15 @@ function fakeQuery(sql, params = []) {
     };
   }
 
+  if (sql.includes("WHERE c.parent_id = $1 AND o.collected_at IS NULL")) {
+    const mine = childProfiles.filter((c) => c.parent_id === params[0]).map((c) => c.child_id);
+    return {
+      rows: orders
+        .filter((o) => mine.includes(o.child_id) && !o.collected_at && o.status !== "cancelled")
+        .map((o) => ({ ...o, stall_name: stallOf(o).name, avg_prep_minutes: stallOf(o).avg_prep_minutes, child_name: `Kid ${o.child_id}` })),
+    };
+  }
+
   if (sql.includes("WHERE s.owner_id = $1")) {
     return {
       rows: orders
@@ -191,6 +200,15 @@ async function run() {
   check(res.body.orders[0].ahead === 2 && res.body.orders[0].waitMinutes === 12, "kid home has the queue and wait time");
   res = await get("/me/orders", parent);
   check(res.status === 403, "my orders is only for kids");
+
+  // parent home card: their kids' orders only
+  res = await get("/children/live-orders", parent);
+  check(res.status === 200 && res.body.orders.length === 1 && res.body.orders[0].childName === "Kid 10", "parent sees their kid's order");
+  check(res.body.orders[0].ahead === 2 && res.body.orders[0].waitMinutes === 12, "parent card has the queue and wait time");
+  res = await get("/children/live-orders", otherParent);
+  check(res.body.orders.every((o) => o.childId === 12), "other parent only sees their own kid");
+  res = await get("/children/live-orders", kid);
+  check(res.status === 403, "live orders card is only for parents");
 
   res = await put("/orders/3/ready", otherOwner);
   check(res.status === 404, "other stall cannot mark the order ready");
