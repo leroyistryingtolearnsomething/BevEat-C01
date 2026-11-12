@@ -55,4 +55,26 @@ function parseTrayItems(body) {
   };
 }
 
-module.exports = { toId, isId, parseTrayItems, MAX_TRAY_LINES, MAX_QUANTITY };
+// ---------- Ask Mum note (POST /api/ask-mum) ----------
+
+// The same limit as the CHECK on ask_mum_requests.child_note (docs/schema-requests.md #11)
+const MAX_NOTE_CHARS = 100;
+
+// Control characters: newlines, tabs, NUL, bell and the like (C0, DEL and C1). A one-line note
+// for Mum never needs them, and they can break how the parent screen lays it out.
+const CONTROL_CHARS = /[\u0000-\u001F\u007F-\u009F]/;
+
+// The kid's optional note -> { note } (a trimmed string, or null for "no note") or { error }.
+// Characters are counted with [...note] so an emoji like 🍕 counts as 1, the same way Postgres's
+// char_length does. ("🍕".length is 2 in JavaScript.)
+function parseAskMumNote(value) {
+  if (value === undefined || value === null) return { note: null };
+  if (typeof value !== "string") return { error: "note must be text" };
+  if (CONTROL_CHARS.test(value)) return { error: "note can't have line breaks or special characters" };
+  const note = value.trim();
+  if (note === "") return { note: null };
+  if ([...note].length > MAX_NOTE_CHARS) return { error: `note can be at most ${MAX_NOTE_CHARS} characters` };
+  return { note };
+}
+
+module.exports = { toId, isId, parseTrayItems, parseAskMumNote, MAX_TRAY_LINES, MAX_QUANTITY, MAX_NOTE_CHARS };

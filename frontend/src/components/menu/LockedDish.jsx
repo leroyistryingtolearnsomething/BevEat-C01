@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import BackCircle, { useGoBack } from "./BackCircle.jsx";
 import DishCard from "./DishCard.jsx";
 import DishPhoto from "./DishPhoto.jsx";
@@ -94,11 +94,21 @@ function ruleText(dish) {
   return `Mum picked “${label}”.`;
 }
 
+// The kid's optional note for Mum. Same rules as the server (parseAskMumNote): trimmed, at most
+// 100 characters, counted with [...text] so an emoji counts as 1 (the input's maxLength would
+// count it as 2, so it isn't used: the counter and the disabled button do the limiting).
+const NOTE_MAX = 100;
+const NOTE_CHIPS = ["I'm extra hungry today", "It's a special day", "Just this once please!"];
+const noteLength = (text) => [...text.trim()].length;
+
 function ParentWords({ dish, token }) {
   // null = still checking, then the request today (or none). "sending" while the tap is in flight.
   const [request, setRequest] = useState(undefined);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const [note, setNote] = useState("");
+  const noteId = useId();
+  const tooLong = noteLength(note) > NOTE_MAX;
 
   // Coming back to 05b shows "Sent to Mum!" again if the kid already asked today
   useEffect(() => {
@@ -111,7 +121,8 @@ function ParentWords({ dish, token }) {
     setSending(true);
     setError("");
     try {
-      setRequest(await askMum(token, dish.id));
+      // an empty box is sent as no note at all; the server trims and checks it again
+      setRequest(await askMum(token, dish.id, note.trim() || undefined));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -126,13 +137,57 @@ function ParentWords({ dish, token }) {
       <p className="km-lead">{ruleText(dish)}</p>
 
       {sent ? (
-        <p className="km-askmum km-askmum--sent" role="status">
-          <img src={check22} width="22" height="22" alt="" /> Sent to Mum!
-        </p>
+        <>
+          <p className="km-askmum km-askmum--sent" role="status">
+            <img src={check22} width="22" height="22" alt="" /> Sent to Mum!
+          </p>
+          {/* plain text: React escapes it, so whatever the kid typed is shown exactly as words */}
+          {request.note && <p className="km-note-quote">“{request.note}”</p>}
+        </>
       ) : (
-        <button type="button" className="km-askmum" onClick={onAsk} disabled={sending || request === undefined}>
-          <img src={send} width="22" height="22" alt="" /> Ask Mum
-        </button>
+        <>
+          <div className="km-note-box">
+            <label className="km-note-label" htmlFor={`${noteId}-input`}>Add a note for Mum (optional)</label>
+            <input
+              id={`${noteId}-input`}
+              className={`km-note-input${tooLong ? " km-note-input--over" : ""}`}
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Why today?"
+              disabled={sending}
+              aria-describedby={`${noteId}-count`}
+              aria-invalid={tooLong}
+              autoComplete="off"
+            />
+            <p id={`${noteId}-count`} className={`km-note-count${tooLong ? " km-note-count--over" : ""}`} aria-live="polite">
+              {noteLength(note)}/{NOTE_MAX}
+              {tooLong && <span> · a bit too long!</span>}
+            </p>
+            <div className="km-note-chips" role="group" aria-label="Quick notes">
+              {NOTE_CHIPS.map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  className="km-note-chip"
+                  aria-pressed={note.trim() === chip}
+                  onClick={() => setNote(chip)}
+                  disabled={sending}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+          </div>
+          <button
+            type="button"
+            className={`km-askmum${tooLong ? " km-askmum--off" : ""}`}
+            onClick={onAsk}
+            disabled={sending || request === undefined || tooLong}
+          >
+            <img src={send} width="22" height="22" alt="" /> Ask Mum
+          </button>
+        </>
       )}
 
       <p className="km-caption" aria-live="polite">

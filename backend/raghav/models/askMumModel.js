@@ -8,7 +8,8 @@ const pool = require("../../config/db");
 // the database's clock and can never disagree with the server's time zone.
 const SG_TODAY = `(now() AT TIME ZONE 'Asia/Singapore')::date`;
 
-const REQUEST_COLUMNS = `request_id, child_id, item_id, status, created_at, decided_at`;
+// child_note = the kid's optional note for Mum (schema request #11). Leslie's parent screens show it.
+const REQUEST_COLUMNS = `request_id, child_id, item_id, status, child_note, created_at, decided_at`;
 
 // This child's request about this dish today, or undefined. The unique index
 // ask_mum_one_per_day means there is at most one.
@@ -25,12 +26,14 @@ async function findToday(childId, itemId) {
 // A new pending request. status, request_date and created_at come from the column defaults.
 // If the child already asked about this dish today, the unique index ask_mum_one_per_day makes
 // Postgres throw error code 23505, which the controller turns into "here's your existing request".
-async function create(childId, itemId) {
+// note: already checked by parseAskMumNote (trimmed, <= 100 characters), or null for "no note".
+// The table's CHECK on child_note is a second guard.
+async function create(childId, itemId, note = null) {
   const { rows } = await pool.query(
-    `INSERT INTO ask_mum_requests (child_id, item_id)
-     VALUES ($1, $2)
+    `INSERT INTO ask_mum_requests (child_id, item_id, child_note)
+     VALUES ($1, $2, $3)
      RETURNING ${REQUEST_COLUMNS}`,
-    [childId, itemId]
+    [childId, itemId, note]
   );
   return rows[0];
 }

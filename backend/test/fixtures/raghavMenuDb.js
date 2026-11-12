@@ -105,10 +105,10 @@ const askMumRows = [];
 let nextRequestId = 1;
 let hideNextAskMumLookup = false;
 const sgToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Singapore" }).format(new Date());
-const requestColumns = ({ request_id, child_id, item_id, status, created_at, decided_at }) =>
-  ({ request_id, child_id, item_id, status, created_at, decided_at });
+const requestColumns = ({ request_id, child_id, item_id, status, child_note, created_at, decided_at }) =>
+  ({ request_id, child_id, item_id, status, child_note, created_at, decided_at });
 
-function askMumQuery(sql, [p1, p2]) {
+function askMumQuery(sql, [p1, p2, p3]) {
   if (state.failAskMum) throw new Error("ask_mum_requests unreachable (expected in this test)");
   const today = sgToday();
   if (sql.includes("INSERT INTO ask_mum_requests")) {
@@ -118,7 +118,14 @@ function askMumQuery(sql, [p1, p2]) {
       err.code = "23505";
       throw err;
     }
-    const row = { request_id: nextRequestId++, child_id: p1, item_id: p2, status: "pending",
+    // the real CHECK on child_note (migration 007): char_length counts characters, like [...s]
+    const childNote = p3 ?? null;
+    if (childNote !== null && [...childNote].length > 100) {
+      const err = new Error('new row violates check constraint "ask_mum_requests_child_note_check"');
+      err.code = "23514";
+      throw err;
+    }
+    const row = { request_id: nextRequestId++, child_id: p1, item_id: p2, status: "pending", child_note: childNote,
       request_date: today, created_at: new Date(), decided_at: null };
     askMumRows.push(row);
     return { rows: [requestColumns(row)] };
