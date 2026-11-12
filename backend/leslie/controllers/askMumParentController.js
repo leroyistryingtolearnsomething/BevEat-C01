@@ -38,6 +38,7 @@ async function toJson(rows) {
       imageUrl: r.default_image_url,
       ruleLabel: await ruleLabelFor(r, rulesCache),
       status: r.status,
+      childNote: r.child_note ?? null,
       parentNote: r.parent_note,
       createdAt: r.created_at,
       decidedAt: r.decided_at,

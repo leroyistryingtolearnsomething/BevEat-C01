@@ -69,6 +69,7 @@ export function AskMumPings({ requests }) {
               <p className="am-ping__meta">{money(r.price)} · {r.stallName}</p>
             </div>
           </div>
+          {r.childNote && <p className="am-ping__note">“{r.childNote}”</p>}
           {r.ruleLabel && <p className="am-ping__rule">🔒 Breaks your rule: {r.ruleLabel}</p>}
           <Link to={`/parent/ask-mum/${r.requestId}`} className="am-ping__btn">Review request</Link>
         </article>

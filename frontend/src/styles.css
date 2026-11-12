@@ -806,3 +806,8 @@ button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
 .switch[aria-checked="true"] .switch__knob { transform: translateX(20px); }
 .switch:focus-visible { outline: 3px solid var(--p-green); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .switch, .switch__knob { transition: none; } }
+
+/* Kid's note on an Ask Mum request (migration 007, child_note) */
+.am-ping__note { margin: 0; padding: 8px 10px; border-radius: 10px; background: #efe8ff; color: #3d2d73; font-size: 13px; font-weight: 600; }
+.am-kidnote { margin: 0; padding: 10px 12px; border-radius: 14px 14px 14px 4px; background: #efe8ff; color: #3d2d73; font-size: 14px; }
+.am-kidnote__who { display: block; font-size: 12px; font-weight: 700; color: #6a52c7; }

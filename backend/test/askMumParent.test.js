@@ -65,7 +65,7 @@ fakePool.query = async (sql, params = []) => {
       err.code = "23505";
       throw err;
     }
-    const row = { request_id: nextAsk++, child_id: p1, item_id: p2, status: "pending", request_date: today(), parent_note: null, created_at: new Date(), decided_at: null };
+    const row = { request_id: nextAsk++, child_id: p1, item_id: p2, status: "pending", request_date: today(), child_note: null, parent_note: null, created_at: new Date(), decided_at: null };
     asks.push(row);
     return { rows: [{ ...row }] };
   }
@@ -154,12 +154,15 @@ async function run() {
   check(res.status === 201 && res.body.status === "pending", "Aisyah asks for Mee Goreng (pending)");
   const reqId = res.body.requestId;
 
+  // Raghav's kid screen saves an optional note (migration 007); put one on the row directly
+  asks.find((a) => a.request_id === reqId).child_note = "Just this once pls, I finished my veg yesterday!";
   res = await mumA.get("/api/ask-mum/pending");
   const card = res.body.requests && res.body.requests[0];
   check(res.status === 200 && res.body.requests.length === 1, "Mum's bell has 1 request");
   check(card && card.dishName === "Mee Goreng" && card.childName === "Aisyah" && card.price === 3.5 && card.stallName === "Mariam Nasi Lemak",
     "request card has dish, kid, price and stall");
   check(card && card.ruleLabel === "No fried food", "request card says which rule it breaks");
+  check(card && card.childNote === "Just this once pls, I finished my veg yesterday!", "request card carries the kid's note");
   check((await mumB.get("/api/ask-mum/pending")).body.requests.length === 0, "another parent's bell is empty");
   res = await mumA.get(`/api/children/${AISYAH}/ask-mum?status=pending`);
   check(res.status === 200 && res.body.requests.length === 1, "per-kid list (api-contracts §2f) works");

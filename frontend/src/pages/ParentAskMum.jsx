@@ -82,6 +82,12 @@ function Review({ req, kid, note, setNote, status, onAnswer }) {
         )}
       </section>
 
+      {req.childNote && (
+        <p className="am-kidnote">
+          <span className="am-kidnote__who">{req.childName} says:</span> “{req.childNote}”
+        </p>
+      )}
+
       {left !== null && (
         <section className="card am-spend">
           <p><span>Food money left today</span><strong>{money(left)}</strong></p>
@@ -135,6 +141,7 @@ function Answered({ req, home }) {
         <p><span>Dish</span><strong>{req.dishName}</strong></p>
         <p><span>Price</span><strong>{money(req.price)}</strong></p>
         {yes && <p><span>Pass valid</span><strong className="am-ok">Today only · 1 time</strong></p>}
+        {req.childNote && <p><span>{req.childName}'s note</span><strong>“{req.childNote}”</strong></p>}
         {req.parentNote && <p><span>Your note</span><strong>“{req.parentNote}”</strong></p>}
       </section>
 

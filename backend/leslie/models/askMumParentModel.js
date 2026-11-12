@@ -9,7 +9,7 @@ const TODAY = `(now() AT TIME ZONE 'Asia/Singapore')::date`;
 const REQUEST_SELECT = `
   SELECT r.request_id, r.child_id, u.display_name AS child_name, r.item_id, m.name AS dish_name,
          s.name AS stall_name, m.price, m.default_image_url, m.is_fried, m.is_low_sugar, m.sugar_g,
-         r.status, r.parent_note, r.created_at, r.decided_at
+         r.status, r.child_note, r.parent_note, r.created_at, r.decided_at
     FROM ask_mum_requests r
     JOIN child_profiles c ON c.child_id = r.child_id
     JOIN users u ON u.user_id = r.child_id
