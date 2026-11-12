@@ -170,6 +170,24 @@ ALTER TABLE public.ask_mum_requests ENABLE ROW LEVEL SECURITY;
 
 Who writes what: Raghav's API only **INSERTs** `pending` rows. Leslie's API only **UPDATEs** `status` + `decided_at` on rows that are still `pending`. Contract: `docs/api-contracts.md` §2f.
 
+**Status: applied** (checked on the live database 2026-11-12). The live table also has a `parent_note text` column (≤200 chars) that isn't in the SQL above. Raghav's API doesn't read or write it. The kid's own note needs a new column: see #11.
+
 ## 10. Data fix: hidden egg in "Add vanilla ice cream" (HIGH, safety, no schema change)
 
 Add-on 12 (Ice Kacang → "Add vanilla ice cream") contains **milk and egg**, but `add_ons.allergen_id` only holds Milk, and Ice Kacang itself has no Egg tag. So a child allergic to egg (but not peanuts or milk) could add it. Until #2 (`add_on_allergens`) exists, the safest single value is **Egg**: Ice Kacang already contains milk, so a milk-allergic child never sees the dish anyway. Raghav's `03_more_add_ons.sql` makes this change (it's Raghav's own seed row) and explains why.
+
+## 11. Kid's note on an Ask Mum request (MEDIUM, needed for the 05b note box)
+
+**Why:** on 05b the kid can add a short, optional note before tapping **Ask Mum** (e.g. *"I'm extra hungry today"*, *"It's a special day"*), so Mum knows why they're asking. The parent screen (Leslie, `docs/api-contracts.md` §2f) shows it next to the dish. `ask_mum_requests` (#9) is already live, so this is a new column, not a change to #9.
+
+```sql
+ALTER TABLE public.ask_mum_requests
+  ADD COLUMN child_note text
+  CHECK (child_note IS NULL OR char_length(child_note) <= 100);
+```
+
+- **Optional:** NULL means the kid didn't write a note. Existing rows stay NULL, so the change is safe to run at any time.
+- **Name:** `child_note`, the name in Leslie's own draft (`backend/leslie/db/migrations/002_ask_mum_requests_DRAFT.sql`). It sits beside the live `parent_note`, so it's clear whose words each column holds.
+- **100 characters:** about one kid-sized sentence, enough for the quick-tap chips. Raghav's API enforces the same limit first and returns 400. It also trims spaces, rejects control characters (including newlines), and stores an empty note as NULL. The CHECK is a second guard, so nothing else can write a longer note.
+- **Who writes it:** only Raghav's `POST /api/ask-mum`, in the same INSERT as the request. Leslie's parent side only reads it, and must show it as plain text, never as HTML.
+- **Until it exists:** Raghav's API ignores the note, and the parent GET returns `"note": null`.
