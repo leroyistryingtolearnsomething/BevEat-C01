@@ -93,4 +93,63 @@ async function removePhoto(req, res, next){
     }
 }
 
-module.exports = {getMyDishes, createPhoto, removePhoto};
+async function getDishPhotos(req, res, next){
+    try{
+        const viewerId = req.user.id;
+        const itemId = Number(req.params.itemId);
+
+        const rows = await photoModel.getDishPhotos(itemId, viewerId)
+        const photo = rows.map((r)=>({
+            photo: r.photo_id,
+            imageUrl: r.image_url,
+            hearts: Number(r.hearts),
+            likedByMe: r.liked_by_me,
+            uploaderUsername: r.username || "a kiddyEats kid", //fall back for if Null parent
+            mine: r.uploaded_by === viewerId
+        }))
+            res.json({ photo });
+    }
+    catch(err){
+        next(err);
+    }
+}
+
+async function votePhoto(req, res, next){
+    try{
+        const userId = req.user.id;
+        const photoId = Number(req.params.photoId);
+
+        const photo = await photoModel.getVotablePhoto(photoId);
+
+        if (!photo) return res.status(404).json({error : "Photo not found"});
+
+        if (photo.uploaded_by === userId) return res.status(403).json({error : "You can't heart your own pic"});
+
+            await photoModel.addVote(photoId, userId);
+            const hearts = await photoModel.countHearts(photoId);
+            res.json({photoId, hearts, likedByMe: true });
+    }
+    catch(err){
+        next(err);
+    }
+}
+
+async function unvotePhoto(req, res, next){
+    try{
+        const userId = req.user.id;
+        const photoId = Number(req.params.photoId);
+
+        const photo = await photoModel.getVotablePhoto(photoId, userId);
+
+        if (!photo) return res.status(404).json ({error: "Photo not found"});
+
+            await photoModel.removeVote(photoId, userId)
+            const hearts = await photoModel.countHearts(photoId);
+            res.json({photoId, hearts, likedByMe: false });
+    }
+    catch(err){
+        next(err);
+    }
+}
+
+module.exports = {getMyDishes, createPhoto, removePhoto, getDishPhotos, votePhoto, unvotePhoto};

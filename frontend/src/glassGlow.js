@@ -1,5 +1,5 @@
 // Apple "interactive" Liquid Glass for the parent app's standalone buttons: a soft specular glow tracks the pointer across
-// the glass (mouse hover or finger), the control swells slightly while pressed and springs back with an overshoot.
+// the glass while you press or drag (finger or mouse button), the control swells slightly while pressed and springs back with an overshoot.
 // DOM-only (like glassDrag.js): a glow span is injected into the control, so no component needs changing.
 // Segmented groups (.seg, .kid-switch, ...) and the tab bar already have their own sliding capsule, so they are skipped.
 const TARGETS = ".parent .btn, .parent .back, .parent .allergy-chip, .parent a.m-home-link, .parent a.wallet__btn, .parent .hello__avatar";
@@ -37,17 +37,7 @@ export function installGlassGlow() {
     cur = null;
   };
 
-  const move = (e) => {
-    const el = find(e);
-    if (el !== cur) {
-      leave();
-      if (!el) return;
-      cur = el;
-      glowOf(el);
-      el.setAttribute("data-glow", "");
-    }
-    aim(el, e);
-  };
+  const move = (e) => { if (cur?.hasAttribute("data-press")) aim(cur, e); }; // follows only while pressed, never on a plain hover
 
   const down = (e) => {
     const el = find(e);
@@ -58,10 +48,7 @@ export function installGlassGlow() {
     aim(el, e);
   };
 
-  const up = (e) => {
-    cur?.removeAttribute("data-press");
-    if (e.pointerType !== "mouse") leave(); // a finger lifting takes the glow with it; a mouse keeps hovering
-  };
+  const up = () => leave();
 
   const events = [["pointermove", move], ["pointerdown", down], ["pointerup", up], ["pointercancel", leave]];
   for (const [n, f] of events) document.addEventListener(n, f, true);
