@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { setAllergies } from "../api.js";
 import CustomAllergies from "../components/CustomAllergies.jsx";
+import FoodRuleSwitches from "../components/FoodRuleSwitches.jsx";
 import { ALLERGENS, KidSwitcher, PageHeader, ParentTabs, useKids } from "../components/ParentShell.jsx";
 import tickIcon from "../assets/figma/tick.svg";
 import plusIcon from "../assets/figma/plus-dark.svg";
@@ -51,6 +52,7 @@ export default function ParentAllergies() {
       {kid && (
         <>
           <KidSwitcher kids={kids} kid={kid} onSelect={select} />
+          <FoodRuleSwitches token={token} kid={kid} />
           <section className="card">
             <h2>Allergies</h2>
             <p className="card__lead">Dishes with these never show up for {kid.name}, at any stall. Add-ons with them are hidden too.</p>

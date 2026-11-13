@@ -151,6 +151,48 @@ async function run() {
   res = await request(app).post("/api/ask-mum").send({ itemId: MILO });
   check(res.status === 401, "not logged in gives 401");
 
+  // ----- the kid's note for Mum (ask_mum_requests.child_note, schema request #11) -----
+  const rowsFor = () => db.askMum.rows().filter((r) => r.child_id === CHLOE && r.item_id === MILO);
+
+  db.askMum.reset();
+  res = await ask({ itemId: MILO, note: "  I'm extra hungry today  " });
+  check(res.status === 201 && res.body.note === "I'm extra hungry today", "a note is saved, trimmed, and sent back");
+  check(rowsFor()[0].child_note === "I'm extra hungry today", "...it's written to child_note (what Leslie's parent screen shows)");
+  res = await status(MILO);
+  check(res.body.request.note === "I'm extra hungry today", "GET returns the note, so 05b's 'Sent' state shows it again");
+  res = await ask({ itemId: MILO, note: "Pleeease" });
+  check(res.status === 200 && res.body.note === "I'm extra hungry today" && rowsFor().length === 1,
+    "asking again the same day returns the ORIGINAL note; the new one is ignored");
+
+  for (const [label, note] of [["missing", undefined], ["null", null], ['""', ""], ['"   " (only spaces)', "   "]]) {
+    db.askMum.reset();
+    res = await ask(note === undefined ? { itemId: MILO } : { itemId: MILO, note });
+    check(res.status === 201 && res.body.note === null && rowsFor()[0].child_note === null, `note ${label}: 201, saved as null`);
+  }
+
+  db.askMum.reset();
+  res = await ask({ itemId: MILO, note: "a".repeat(100) });
+  check(res.status === 201 && res.body.note.length === 100, "exactly 100 characters is allowed");
+  db.askMum.reset();
+  res = await ask({ itemId: MILO, note: "🍕".repeat(100) });
+  check(res.status === 201 && [...res.body.note].length === 100,
+    "100 emoji is allowed (counted as characters, like Postgres char_length, not JS .length 200)");
+
+  const badNotes = [
+    ["101 characters", "a".repeat(101)], ["101 emoji", "🍕".repeat(101)], ["a newline", "\n"],
+    ["a line break inside", "hi\nMum"], ["a tab", "hi\tMum"], ["a bell character", "\u0007"],
+    ["a number", 123], ["true", true], ["an object", { text: "hi" }], ["a list", ["hi"]],
+  ];
+  for (const [label, note] of badNotes) {
+    db.askMum.reset();
+    const queriesBefore = db.state.queries.length;
+    res = await ask({ itemId: MILO, note });
+    check(res.status === 400 && typeof res.body.error === "string" && rowsFor().length === 0 &&
+      db.state.queries.length === queriesBefore, `note ${label}: 400, no request, and no database call at all`);
+  }
+  res = await ask({ itemId: "10", note: 123 });
+  check(res.status === 400 && res.body.error === "Invalid dish id", "a bad dish id is still reported first");
+
   console.log(failed ? `\n${failed} failed` : "\nall passed");
   process.exitCode = failed ? 1 : 0;
 }

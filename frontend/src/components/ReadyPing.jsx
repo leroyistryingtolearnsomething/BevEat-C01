@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { getReadyOrders } from "../api.js";
 import { getSession } from "../session.js";
@@ -8,7 +8,6 @@ const POLL_MS = 10000;
 
 export default function ReadyPing() {
   const [ready, setReady] = useState([]);
-  const seen = useRef(new Set());
   const { pathname } = useLocation();
 
   useEffect(() => {
@@ -17,9 +16,6 @@ export default function ReadyPing() {
       if (!s || s.role !== "child") return setReady([]);
       try {
         const { orders } = await getReadyOrders(s.token);
-        const isNew = orders.some((o) => !seen.current.has(o.orderId));
-        orders.forEach((o) => seen.current.add(o.orderId));
-        if (isNew && navigator.vibrate) navigator.vibrate([200, 100, 200]);
         setReady(orders);
       } catch {
         // 401 clears the session in api.js, so the next check stops before calling the api

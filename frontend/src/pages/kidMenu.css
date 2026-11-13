@@ -333,6 +333,39 @@ span.km-big { cursor: default; }
 .km-askmum--sent { background: var(--km-mint); color: var(--k-ink); box-shadow: 0 2px 0 var(--k-ink); cursor: default; }
 .km-caption { font-size: 13px; font-weight: 600; color: var(--km-caption); }
 
+/* 05b: the kid's optional note for Mum. Sticker Pop pieces: ink outlines, hard ink shadows.
+   (km-note-* only; the bare .km-note is the Food Card's note pill.) Contrast on the #ede8ff page:
+   label ink 14:1 · counter #55587a 5.7:1 · "too long" #bf3326 4.7:1 · picked chip white on grape 4.5:1 */
+.km-note-box { display: flex; flex-direction: column; align-items: stretch; gap: 8px; width: 100%; text-align: left; }
+.km-note-label { font-family: var(--km-font); font-size: 15px; font-weight: 600; color: var(--k-ink); }
+.km-note-input {
+  width: 100%; min-height: 48px; padding: 10px 14px;
+  border: var(--k-line); border-radius: 14px; background: #fff; box-shadow: 0 3px 0 var(--k-ink);
+  font-family: var(--km-font); font-size: 16px; /* 16px stops iPhones zooming in on focus */ color: var(--k-ink);
+}
+.km-note-input::placeholder { color: var(--km-caption); }
+.km-note-input:focus-visible { outline: 3px solid var(--km-grape); outline-offset: 2px; }
+.km-note-input--over { border-color: var(--km-allergy-ink); }
+.km-note-count { align-self: flex-end; margin: 0; font-size: 13px; font-weight: 600; color: var(--km-caption); }
+.km-note-count--over { color: var(--km-allergy-ink); }
+.km-note-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.km-note-chip {
+  min-height: 44px; padding: 8px 14px; border-radius: 22px;
+  border: 2px solid var(--k-ink); background: #fff; box-shadow: 0 2px 0 var(--k-ink);
+  color: var(--k-ink); font-family: var(--km-font); font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.km-note-chip[aria-pressed="true"] { background: var(--km-grape); color: #fff; }
+.km-note-chip:disabled { cursor: progress; }
+.km-note-chip:focus-visible { outline: 3px solid var(--km-grape); outline-offset: 2px; }
+/* the note as Mum got it, under "Sent to Mum!" */
+.km-note-quote {
+  max-width: 100%; margin: 0; padding: 10px 14px; overflow-wrap: anywhere;
+  background: #fff; border: var(--k-line); border-radius: 18px 18px 18px 4px; box-shadow: 0 3px 0 var(--k-ink);
+  font-family: var(--km-font); font-size: 16px; font-weight: 500; color: var(--k-ink);
+}
+/* Ask Mum can't be tapped while the note is too long */
+.km-askmum--off { background: var(--km-muted-pill); color: var(--km-caption); box-shadow: 0 2px 0 var(--k-ink); cursor: not-allowed; }
+
 .km-alt-box {
   display: flex; flex-direction: column; gap: 12px; width: 100%; padding: 14px; text-align: left;
   background: #fff; border: var(--k-line); border-radius: 24px; box-shadow: var(--k-shadow);
@@ -423,42 +456,128 @@ span.km-big { cursor: default; }
 /* Pay button: Figma Big Button "Mint" */
 .km-big--mint { background: var(--km-mint); }
 
-/* Slide to pay: the same mint, border, radius and shadow as the Big Button "Mint" it replaced.
-   --km-slide-p (0..1) is set by SlideToPay.jsx and moves the thumb along the rail. */
+/* ========== Slide to pay (06 My tray, SlideToPay.jsx) ==========
+   A recessed mint pill with a white thumb, like "slide to unlock". --km-slide-p (0..1) is written
+   by SlideToPay.jsx; the thumb, the dark trail and the label's fade all read it, and only
+   transform and opacity ever animate, so dragging stays smooth.
+   Colours (WCAG contrast, checked):
+   - the track is a deeper shade of --km-mint: white text on #2ec4a0 is only 2.2:1. White on
+     #0d735b is 5.8:1, and still 4.7:1 where the 10% shimmer passes over it.
+   - trail #095846: white 8.4:1 · paid #15803d: white 5.0:1 · grey label #55587a on #e4e4ec: 5.4:1 */
 .km-slide {
-  position: relative; width: 100%; min-height: 64px;
-  border-radius: 18px; border: var(--k-line); box-shadow: 0 5px 0 var(--k-ink);
-  background: var(--km-mint); color: var(--k-ink); user-select: none;
+  --km-slide-track: #0d735b;
+  --km-slide-fill: #095846;
+  --km-slide-paid: #15803d;
+  --km-slide-border: 1.5px;
+  --km-slide-thumb: 52px;
+  --km-slide-gap: calc(6px - var(--km-slide-border)); /* 6px from the OUTER edge, inside the border */
+  --km-slide-ease: cubic-bezier(0.22, 1, 0.36, 1);   /* fast start, soft landing */
+  --km-slide-p: 0;
+  position: relative; isolation: isolate; overflow: hidden; /* clips the trail to the pill */
+  width: 100%; height: 64px; border-radius: 999px;
+  border: var(--km-slide-border) solid var(--k-ink);
+  background: var(--km-slide-track);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3), inset 0 -1px 0 rgba(255, 255, 255, 0.12); /* recessed */
+  user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
 }
+
+/* The thumb (and, in a second copy, the trail) travels inside a rail: from 6px in on the left to
+   one thumb-width + 6px in on the right. Each runner is exactly as wide as its rail, so moving it
+   by (p x 100%) of its OWN width moves it p of the way along. */
+.km-slide__rail {
+  position: absolute; z-index: 4; top: var(--km-slide-gap); bottom: var(--km-slide-gap);
+  left: var(--km-slide-gap); right: calc(var(--km-slide-gap) + var(--km-slide-thumb));
+}
+.km-slide__rail--fill { z-index: 1; }
+.km-slide__runner {
+  position: absolute; inset: 0; pointer-events: none;
+  transform: translate3d(calc(var(--km-slide-p) * 100%), 0, 0);
+  transition: transform 250ms var(--km-slide-ease); /* the spring back and the snap to the end */
+}
+
+/* Dark trail: a long pill whose right end sits just past the thumb, so it "grows" as the thumb moves */
+.km-slide__fill {
+  position: absolute; top: calc(-1 * var(--km-slide-gap)); bottom: calc(-1 * var(--km-slide-gap));
+  right: calc(100% - var(--km-slide-thumb) - var(--km-slide-gap)); width: 200vw;
+  border-radius: 999px; background: var(--km-slide-fill);
+  opacity: clamp(0, calc(var(--km-slide-p) * 12), 1); /* invisible at rest, there as soon as you pull */
+  transition: opacity 250ms var(--km-slide-ease);
+}
+
+/* Paid: the whole track goes green (an overlay fading in, so it's still only opacity) */
+.km-slide__done {
+  position: absolute; inset: 0; z-index: 2; border-radius: inherit;
+  background: var(--km-slide-paid); opacity: 0; transition: opacity 200ms ease-out;
+}
+.km-slide--paid .km-slide__done { opacity: 1; }
+
 .km-slide__label {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 8px;
-  padding-left: 56px; /* clear of the thumb at the start */
-  font-family: var(--km-font); font-size: 19px; font-weight: 600; line-height: normal; white-space: nowrap;
+  position: absolute; inset: 0; z-index: 3; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 16px 0 calc(var(--km-slide-thumb) + 12px); /* centred in the space right of the thumb */
+  color: #fff; font-family: var(--km-font); font-size: 18px; font-weight: 600; line-height: 1;
+  /* fades out as you drag: fully gone at 60% of the way */
+  opacity: clamp(0, calc(1 - var(--km-slide-p) / 0.6), 1);
+  transition: opacity 250ms var(--km-slide-ease);
 }
-/* The thumb travels inside this rail: 6px in from the left, and the thumb's own width in from the right */
-.km-slide__rail { position: absolute; top: 6px; bottom: 6px; left: 6px; right: calc(6px + 48px); }
+.km-slide__text { position: relative; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* "Slide to unlock" shimmer: a soft light band sweeps left to right across the label, then rests */
+.km-slide__sheen {
+  position: absolute; top: 0; bottom: 0; left: 0; width: 45%;
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+  transform: translate3d(-110%, 0, 0);
+  animation: km-sheen 2.8s ease-in-out 0.6s infinite;
+}
+@keyframes km-sheen {
+  0% { transform: translate3d(-110%, 0, 0); }
+  60%, 100% { transform: translate3d(240%, 0, 0); }
+}
+
 .km-slide__thumb {
-  position: absolute; top: 0; left: calc(var(--km-slide-p) * 100%);
-  display: grid; place-items: center; width: 48px; height: 48px; padding: 0;
-  border-radius: 50%; border: var(--k-line); background: #fff; box-shadow: 0 3px 0 var(--k-ink);
-  color: var(--k-ink); font-family: var(--km-font); font-size: 24px; font-weight: 700;
+  position: absolute; top: 0; left: 0; pointer-events: auto;
+  display: grid; place-items: center; width: var(--km-slide-thumb); height: var(--km-slide-thumb); padding: 0;
+  border: 0; border-radius: 50%; background: #fff; color: var(--km-slide-track);
+  box-shadow: 0 3px 8px rgba(6, 40, 32, 0.35), 0 1px 2px rgba(0, 0, 0, 0.2);
   cursor: grab; touch-action: none; /* only the thumb: the page still scrolls everywhere else */
-  transition: left 200ms ease-out; /* the spring back */
 }
-.km-slide--dragging .km-slide__thumb { cursor: grabbing; transition: none; } /* follow the finger exactly */
-.km-slide__thumb:focus-visible { outline: 3px solid var(--k-ink); outline-offset: 3px; }
-.km-slide--locked { background: var(--km-muted-pill); box-shadow: 0 2px 0 var(--k-ink); }
-.km-slide--locked .km-slide__thumb { cursor: not-allowed; box-shadow: none; color: var(--k-soft); }
-.km-slide__spinner {
-  width: 18px; height: 18px; border-radius: 50%;
-  border: 3px solid var(--k-ink); border-right-color: transparent;
-  animation: km-spin 0.8s linear infinite;
-}
+.km-slide__thumb:focus-visible { outline: 2.5px solid #fff; outline-offset: 1.5px; }
+
+/* Dragging: follow the finger exactly, no easing */
+.km-slide--dragging .km-slide__runner,
+.km-slide--dragging .km-slide__fill,
+.km-slide--dragging .km-slide__label { transition: none; }
+.km-slide--dragging .km-slide__thumb { cursor: grabbing; }
+
+/* Paying / paid: thumb parked at the end, so the words move to the left side and stay visible */
+.km-slide--busy .km-slide__label { opacity: 1; padding: 0 calc(var(--km-slide-thumb) + 12px) 0 16px; }
+.km-slide--busy .km-slide__thumb { cursor: progress; }
+.km-slide--paid .km-slide__thumb { color: var(--km-slide-paid); cursor: default; }
+.km-slide__spinner { animation: km-spin 0.8s linear infinite; }
 @keyframes km-spin { to { transform: rotate(360deg); } }
 
+/* Can't pay yet: grey, flat, no shimmer, words still readable */
+.km-slide--locked { background: #e4e4ec; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12); }
+.km-slide--locked .km-slide__label { color: #55587a; }
+.km-slide--locked .km-slide__thumb {
+  background: #f6f6f9; color: #a3a5b8; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15); cursor: not-allowed;
+}
+
+/* Payment failed: a quick "nope" wiggle while the thumb springs back */
+.km-slide--shake { animation: km-shake 360ms ease-in-out; }
+@keyframes km-shake {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  20% { transform: translate3d(-6px, 0, 0); }
+  40% { transform: translate3d(6px, 0, 0); }
+  60% { transform: translate3d(-4px, 0, 0); }
+  80% { transform: translate3d(3px, 0, 0); }
+}
+
+/* Reduced motion: no shimmer, no shake, no spinning, instant snap back. Colours still change. */
 @media (prefers-reduced-motion: reduce) {
-  .km-slide__thumb { transition: none; }
-  .km-slide__spinner { animation: none; } /* "Paying…" still says it in words */
+  .km-slide__runner, .km-slide__fill, .km-slide__label, .km-slide__done { transition: none; }
+  .km-slide__sheen { display: none; }
+  .km-slide--shake, .km-slide__spinner { animation: none; } /* "Paying…" still says it in words */
 }
 
 /* "Removed Milo Ice · Undo", just above the fixed footer. 3 classes, same reason as .km-footer */
@@ -474,14 +593,17 @@ span.km-big { cursor: default; }
   background: var(--k-sun); color: var(--k-ink); font-family: var(--km-font); font-size: 16px; font-weight: 600; cursor: pointer;
 }
 
-/* ========== Cart button on kid Home (TrayButton.jsx) ==========
-   Sticker Pop round button: sun fill, ink outline and the hard ink shadow, 48px so it's an easy tap */
+/* ========== Tray button on kid Home (TrayButton.jsx) ==========
+   The Kids Figma Home header's round button (frame "Notifications", top right): 44px white circle,
+   ink outline and the Sticker Pop 3px hard ink shadow. Inside, a 24px line icon from the same set
+   as the tab bar (tab-tray.svg), so the header and the bottom bar look like one family. */
 .km-traybtn {
   position: relative; flex: none; display: grid; place-items: center;
-  width: 48px; height: 48px; border-radius: 50%;
-  background: var(--k-sun); border: var(--k-line); box-shadow: 0 3px 0 var(--k-ink);
-  font-size: 24px; line-height: 1; text-decoration: none;
+  width: 44px; height: 44px; border-radius: 50%; /* 44px = the minimum comfortable tap target */
+  background: #fff; border: var(--k-line); box-shadow: 0 3px 0 var(--k-ink);
+  text-decoration: none;
 }
+.km-traybtn img { display: block; }
 .km-traybtn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--k-ink); }
 .km-traybtn:focus-visible { outline: 3px solid var(--k-ink); outline-offset: 3px; }
 .km-traybtn__badge {

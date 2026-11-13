@@ -82,6 +82,11 @@ export function uploadPhoto(token, photo, itemId, orderId) {
 }
 // Retake: delete the kid's own photo (the row and the picture file)
 export const deletePhoto = (token, photoId) => request(`/photos/${photoId}`, { method: "DELETE", token });
+// All pics of one dish (most hearts first): { photos: [{ photo, imageUrl, hearts, likedByMe, uploaderUsername, mine }] }
+export const getDishPhotos = (token, itemId) => request(`/dishes/${itemId}/photos`, { token });
+// Heart / un-heart a photo: both return { photoId, hearts, likedByMe }
+export const votePhoto = (token, photoId) => request(`/photos/${photoId}/vote`, { method: "POST", token });
+export const unvotePhoto = (token, photoId) => request(`/photos/${photoId}/vote`, { method: "DELETE", token });
 // Live in the backend: change a kid's allergies (keys like "peanut") and daily food money
 export const setAllergies = (token, childId, allergens) =>
   request(`/children/${childId}/allergies`, { method: "PUT", body: { allergens }, token });
@@ -154,7 +159,7 @@ export const getStallMenu = (token, stallId, view = "safe") =>
 
 export const getDish = (token, itemId) => request(`/menu-items/${encodeURIComponent(itemId)}`, { token });
 
-export const askMum = (token, itemId) => request("/ask-mum", { method: "POST", body: { itemId }, token });
+export const askMum = (token, itemId, note) => request("/ask-mum", { method: "POST", body: { itemId, note }, token });
 
 export const getAskMum = (token, itemId) => request(`/ask-mum/${encodeURIComponent(itemId)}`, { token });
 
@@ -175,3 +180,21 @@ export const getMacrosWeek = (token, childId, start) =>
 // range: "this_week" | "last_week" | "this_month"
 export const getChildOrders = (token, childId, range = "this_week") =>
   request(`/children/${childId}/orders?range=${range}`, { token });
+
+// Live in the backend: Ask Mum, parent side + Mum's rules switches (Leslie, CB69-26 / CB69-18)
+// pending -> { requests: [{ requestId, childId, childName, itemId, dishName, stallName, price, imageUrl,
+//              ruleLabel, status, parentNote, createdAt, decidedAt }] }  (today, all of this parent's kids)
+export const getAskMumPending = (token) => request("/ask-mum/pending", { token });
+
+export const getAskMumRequest = (token, requestId) => request(`/ask-mum/requests/${encodeURIComponent(requestId)}`, { token });
+
+// decision = "approved" | "denied", note is optional (max 200 characters)
+export const decideAskMum = (token, requestId, decision, note) =>
+  request(`/ask-mum/${encodeURIComponent(requestId)}`, { method: "PUT", body: { decision, note }, token });
+
+// -> { noFried, noSugary }
+export const getFoodRules = (token, childId) => request(`/children/${childId}/food-rules`, { token });
+
+// rules = { noFried?: boolean, noSugary?: boolean } -> { noFried, noSugary }
+export const setFoodRules = (token, childId, rules) =>
+  request(`/children/${childId}/food-rules`, { method: "PUT", body: rules, token });

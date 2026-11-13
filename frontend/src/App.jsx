@@ -20,10 +20,12 @@ import KidPickup from "./pages/KidPickup.jsx";
 import KidOrderDone from "./pages/KidOrderDone.jsx";
 import ParentSpending from "./pages/ParentSpending.jsx";
 import ParentPin from "./pages/ParentPin.jsx";
+import ParentAskMum from "./pages/ParentAskMum.jsx";
 import ParentMacros from "./pages/ParentMacros.jsx";
 import ParentOrders from "./pages/ParentOrders.jsx";
 import ReadyPing from "./components/ReadyPing.jsx";
-import Snap from "./pages/Snap.jsx"
+import Snap from "./pages/Snap.jsx";
+import DishPics from "./pages/DishPics.jsx";
 
 // UI guard only; the API checks the token's role on every request
 function RequireRole({ role, children }) {
@@ -52,6 +54,7 @@ export default function App() {
       <Route path="/parent/menu" element={<RequireRole role="parent"><ParentMenu /></RequireRole>} />
       <Route path="/parent/spending" element={<RequireRole role="parent"><ParentSpending /></RequireRole>} />
       <Route path="/parent/pin" element={<RequireRole role="parent"><ParentPin /></RequireRole>} />
+      <Route path="/parent/ask-mum/:requestId" element={<RequireRole role="parent"><ParentAskMum /></RequireRole>} />
       <Route path="/kid/order-done" element={<RequireRole role="child"><KidOrderDone /></RequireRole>} />
       <Route path="/kid/pickup/:orderId" element={<RequireRole role="child"><KidPickup /></RequireRole>} />
       <Route path="/parent/macros" element={<RequireRole role="parent"><ParentMacros /></RequireRole>} />
@@ -65,6 +68,7 @@ export default function App() {
       <Route path="/kid/dishes/:itemId" element={<RequireRole role="child"><FoodDetail /></RequireRole>} />
       <Route path="/kid/tray" element={<RequireRole role="child"><Tray /></RequireRole>} />
       <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/kid/dishes/:itemId/pics" element={<RequireRole role = "child"><DishPics/></RequireRole>} />
     </Routes>
     </>
   );

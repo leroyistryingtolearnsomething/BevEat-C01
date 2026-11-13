@@ -40,14 +40,16 @@ const getMoneyToday = (childId) => Money.getMoneyToday(childId);
 // Leroy's parent food rules (§2b): the dishes this child's parent locked on the parent Menu screen.
 // Like allergies, a database failure THROWS, so the request fails closed instead of showing
 // a locked dish.
+// Rules that cover a kind of food (not one dish) get a fixed label (Leslie, CB69-18)
+const RULE_LABELS = { no_fried: "No fried food", no_sugary: "No sugary drinks" };
+
 async function getFoodRules(childId) {
   const rows = await FoodRule.listRulesForChild(childId);
   return rows.map((r) => ({
     type: r.rule_type,
     itemId: r.item_id ?? undefined,
-    // blocked_item: the dish's name ("Mum picked “Fishball soup”."). A no_fried row has no dish,
-    // so it gets the rule's own name from the contract (§2b).
-    label: r.rule_type === "no_fried" ? "No fried food" : r.name ?? undefined,
+    // blocked_item: the dish name. Food-kind rules (no_fried / no_sugary) use RULE_LABELS (§2b).
+    label: r.name ?? RULE_LABELS[r.rule_type], // "Mum picked “Fishball soup”." / "No fried food"
   }));
 }
 
@@ -70,4 +72,4 @@ async function getTopPhotos(itemIds, viewerId) {
   );
 }
 
-module.exports = { getChildAllergies, getCustomAllergyBlocks, getMoneyToday, getFoodRules, getTopPhotos };
+module.exports = { RULE_LABELS, getChildAllergies, getCustomAllergyBlocks, getMoneyToday, getFoodRules, getTopPhotos };

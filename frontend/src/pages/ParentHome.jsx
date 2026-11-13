@@ -4,6 +4,7 @@ import { clearSession, getSession } from "../session.js";
 import { KidSwitcher, ParentTabs, money, useKids } from "../components/ParentShell.jsx";
 import ParentAlerts from "../components/ParentAlerts.jsx";
 import ParentOrdersCard from "../components/ParentOrdersCard.jsx";
+import { AskMumBell, AskMumPings, useAskMumPending } from "../components/AskMum.jsx";
 import Icon from "../components/Icon.jsx";
 import walletIcon from "../assets/figma/wallet.svg";
 import warningIcon from "../assets/figma/warning.svg";
@@ -17,6 +18,7 @@ export default function ParentHome() {
   const { kids, kid, select, error, token } = useKids();
   const [section, setSection] = useState("allergies");
   const [lowWallets, setLowWallets] = useState(null); // low_wallet alerts, null until loaded
+  const askMum = useAskMumPending(token); // Ask Mum requests waiting for an answer (Leslie, CB69-26)
 
   const logOut = () => {
     clearSession();
@@ -31,6 +33,7 @@ export default function ParentHome() {
           <h1>Hi {name}!</h1>
           <p className="lead">Your kids' limits for today</p>
         </div>
+        <AskMumBell requests={askMum} />
       </header>
 
       {error && <p className="form-error" role="alert">{error}</p>}
@@ -45,6 +48,7 @@ export default function ParentHome() {
       {kid && (
         <>
           <KidSwitcher kids={kids} kid={kid} onSelect={select} />
+          <AskMumPings requests={askMum} />
           <ParentAlerts token={token} onLowWallets={setLowWallets} />
           <ParentOrdersCard token={token} />
           <Today kid={kid} lowAlert={lowWallets?.find((a) => a.childId === kid.id)} alertsLoaded={!!lowWallets} />
