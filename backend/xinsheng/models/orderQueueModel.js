@@ -96,11 +96,22 @@ async function getForOwner(ownerId) {
 }
 
 // pickup code is made when the order is ready, kid shows it at the stall
-async function markReady(orderId, pickupCode) {
+// readyAt = when the countdown ended (auto ready), otherwise now
+async function markReady(orderId, pickupCode, readyAt = null) {
   const { rows } = await pool.query(
-    `UPDATE orders SET status = 'ready', ready_at = now(), pickup_code = $2
-     WHERE order_id = $1 AND ready_at IS NULL RETURNING order_id, ready_at`,
-    [orderId, pickupCode]
+    `UPDATE orders SET status = 'ready', ready_at = COALESCE($3, now()), pickup_code = $2
+     WHERE order_id = $1 AND ready_at IS NULL RETURNING order_id, ready_at, pickup_code`,
+    [orderId, pickupCode, readyAt]
+  );
+  return rows[0];
+}
+
+// kid taps "Order received" once they have the food
+async function markReceivedByKid(orderId, childId) {
+  const { rows } = await pool.query(
+    `UPDATE orders SET status = 'collected', collected_at = now()
+     WHERE order_id = $1 AND child_id = $2 AND ready_at IS NOT NULL AND collected_at IS NULL RETURNING order_id, collected_at`,
+    [orderId, childId]
   );
   return rows[0];
 }
@@ -114,4 +125,4 @@ async function markCollected(orderId) {
   return rows[0];
 }
 
-module.exports = { getOrder, countAhead, getStallQueue, getReadyForChild, getActiveForChild, getActiveForParent, getForOwner, markReady, markCollected };
+module.exports = { getOrder, countAhead, getStallQueue, getReadyForChild, getActiveForChild, getActiveForParent, getForOwner, markReady, markReceivedByKid, markCollected };

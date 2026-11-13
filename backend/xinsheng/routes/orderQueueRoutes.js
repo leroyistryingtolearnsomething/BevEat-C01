@@ -14,5 +14,6 @@ router.get("/children/live-orders", requireAuth, requireRole("parent"), c.getKid
 router.get("/stall/orders", ...owner, c.getStallOrders);
 router.put("/orders/:orderId/ready", ...owner, c.markReady);
 router.put("/orders/:orderId/collected", ...owner, c.markCollected);
+router.put("/orders/:orderId/received", requireAuth, requireRole("child"), c.markReceived);
 
 module.exports = router;

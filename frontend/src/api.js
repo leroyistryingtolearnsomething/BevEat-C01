@@ -146,6 +146,10 @@ export const getKidsOrders = (token) => request("/children/live-orders", { token
 
 export const getStallOrders = (token) => request("/stall/orders", { token });
 
+// kid taps "Order received" once they have the food
+export const markOrderReceived = (token, orderId) =>
+  request(`/orders/${orderId}/received`, { method: "PUT", token });
+
 export const markOrderReady = (token, orderId) =>
   request(`/orders/${orderId}/ready`, { method: "PUT", token });
 

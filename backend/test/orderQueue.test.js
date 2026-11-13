@@ -17,8 +17,8 @@ const stalls = [
   { stall_id: 1, name: "Ah Hock Chicken Rice", owner_id: 20, avg_prep_minutes: 4 },
   { stall_id: 2, name: "Mee Pok Man", owner_id: 21, avg_prep_minutes: null },
 ];
-// orders placed a few minutes ago (cards hide old orders, so the test data has to be recent)
-const t = (min) => new Date(Date.now() - (10 - min) * 60000);
+// orders placed in the last couple of minutes (they turn ready by themselves once the countdown ends)
+const t = (min) => new Date(Date.now() - (3 - min) * 30000); // t(0) = 1.5 min ago, each step = 30s
 const orders = [
   { order_id: 1, child_id: 12, stall_id: 1, queue_number: 101, status: "placed", placed_at: t(0), ready_at: null, collected_at: null },
   { order_id: 2, child_id: 12, stall_id: 1, queue_number: 102, status: "placed", placed_at: t(1), ready_at: null, collected_at: null },
@@ -97,8 +97,16 @@ function fakeQuery(sql, params = []) {
     const o = orders.find((x) => x.order_id === params[0] && !x.ready_at);
     if (!o) return { rows: [] };
     o.status = "ready";
-    o.ready_at = new Date();
+    o.ready_at = params[2] ? new Date(params[2]) : new Date();
     o.pickup_code = params[1];
+    return { rows: [o] };
+  }
+
+  if (sql.includes("AND child_id = $2 AND ready_at IS NOT NULL")) {
+    const o = orders.find((x) => x.order_id === params[0] && x.child_id === params[1] && x.ready_at && !x.collected_at);
+    if (!o) return { rows: [] };
+    o.status = "collected";
+    o.collected_at = new Date();
     return { rows: [o] };
   }
 
@@ -290,6 +298,26 @@ async function run() {
 
   res = await get("/me/orders", kid);
   check(res.body.orders.length === 0, "collected order leaves kid home");
+
+  // no stall app yet: order turns ready when the countdown ends, kid taps Order received
+  orders.push({ order_id: 6, child_id: 10, stall_id: 2, queue_number: 203, status: "placed", placed_at: t(-10), ready_at: null, collected_at: null });
+  res = await get("/me/ready-orders", kid);
+  const auto = res.body.orders.find((o) => o.orderId === 6);
+  check(auto && /^\d{4}$/.test(auto.pickupCode), "countdown ended (5 min prep, placed 6.5 min ago) so it's ready with a code");
+  check(Math.abs(new Date(orders[5].ready_at) - (t(-10).getTime() + 5 * 60000)) < 1000, "ready time = when the countdown ended");
+
+  res = await put("/orders/2/received", otherKid);
+  check(res.status === 409, "can't say received before it's ready");
+  res = await put("/orders/6/received", otherKid);
+  check(res.status === 404, "other kid can't receive it");
+  res = await put("/orders/6/received", owner);
+  check(res.status === 403, "only kids use the Order received button");
+  res = await put("/orders/6/received", kid);
+  check(res.status === 200 && res.body.collectedAt, "kid taps Order received");
+  res = await put("/orders/6/received", kid);
+  check(res.status === 409, "can't receive it twice");
+  res = await get("/orders/6/queue", kid);
+  check(res.body.stage === "collected", "stage is collected after Order received");
 
   console.log(failed ? `\n${failed} failed` : "\nall passed");
   process.exitCode = failed ? 1 : 0;

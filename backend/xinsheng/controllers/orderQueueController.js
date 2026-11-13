@@ -17,6 +17,17 @@ function pickupInfo(user, order) {
 
 const prepMins = (stall) => stall.avg_prep_minutes || DEFAULT_PREP_MIN;
 
+// no stall owner app yet, so an order turns ready by itself when its countdown ends
+async function autoReady(order, info) {
+  if (!info.readyBy || Date.now() < new Date(info.readyBy).getTime()) return false;
+  const row = await Queue.markReady(order.order_id, newPickupCode(), info.readyBy);
+  if (!row) return false;
+  order.status = "ready";
+  order.ready_at = row.ready_at;
+  order.pickup_code = row.pickup_code;
+  return true;
+}
+
 // stage for the tracker: received (orders ahead) -> cooking (next up) -> ready -> collected
 // readyBy = placed time + estimated wait, the app counts down to it
 function queueInfo(order, ahead) {
@@ -51,13 +62,15 @@ async function getOrderQueue(req, res, next) {
 
     const waiting = !order.ready_at && !order.collected_at && order.status !== "cancelled";
     const ahead = waiting ? await Queue.countAhead(order.stall_id, order.placed_at, order.order_id) : 0;
+    let info = queueInfo(order, ahead);
+    if (await autoReady(order, info)) info = queueInfo(order, 0);
     res.json({
       orderId: order.order_id,
       queueNumber: order.queue_number,
       stallName: order.stall_name,
       status: order.status,
       ready: !!order.ready_at,
-      ...queueInfo(order, ahead),
+      ...info,
       readyAt: order.ready_at,
       ...pickupInfo(req.user, order),
     });
@@ -86,6 +99,7 @@ async function getStallWait(req, res, next) {
 // GET /api/me/ready-orders  (kid app checks this every few seconds for the ping)
 async function getMyReadyOrders(req, res, next) {
   try {
+    await withQueue(req.user, await Queue.getActiveForChild(req.user.id)); // turns finished countdowns into ready
     const rows = (await Queue.getReadyForChild(req.user.id)).filter((o) => minsAgo(o.ready_at) <= HIDE_AFTER_MIN);
     res.json({
       orders: rows.map((o) => ({
@@ -106,7 +120,8 @@ async function withQueue(user, rows) {
   const orders = [];
   for (const o of rows) {
     const ahead = o.ready_at ? 0 : await Queue.countAhead(o.stall_id, o.placed_at, o.order_id);
-    const info = queueInfo(o, ahead);
+    let info = queueInfo(o, ahead);
+    if (await autoReady(o, info)) info = queueInfo(o, 0);
     // old orders nobody picked up shouldn't sit on the home cards all day
     if (minsAgo(o.ready_at || info.readyBy) > HIDE_AFTER_MIN) continue;
     orders.push({
@@ -208,4 +223,19 @@ async function markCollected(req, res, next) {
   }
 }
 
-module.exports = { getOrderQueue, getStallWait, getMyReadyOrders, getMyOrders, getKidsOrders, getStallOrders, markReady, markCollected };
+// PUT /api/orders/:orderId/received  (kid taps "Order received" when they have the food)
+async function markReceived(req, res, next) {
+  const orderId = toId(req.params.orderId);
+  if (!orderId) return res.status(400).json({ error: "Invalid order id" });
+  try {
+    const order = await Queue.getOrder(orderId);
+    if (!order || order.child_id !== req.user.id) return res.status(404).json({ error: "Order not found" });
+    const row = await Queue.markReceivedByKid(orderId, req.user.id);
+    if (!row) return res.status(409).json({ error: "Order is not ready yet or already received" });
+    res.json({ orderId: row.order_id, collectedAt: row.collected_at });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { markReceived, getOrderQueue, getStallWait, getMyReadyOrders, getMyOrders, getKidsOrders, getStallOrders, markReady, markCollected };
