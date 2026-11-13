@@ -64,7 +64,7 @@ export default function ParentAskMum() {
 
 // 09b
 function Review({ req, kid, note, setNote, status, onAnswer }) {
-  const left = kid ? Math.max(0, kid.dailyLimit - kid.spentToday) : null;
+  const left = kid ? Math.max(0, (kid.todayLimit ?? kid.dailyLimit) - kid.spentToday) : null;
   const after = left === null ? null : left - req.price;
   return (
     <>
