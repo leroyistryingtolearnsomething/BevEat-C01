@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 // order stages from the queue endpoint, in order
 export const STAGES = [
-  ["received", "Order received"],
+  ["received", "Order placed"],
   ["cooking", "Cooking"],
   ["ready", "Ready"],
   ["collected", "Collected"],
@@ -39,7 +39,8 @@ export function statusLine(o, now) {
 
 // Order received -> Cooking -> Ready -> Collected, done steps filled in
 export function StageSteps({ stage }) {
-  const at = STAGES.findIndex(([key]) => key === stage);
+  // collected = every step done
+  const at = stage === "collected" ? STAGES.length : STAGES.findIndex(([key]) => key === stage);
   return (
     <ol className="stage-steps" aria-label={`Order status: ${stageName(stage)}`}>
       {STAGES.map(([key, label], i) => (

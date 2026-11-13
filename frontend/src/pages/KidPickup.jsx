@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getOrderQueue } from "../api.js";
+import { getOrderQueue, markOrderReceived } from "../api.js";
 import { getSession } from "../session.js";
 import BackButton from "../components/BackButton.jsx";
 import { StageSteps, timeLeft, useNow } from "../components/OrderStatus.jsx";
@@ -13,15 +13,35 @@ export default function KidPickup() {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
   const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
   const now = useNow();
+  const { token } = getSession();
+
+  const load = () => getOrderQueue(token, orderId).then((o) => { setOrder(o); setErr(""); }).catch((e) => setErr(e.message));
 
   useEffect(() => {
-    const { token } = getSession();
-    const load = () => getOrderQueue(token, orderId).then((o) => { setOrder(o); setErr(""); }).catch((e) => setErr(e.message));
     load();
     const id = setInterval(load, POLL_MS);
     return () => clearInterval(id);
   }, [orderId]);
+
+  // countdown just ended: check now instead of waiting for the next poll
+  const left = order && timeLeft(order.readyBy, now);
+  useEffect(() => {
+    if (order && order.readyBy && !left) load();
+  }, [!!left]);
+
+  // kid has the food, order is done
+  async function received() {
+    setBusy(true);
+    try {
+      await markOrderReceived(token, orderId);
+      await load();
+    } catch (e) {
+      setErr(e.message);
+    }
+    setBusy(false);
+  }
 
   return (
     <main className="screen kid km-screen pickup">
@@ -40,15 +60,19 @@ export default function KidPickup() {
           <p className="pickup__label">Pickup code</p>
           <p className="pickup__code">{order.pickupCode}</p>
           <p className="pickup__small">Order number {order.queueNumber}</p>
+          <button type="button" className="km-big km-big--sun" onClick={received} disabled={busy}>
+            {busy ? "Saving…" : "Order received"}
+          </button>
+          <p className="pickup__small">Tap this once you have your food</p>
         </section>
       )}
 
       {order && (order.stage === "received" || order.stage === "cooking") && (
         <section className="pickup__card">
-          <p className="pickup__title">{order.stage === "received" ? "Order received! 📝" : "Cooking… 🍳"}</p>
+          <p className="pickup__title">{order.stage === "received" ? "Order placed! 📝" : "Cooking… 🍳"}</p>
           <p>{order.stallName}, order number {order.queueNumber}</p>
           <p className="pickup__label">Time left</p>
-          <p className="pickup__code">{timeLeft(order.readyBy, now) || "Almost ready"}</p>
+          <p className="pickup__code">{left || "Almost ready"}</p>
           <p className="pickup__label">
             {order.ahead > 0 ? `${order.ahead} ${order.ahead === 1 ? "order" : "orders"} before yours` : "You're next!"}
           </p>
