@@ -1,0 +1,49 @@
+/* Small, purposeful motion for moments people cause (a heart, a wrong field, a removed row, a changing amount, a success).
+   Everything that moves lives inside "no-preference": with reduced motion the app is simply still and every end state is the same.
+   Only transform, opacity and stroke-dashoffset move. Curves are the app's two: a strong ease-out, and a springy overshoot. */
+
+:root { --ux-out: cubic-bezier(0.23, 1, 0.32, 1); --ux-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* a changing amount: only the digits that change roll (components/Roll.jsx). The offset is always there; only the move is animated. */
+.roll { display: inline-flex; font-variant-numeric: tabular-nums; }
+.roll__d { display: inline-block; height: 1em; line-height: 1; overflow: hidden; }
+.roll__col { display: flex; flex-direction: column; align-items: center; } /* a narrow 1 sits centred in its column, so the gap is even */
+.roll__col > span { display: block; height: 1em; line-height: 1; }
+
+/* a drawn check starts hidden only when it is about to animate */
+.ux-check { display: block; overflow: visible; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .roll__col { transition: transform 300ms var(--ux-out); }
+
+  /* --- the heart on a pic: it pops, and a ring answers it (secondary motion, smaller and softer) --- */
+  @keyframes ux-heart-pop { 0% { transform: scale(0.6); } 55% { transform: scale(1.3); } 100% { transform: scale(1); } }
+  @keyframes ux-ring { from { opacity: 0.7; transform: scale(1); } to { opacity: 0; transform: scale(1.4); } }
+  .dp-heart { position: relative; }
+  .dp-heart--pop img { animation: ux-heart-pop 360ms var(--ux-spring) both; }
+  .dp-heart--pop::after { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 2px solid #ff6b5b; pointer-events: none; animation: ux-ring 420ms ease-out both; }
+
+  /* --- a wrong field shakes once (called from validate.js, only after a submit, never on blur) --- */
+  @keyframes ux-shake { 15% { transform: translateX(-10px); } 30% { transform: translateX(10px); } 45% { transform: translateX(-6px); } 60% { transform: translateX(6px); } 80% { transform: translateX(-3px); } }
+  .ux-shake { animation: ux-shake 360ms var(--ux-out); }
+
+  /* --- a removed tray row steps aside (the rows below then slide up: useFlip.js) --- */
+  @keyframes ux-leave { to { opacity: 0; transform: translateX(-24px); } }
+  .km-tray-row--leaving { animation: ux-leave 160ms ease-in both; pointer-events: none; }
+
+  /* --- the lock switch: the knob settles with a little give --- */
+  .switch { transition: background-color 200ms ease-out; }
+  .switch__knob { transition: transform 280ms var(--ux-spring); }
+
+  /* --- a success: the disc pops, then the check draws itself --- */
+  @keyframes ux-pop { from { opacity: 0; transform: scale(0.5); } }
+  @keyframes ux-draw { to { stroke-dashoffset: 0; } }
+  .ux-check__disc { transform-box: fill-box; transform-origin: center; animation: ux-pop 380ms var(--ux-spring) both; }
+  .ux-check__tick { stroke-dasharray: 1; stroke-dashoffset: 1; animation: ux-draw 340ms var(--ux-out) 240ms forwards; }
+  .am-done__ring { animation: ux-pop 380ms var(--ux-spring) both; }
+  .am-done__ring svg path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: ux-draw 320ms var(--ux-out) 220ms forwards; }
+
+  /* --- progress and spending bars grow from empty to their value --- */
+  @keyframes ux-grow { from { transform: scaleX(0); } }
+  .today__bar span, .spend-day__bar span { transform-origin: left center; animation: ux-grow 600ms var(--ux-out) 150ms both; }
+}

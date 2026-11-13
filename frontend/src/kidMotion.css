@@ -7,15 +7,15 @@
   .kid { --k-ease-out: cubic-bezier(0.23, 1, 0.32, 1); --k-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
 
   /* --- screens: the top-level blocks rise in one after another (first 8 only, 40ms apart) --- */
-  @keyframes k-rise { from { opacity: 0; transform: translateY(12px); } }
+  @keyframes k-rise { from { opacity: 0; transform: translateY(8px); } }
   .kid:not(.od) > :not(.blob, .hk-tabbar, .km-footer, .km-undo, .od-confetti, [popover], dialog) {
-    animation: k-rise 280ms var(--k-ease-out) both; animation-delay: calc(var(--i, 0) * 40ms);
+    animation: k-rise 220ms var(--k-ease-out) both; animation-delay: calc(var(--i, 0) * 30ms);
   }
   .kid > :nth-child(2) { --i: 1; } .kid > :nth-child(3) { --i: 2; } .kid > :nth-child(4) { --i: 3; } .kid > :nth-child(5) { --i: 4; }
   .kid > :nth-child(6) { --i: 5; } .kid > :nth-child(7) { --i: 6; } .kid > :nth-child(n+8) { --i: 7; }
 
   /* --- dish grids and tray rows: each card settles in after the one before it --- */
-  .km-grid > *, .hk-pics__row > *, .km-tray-row { animation: k-rise 260ms var(--k-ease-out) both; animation-delay: calc(var(--j, 0) * 35ms); }
+  .km-grid > *, .hk-pics__row > *, .km-tray-row { animation: k-rise 220ms var(--k-ease-out) both; animation-delay: calc(var(--j, 0) * 30ms); }
   :is(.km-grid, .hk-pics__row) > :nth-child(2) { --j: 1; } :is(.km-grid, .hk-pics__row) > :nth-child(3) { --j: 2; }
   :is(.km-grid, .hk-pics__row) > :nth-child(4) { --j: 3; } :is(.km-grid, .hk-pics__row) > :nth-child(5) { --j: 4; }
   :is(.km-grid, .hk-pics__row) > :nth-child(6) { --j: 5; } :is(.km-grid, .hk-pics__row) > :nth-child(n+7) { --j: 6; }
@@ -31,8 +31,8 @@
   .kid :is(.km-big, .km-back, .km-chip, .km-tray-remove, .km-heart, a.hk-stall, a.km-card):active:not(:disabled) { transform: scale(0.97); }
   .kid .hk-tab:active { transform: scale(0.93); }
   /* the open tab's glass capsule pops in when a tab screen opens */
-  @keyframes k-capsule { from { opacity: 0; transform: scale(0.85); } }
-  .kid .hk-tab--active { animation: k-capsule 320ms var(--k-spring) 120ms both; }
+  @keyframes k-capsule { from { opacity: 0; transform: scale(0.9); } }
+  .kid .hk-tab--active { animation: k-capsule 200ms var(--k-ease-out) both; }
 
   /* --- toasts and menus come from where they live --- */
   @keyframes k-toast { from { opacity: 0; transform: translate(-50%, 14px); } }
