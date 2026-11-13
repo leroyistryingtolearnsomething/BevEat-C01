@@ -191,3 +191,5 @@ ALTER TABLE public.ask_mum_requests
 - **100 characters:** about one kid-sized sentence, enough for the quick-tap chips. Raghav's API enforces the same limit first and returns 400. It also trims spaces, rejects control characters (including newlines), and stores an empty note as NULL. The CHECK is a second guard, so nothing else can write a longer note.
 - **Who writes it:** only Raghav's `POST /api/ask-mum`, in the same INSERT as the request. Leslie's parent side only reads it, and must show it as plain text, never as HTML.
 - **Until it exists:** Raghav's API ignores the note, and the parent GET returns `"note": null`.
+
+**Status: applied** (checked on the live database 2026-11-13). Leslie's `backend/leslie/db/migrations/007_ask_mum_child_note.sql` added `child_note text` with `CHECK (child_note IS NULL OR char_length(child_note) <= 100)`, exactly as requested. Raghav's `POST /api/ask-mum` writes it (§3d), and Leslie's parent screens read it as `childNote` (§2f).

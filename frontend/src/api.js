@@ -151,7 +151,7 @@ export const getStallMenu = (token, stallId, view = "safe") =>
 
 export const getDish = (token, itemId) => request(`/menu-items/${encodeURIComponent(itemId)}`, { token });
 
-export const askMum = (token, itemId) => request("/ask-mum", { method: "POST", body: { itemId }, token });
+export const askMum = (token, itemId, note) => request("/ask-mum", { method: "POST", body: { itemId, note }, token });
 
 export const getAskMum = (token, itemId) => request(`/ask-mum/${encodeURIComponent(itemId)}`, { token });
 

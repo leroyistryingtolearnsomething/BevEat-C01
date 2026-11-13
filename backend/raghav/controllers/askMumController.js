@@ -4,7 +4,7 @@ const Menu = require("../models/menuModel");
 const AskMum = require("../models/askMumModel");
 const { STATUS, decideDish } = require("../services/dishSafety");
 const { loadChildContext, toDishFacts } = require("../services/menuService");
-const { toId, isId } = require("./validation");
+const { toId, isId, parseAskMumNote } = require("./validation");
 
 const UNIQUE_VIOLATION = "23505"; // Postgres error code for a broken unique index
 
@@ -12,15 +12,19 @@ function toRequestJson(row) {
   return {
     requestId: row.request_id,
     status: row.status,
+    note: row.child_note ?? null, // the kid's own words for Mum, shown on 05b's "Sent" state
     createdAt: row.created_at,
     decidedAt: row.decided_at,
   };
 }
 
-// POST /api/ask-mum  body { itemId }
+// POST /api/ask-mum  body { itemId, note? }
 async function askMum(req, res, next) {
-  const { itemId } = req.body || {};
+  const { itemId, note: rawNote } = req.body || {};
   if (!isId(itemId)) return res.status(400).json({ error: "Invalid dish id" });
+  // Checked before ANY database call, so a bad note never creates a request
+  const parsed = parseAskMumNote(rawNote);
+  if (parsed.error) return res.status(400).json({ error: parsed.error });
   const childId = req.user.id;
 
   try {
@@ -28,7 +32,8 @@ async function askMum(req, res, next) {
     if (!row) return res.status(404).json({ error: "Dish not found" });
 
     // One request per child, per dish, per day, whatever Mum answered: send back the one
-    // already made instead of pinging Mum again
+    // already made instead of pinging Mum again. Its ORIGINAL note stays: Mum may already have
+    // read it, so a second tap can't change what she was told.
     const existing = await AskMum.findToday(childId, itemId);
     if (existing) return res.json(toRequestJson(existing));
 
@@ -43,7 +48,7 @@ async function askMum(req, res, next) {
     if (verdict.status === STATUS.ALLOWED) return res.status(409).json({ error: "This dish isn't locked" });
 
     try {
-      const created = await AskMum.create(childId, itemId);
+      const created = await AskMum.create(childId, itemId, parsed.note);
       res.status(201).json(toRequestJson(created));
     } catch (err) {
       // Two taps at the same moment: the unique index stops the second one, so hand back the first

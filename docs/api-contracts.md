@@ -170,7 +170,7 @@ query  status = "pending" (default) | "all"     // "all" = today's pending, appr
           "price":      3.5,                       // number, from menu_items.price
           "ruleLabel":  "No fried food",           // the Mum rule that locked it, or null (see below)
           "status":     "pending",                 // "pending" | "approved" | "denied"
-          "note":       null,                      // the kid's note (string) or null. Always null until #11
+          "childNote":  "I'm extra hungry today",  // the kid's note (string) or null. Leslie built it as childNote
           "createdAt":  "2026-11-19T07:05:00Z",
           "decidedAt":  null                       // set once Mum answers
         }] }
@@ -181,7 +181,7 @@ query  status = "pending" (default) | "all"     // "all" = today's pending, appr
 403 → a child's token (requireRole("parent"))
 ```
 
-- **`note`:** the kid's optional message from 05b, at most 100 characters, already trimmed by Raghav's API. It lives in `ask_mum_requests.child_note` (`docs/schema-requests.md` #11). **Until that column exists, return `"note": null` for every request**, so the parent screen can be built now and starts showing notes as soon as Leslie runs #11. Show it as **plain text** (React's `{note}`, never `dangerouslySetInnerHTML`): it's typed by a child and is not trusted.
+- **`childNote`:** the kid's optional message from 05b, at most 100 characters, already trimmed by Raghav's API (§3d). It lives in `ask_mum_requests.child_note` (`docs/schema-requests.md` #11, live since 2026-11-12, Leslie's migration 007). Leslie's controller sends it as `childNote` (`r.child_note ?? null`). Her bell card (`frontend/src/components/AskMum.jsx`) and request page (`frontend/src/pages/ParentAskMum.jsx`) show it as **plain text** (React's `{childNote}`, never `dangerouslySetInnerHTML`), because it's typed by a child and isn't trusted.
 - **`ruleLabel`:** why the dish was locked, so Mum remembers her own rule. The simplest way to get it is Raghav's `getFoodRules(childId)` in `backend/raghav/services/teammates.js` (read-only reuse). It returns `[{ type, itemId?, label }]`: a `blocked_item` rule matches by `itemId`, and a `no_fried` rule (label "No fried food") matches a dish with `menu_items.is_fried` not `false`. Use `null` if Mum has removed the rule since the kid asked.
 - **`parent_note`:** the live table also has this column (#9 note). It isn't part of this contract, and the kid side never reads it.
 
@@ -190,7 +190,7 @@ A query that gives every field except `ruleLabel` (`$1` = childId, `$2` = `'pend
 ```sql
 SELECT r.request_id, r.item_id, m.name AS dish_name, s.name AS stall_name, m.price,
        r.status, r.created_at, r.decided_at,
-       NULL::text AS note            -- after #11: r.child_note AS note
+       r.child_note                  -- sent as childNote
   FROM ask_mum_requests r
   JOIN menu_items m ON m.item_id = r.item_id
   JOIN stalls     s ON s.stall_id = m.stall_id
@@ -352,10 +352,13 @@ body: { "items": [{ "itemId": 1, "quantity": 1, "addOnIds": [2] }, { "itemId": 1
 ### 3d. `POST /api/ask-mum` (PR A)
 
 ```
-body: { "itemId": 5 }
-201 → { "requestId": 7, "status": "pending" }        // new request; button shows the Figma "Sent" state
-200 → { "requestId": 7, "status": "pending" | "approved" | "denied" }   // already asked about this dish today: the existing request, no new row
-400 → itemId is not a positive integer
+body: { "itemId": 5, "note": "I'm extra hungry today" }     // note is optional
+201 → { "requestId": 7, "status": "pending", "note": "I'm extra hungry today", "createdAt": "...", "decidedAt": null }
+       // new request; the button shows the Figma "Sent" state, with the note quoted under it
+200 → { "requestId": 7, "status": "pending" | "approved" | "denied", "note": "..." | null, ... }
+       // already asked about this dish today: the existing request with its ORIGINAL note, no new row
+400 → itemId is not a positive integer              { "error": "Invalid dish id" }  (checked first)
+400 → bad note (see below)                          { "error": "note ..." }
 404 → no such dish
 409 → { "error": "Ask Mum can't unlock allergies" }        // dish is blocked_allergy
 409 → { "error": "This dish isn't locked" }               // dish is already allowed
@@ -363,12 +366,22 @@ body: { "itemId": 5 }
 
 There is **one request per child per dish per day, whatever the answer** (decided 2026-11-06), so a child can't keep asking after Mum says no. The unique index backs this up, so if two taps race, the second gets the existing request back. The child can ask again tomorrow.
 
+**The note** (`parseAskMumNote` in `backend/raghav/controllers/validation.js`). It's checked **before any database call**, so a bad note never creates a request:
+- Optional. Missing, `null`, `""` or only spaces → saved as `null` ("no note").
+- Must be a string (`123`, `true`, `{}` or `[]` → 400). It's trimmed before it's saved.
+- No control characters, including newlines and tabs → 400. It's a one-line note.
+- At most **100 characters**, counted with `[...note].length`, so an emoji counts as 1 the way Postgres `char_length` does → 400 if longer. The table's CHECK on `ask_mum_requests.child_note` (#11) is a second guard.
+- A second ask the same day can't change the note: Mum may already have read the first one.
+
+Leslie's parent screens show it as `childNote` (§2f).
+
 ### 3e. `GET /api/ask-mum/:itemId` (PR A)
 
 Today's latest request from this child for this dish, so 05b shows "Sent" again when the kid comes back:
 
 ```
-200 → { "request": { "requestId": 7, "status": "pending" | "approved" | "denied", "createdAt": "...", "decidedAt": null } }
+200 → { "request": { "requestId": 7, "status": "pending" | "approved" | "denied", "note": "I'm extra hungry today" | null,
+                     "createdAt": "...", "decidedAt": null } }     // note = what the kid sent with it, so "Sent" can quote it
 200 → { "request": null }                            // not asked today
 400 → bad itemId
 ```
