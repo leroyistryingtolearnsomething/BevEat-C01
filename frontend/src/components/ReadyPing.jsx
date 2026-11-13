@@ -5,9 +5,20 @@ import { getSession } from "../session.js";
 
 // order ready ping: kid app checks every 10s, shows a banner when food is ready
 const POLL_MS = 10000;
+const HIDDEN_KEY = "kiddyeats.hiddenPings";
+
+// orders the kid closed with the x, kept for this tab so they don't come back on refresh
+function loadHidden() {
+  try {
+    return JSON.parse(sessionStorage.getItem(HIDDEN_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
 
 export default function ReadyPing() {
   const [ready, setReady] = useState([]);
+  const [hidden, setHidden] = useState(loadHidden);
   const { pathname } = useLocation();
 
   useEffect(() => {
@@ -27,21 +38,34 @@ export default function ReadyPing() {
     return () => clearInterval(id);
   }, []);
 
+  function hide(orderId) {
+    const next = [...hidden, orderId];
+    setHidden(next);
+    try {
+      sessionStorage.setItem(HIDDEN_KEY, JSON.stringify(next));
+    } catch {
+      // private mode etc, it just comes back after a refresh
+    }
+  }
+
+  const shown = ready.filter((o) => !hidden.includes(o.orderId));
   // no banner on the pickup page, it already shows the code
-  if (ready.length === 0 || pathname.startsWith("/kid/pickup")) return null;
-  // bottom 104 so it sits above the kid tab bar
+  if (shown.length === 0 || pathname.startsWith("/kid/pickup")) return null;
   return (
-    <div className="ready-ping" role="alert" style={{
-      position: "fixed", left: 16, right: 16, bottom: 104, zIndex: 50, padding: "14px 16px",
-      borderRadius: 16, background: "#2e7d32", color: "#fff", fontWeight: 700,
-      boxShadow: "0 6px 20px rgba(0,0,0,.2)",
-    }}>
-      {ready.map((o) => (
-        <Link key={o.orderId} to={`/kid/pickup/${o.orderId}`} style={{ display: "block", margin: 0, color: "#fff" }}>
-          🔔 Your food is ready! Go to {o.stallName}, number {o.queueNumber}
-          {o.pickupCode && <> · show code <span style={{ fontSize: 20, letterSpacing: 2 }}>{o.pickupCode}</span></>}
-          {" "}›
-        </Link>
+    <div className="ready-ping" role="alert">
+      {shown.map((o) => (
+        <div key={o.orderId} className="ready-ping__row">
+          <Link to={`/kid/pickup/${o.orderId}`} className="ready-ping__link">
+            <span className="ready-ping__title">🔔 Your food is ready!</span>
+            <span className="ready-ping__text">
+              {o.stallName}, number {o.queueNumber}
+              {o.pickupCode && <> · show code <b>{o.pickupCode}</b></>}
+            </span>
+          </Link>
+          <button type="button" className="ready-ping__close" onClick={() => hide(o.orderId)} aria-label={`Close the ready message for ${o.stallName}`}>
+            ×
+          </button>
+        </div>
       ))}
     </div>
   );

@@ -959,3 +959,24 @@ a.km-hero__pics { color: var(--k-ink); text-decoration: none; }
 .stage-steps__done span { background: #2ec4a0; color: #fff; }
 .stage-steps__now { color: var(--k-ink); }
 .stage-steps__now span { background: var(--k-sun); }
+
+/* ---------- Order ready banner (Xin Sheng) ---------- */
+/* sits above the kid tab bar, same mint as a ready order card but a bit darker */
+.ready-ping {
+  position: fixed; left: 16px; right: 16px; bottom: calc(104px + env(safe-area-inset-bottom)); z-index: 50;
+  display: flex; flex-direction: column; gap: 8px; max-width: 480px; margin: 0 auto;
+  font-family: "Nunito", system-ui, sans-serif; color: var(--k-ink);
+}
+.ready-ping__row {
+  display: flex; align-items: center; gap: 8px; padding: 10px 8px 10px 14px;
+  background: #b9ecd2; border: var(--k-line); border-radius: 20px; box-shadow: var(--k-shadow);
+}
+.ready-ping__link { flex: 1; display: flex; flex-direction: column; gap: 2px; color: inherit; text-decoration: none; }
+.ready-ping__title { font-family: "Fredoka", system-ui, sans-serif; font-size: 17px; font-weight: 600; }
+.ready-ping__text { font-size: 14px; font-weight: 700; }
+.ready-ping__text b { font-family: "Fredoka", system-ui, sans-serif; font-size: 17px; letter-spacing: 2px; }
+.ready-ping__close {
+  flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%;
+  background: transparent; color: var(--k-ink); font-size: 28px; line-height: 1; cursor: pointer;
+}
+.ready-ping__close:hover, .ready-ping__close:focus-visible { background: rgb(31 32 65 / 0.08); }
