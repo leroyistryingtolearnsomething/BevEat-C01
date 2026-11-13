@@ -10,6 +10,7 @@ router.get("/orders/:orderId/queue", requireAuth, c.getOrderQueue);
 router.get("/stalls/:stallId/wait", requireAuth, c.getStallWait);
 router.get("/me/ready-orders", requireAuth, requireRole("child"), c.getMyReadyOrders);
 router.get("/me/orders", requireAuth, requireRole("child"), c.getMyOrders);
+router.get("/children/live-orders", requireAuth, requireRole("parent"), c.getKidsOrders);
 router.get("/stall/orders", ...owner, c.getStallOrders);
 router.put("/orders/:orderId/ready", ...owner, c.markReady);
 router.put("/orders/:orderId/collected", ...owner, c.markCollected);

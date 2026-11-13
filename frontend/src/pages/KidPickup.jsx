@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { getOrderQueue } from "../api.js";
 import { getSession } from "../session.js";
 import BackButton from "../components/BackButton.jsx";
+import { StageSteps, timeLeft, useNow } from "../components/OrderStatus.jsx";
 import "./kidMenu.css";
 
 const POLL_MS = 10000;
@@ -12,6 +13,7 @@ export default function KidPickup() {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
   const [err, setErr] = useState("");
+  const now = useNow();
 
   useEffect(() => {
     const { token } = getSession();
@@ -29,8 +31,9 @@ export default function KidPickup() {
       </header>
       {err && <p className="km-lead" role="alert">{err}</p>}
       {!order && !err && <p className="km-lead">Loading…</p>}
+      {order && order.stage !== "cancelled" && <StageSteps stage={order.stage} />}
 
-      {order && order.pickupCode && (
+      {order && order.stage === "ready" && (
         <section className="pickup__card" aria-live="polite">
           <p className="pickup__title">Your food is ready! 🎉</p>
           <p>Go to <strong>{order.stallName}</strong> and show this code</p>
@@ -40,17 +43,20 @@ export default function KidPickup() {
         </section>
       )}
 
-      {order && !order.pickupCode && !order.ready && (
-        <section className="pickup__card" aria-live="polite">
-          <p className="pickup__title">Cooking… 🍳</p>
+      {order && (order.stage === "received" || order.stage === "cooking") && (
+        <section className="pickup__card">
+          <p className="pickup__title">{order.stage === "received" ? "Order received! 📝" : "Cooking… 🍳"}</p>
           <p>{order.stallName}, order number {order.queueNumber}</p>
-          <p className="pickup__code">{order.ahead}</p>
-          <p className="pickup__label">{order.ahead === 1 ? "order before yours" : "orders before yours"}</p>
-          <p className="pickup__small">About {order.waitMinutes} min. We'll ping you when it's ready!</p>
+          <p className="pickup__label">Time left</p>
+          <p className="pickup__code">{timeLeft(order.readyBy, now) || "Almost ready"}</p>
+          <p className="pickup__label">
+            {order.ahead > 0 ? `${order.ahead} ${order.ahead === 1 ? "order" : "orders"} before yours` : "You're next!"}
+          </p>
+          <p className="pickup__small">We'll ping you when it's ready!</p>
         </section>
       )}
 
-      {order && !order.pickupCode && order.ready && (
+      {order && order.stage === "collected" && (
         <section className="pickup__card">
           <p className="pickup__title">All done! 😋</p>
           <p>You already collected this order.</p>

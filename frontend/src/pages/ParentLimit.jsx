@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { setDailyLimit } from "../api.js";
 import { KidSwitcher, PageHeader, ParentTabs, money, useKids } from "../components/ParentShell.jsx";
 import WeekdayLimits from "../components/WeekdayLimits.jsx";
+import WalletAlertSetting from "../components/WalletAlertSetting.jsx";
 
 const PRESETS = [4, 6, 8, 10];
 
@@ -69,6 +70,7 @@ export default function ParentLimit() {
           </button>
 
           <WeekdayLimits token={token} kid={kid} />
+          <WalletAlertSetting token={token} kid={kid} />
         </>
       )}
 

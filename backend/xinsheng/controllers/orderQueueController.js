@@ -3,6 +3,8 @@ const crypto = require("crypto");
 const Queue = require("../models/orderQueueModel");
 
 const DEFAULT_PREP_MIN = 5; // if the stall has no avg_prep_minutes
+const HIDE_AFTER_MIN = 30; // cards + ping go away 30 min after ready (or 30 min after it should have been ready)
+const minsAgo = (time) => (Date.now() - new Date(time).getTime()) / 60000;
 const CODE_RE = /^\d{4}$/;
 
 const newPickupCode = () => String(crypto.randomInt(0, 10000)).padStart(4, "0");
@@ -14,6 +16,17 @@ function pickupInfo(user, order) {
 }
 
 const prepMins = (stall) => stall.avg_prep_minutes || DEFAULT_PREP_MIN;
+
+// stage for the tracker: received (orders ahead) -> cooking (next up) -> ready -> collected
+// readyBy = placed time + estimated wait, the app counts down to it
+function queueInfo(order, ahead) {
+  if (order.status === "cancelled") return { stage: "cancelled", ahead: 0, waitMinutes: 0, readyBy: null };
+  if (order.collected_at) return { stage: "collected", ahead: 0, waitMinutes: 0, readyBy: null };
+  if (order.ready_at) return { stage: "ready", ahead: 0, waitMinutes: 0, readyBy: null };
+  const waitMinutes = (ahead + 1) * prepMins(order);
+  const readyBy = new Date(new Date(order.placed_at).getTime() + waitMinutes * 60000).toISOString();
+  return { stage: ahead > 0 ? "received" : "cooking", ahead, waitMinutes, readyBy };
+}
 
 function toId(value) {
   const id = Number(value);
@@ -44,8 +57,7 @@ async function getOrderQueue(req, res, next) {
       stallName: order.stall_name,
       status: order.status,
       ready: !!order.ready_at,
-      ahead,
-      waitMinutes: waiting ? (ahead + 1) * prepMins(order) : 0,
+      ...queueInfo(order, ahead),
       readyAt: order.ready_at,
       ...pickupInfo(req.user, order),
     });
@@ -74,7 +86,7 @@ async function getStallWait(req, res, next) {
 // GET /api/me/ready-orders  (kid app checks this every few seconds for the ping)
 async function getMyReadyOrders(req, res, next) {
   try {
-    const rows = await Queue.getReadyForChild(req.user.id);
+    const rows = (await Queue.getReadyForChild(req.user.id)).filter((o) => minsAgo(o.ready_at) <= HIDE_AFTER_MIN);
     res.json({
       orders: rows.map((o) => ({
         orderId: o.order_id,
@@ -89,24 +101,40 @@ async function getMyReadyOrders(req, res, next) {
   }
 }
 
-// GET /api/me/orders  (kid home shows today's orders and their place in the queue)
+// today's orders with their place in the queue (kid home + parent home cards)
+async function withQueue(user, rows) {
+  const orders = [];
+  for (const o of rows) {
+    const ahead = o.ready_at ? 0 : await Queue.countAhead(o.stall_id, o.placed_at, o.order_id);
+    const info = queueInfo(o, ahead);
+    // old orders nobody picked up shouldn't sit on the home cards all day
+    if (minsAgo(o.ready_at || info.readyBy) > HIDE_AFTER_MIN) continue;
+    orders.push({
+      orderId: o.order_id,
+      ...(o.child_name && { childId: o.child_id, childName: o.child_name }),
+      queueNumber: o.queue_number,
+      stallName: o.stall_name,
+      ready: !!o.ready_at,
+      ...info,
+      ...pickupInfo(user, o),
+    });
+  }
+  return orders;
+}
+
+// GET /api/me/orders  (kid)
 async function getMyOrders(req, res, next) {
   try {
-    const rows = await Queue.getActiveForChild(req.user.id);
-    const orders = [];
-    for (const o of rows) {
-      const ahead = o.ready_at ? 0 : await Queue.countAhead(o.stall_id, o.placed_at, o.order_id);
-      orders.push({
-        orderId: o.order_id,
-        queueNumber: o.queue_number,
-        stallName: o.stall_name,
-        ready: !!o.ready_at,
-        ahead,
-        waitMinutes: o.ready_at ? 0 : (ahead + 1) * prepMins(o),
-        ...pickupInfo(req.user, o),
-      });
-    }
-    res.json({ orders });
+    res.json({ orders: await withQueue(req.user, await Queue.getActiveForChild(req.user.id)) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// GET /api/children/live-orders  (parent, all their kids)
+async function getKidsOrders(req, res, next) {
+  try {
+    res.json({ orders: await withQueue(req.user, await Queue.getActiveForParent(req.user.id)) });
   } catch (err) {
     next(err);
   }
@@ -180,4 +208,4 @@ async function markCollected(req, res, next) {
   }
 }
 
-module.exports = { getOrderQueue, getStallWait, getMyReadyOrders, getMyOrders, getStallOrders, markReady, markCollected };
+module.exports = { getOrderQueue, getStallWait, getMyReadyOrders, getMyOrders, getKidsOrders, getStallOrders, markReady, markCollected };

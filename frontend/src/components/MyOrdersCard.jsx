@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getMyOrders } from "../api.js";
 import { getSession } from "../session.js";
+import { statusLine, useNow } from "./OrderStatus.jsx";
 
 // kid home: today's orders with place in the queue, tap one to open the pickup page
 const POLL_MS = 10000;
 
 export default function MyOrdersCard() {
   const [orders, setOrders] = useState([]);
+  const now = useNow();
 
   useEffect(() => {
     const { token } = getSession();
@@ -27,11 +29,7 @@ export default function MyOrdersCard() {
           <span className="my-orders__num">#{o.queueNumber}</span>
           <span className="my-orders__text">
             <strong>{o.stallName}</strong>
-            {o.ready ? (
-              <small>Ready! Show code {o.pickupCode}</small>
-            ) : (
-              <small>{o.ahead} before you · about {o.waitMinutes} min</small>
-            )}
+            <small>{statusLine(o, now)}</small>
           </span>
           <span aria-hidden="true">›</span>
         </Link>
