@@ -53,7 +53,7 @@ export default function DishPics(){
     return(
         <main className = "screen kid dp-kid">
             <header className="dp-head">
-                <BackCircle to={`/kid/dishes/${itemId}`}/>
+                <BackCircle to={`/kid/dishes/${itemId}`} back/>
                 <div>
                     <h1>{dishName || "All pics"}</h1>
                     <p>{photos.length} {photos.length === 1 ? "pic" : "pics"} · tap ❤️ for your favourite</p>
