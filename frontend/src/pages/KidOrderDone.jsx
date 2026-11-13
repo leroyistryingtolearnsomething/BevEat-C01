@@ -3,7 +3,7 @@ import { Link, Navigate, useLocation } from "react-router-dom";
 import { getOrderQueue } from "../api.js";
 import { getSession } from "../session.js";
 import baoCheer from "../assets/figma/kid/order-bao.svg";
-import phoneIcon from "../assets/figma/kid/icon-phone.svg";
+import clockIcon from "../assets/figma/clock.svg";
 import "./kidMenu.css";
 
 const sgd = (n) => `S$${Number(n).toFixed(2)}`;
@@ -55,10 +55,10 @@ export default function KidOrderDone() {
 
       <section className="od-status" aria-label="Order status">
         <div className="od-status__row">
-          <span className="od-status__icon"><img src={phoneIcon} width="20" height="20" alt="" /></span>
+          <span className="od-status__icon"><img src={clockIcon} width="20" height="20" alt="" /></span>
           <div>
             <p className="od-status__title">{wait != null ? `Ready in about ${wait} min` : "We'll ping you when it's ready"}</p>
-            <p className="od-status__sub">Your phone will buzz. Keep it close!</p>
+            <p className="od-status__sub">A green banner pops up when it's ready.</p>
           </div>
         </div>
         <div className="od-progress" aria-hidden="true"><i /></div>
