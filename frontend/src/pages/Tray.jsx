@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { checkout, quoteTray } from "../api.js";
 import { getSession } from "../session.js";
@@ -6,6 +6,7 @@ import {
   loadTray, saveTray, toQuoteItems, setQuantity, removeLine, restoreLine,
   linesInStallOrder, lineKey, problemsByKey, formatSgd, toCents,
 } from "../tray.js";
+import useFlip from "../components/useFlip.js";
 import BackCircle from "../components/menu/BackCircle.jsx";
 import TrayRow from "../components/menu/TrayRow.jsx";
 import MoneyCheck from "../components/menu/MoneyCheck.jsx";
@@ -16,6 +17,7 @@ import "./kidMenu.css";
 
 const QUOTE_DELAY_MS = 300; // wait until the kid stops tapping + / - before asking the server
 const UNDO_MS = 5000;
+const LEAVE_MS = 160; // a removed row steps aside this long before it is really removed (matches .km-tray-row--leaving)
 const PAID_MS = 400; // how long the slider shows "Paid!" before the order-sent screen
 
 const sgd = (amount) => formatSgd(toCents(amount));
@@ -34,11 +36,14 @@ export default function Tray() {
   const [retry, setRetry] = useState(0);
   const [undo, setUndo] = useState(null); // the line just removed, so it can come back
   const [paying, setPaying] = useState(false);
+  const [leaving, setLeaving] = useState(null); // the line key of the row that is stepping aside
+  const listRef = useRef(null);
   const [paid, setPaid] = useState(false);
   const [payMessage, setPayMessage] = useState("");
 
   // The tray as the server sees it. A new key = the tray changed = ask for a new quote.
   const trayKey = JSON.stringify(toQuoteItems(lines));
+  useFlip(listRef, trayKey); // rows slide to their new place when one is removed (a hook: it stays above the early returns)
 
   useEffect(() => {
     if (lines.length === 0) return undefined;
@@ -87,9 +92,15 @@ export default function Tray() {
   }
 
   function removeAt(index) {
-    const { lines: next, removed } = removeLine(lines, index);
-    update(next);
-    setUndo(removed);
+    if (leaving) return; // shortcut: one removal at a time (160ms), upgrade if rows ever need to leave together
+    const wait = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? 0 : LEAVE_MS;
+    setLeaving(lineKey(lines[index]));
+    setTimeout(() => {
+      const { lines: next, removed } = removeLine(lines, index);
+      update(next);
+      setUndo(removed);
+      setLeaving(null);
+    }, wait);
   }
 
   function changeQuantity(index, quantity) {
@@ -182,10 +193,12 @@ export default function Tray() {
     <main className="screen kid km-screen" aria-busy={busy}>
       {header}
 
-      <ul className={`km-tray${busy ? " km-tray--busy" : ""}`} aria-label="Food in my tray">
+      <ul ref={listRef} className={`km-tray${busy ? " km-tray--busy" : ""}`} aria-label="Food in my tray">
         {linesInStallOrder(lines).map(({ line, index }) => (
           <TrayRow
             key={lineKey(line)}
+            flipKey={lineKey(line)}
+            leaving={leaving === lineKey(line)}
             line={line}
             // "…" only while a quote is on its way; after a 409 there is no price to show
             price={priced.get(lineKey(line)) ?? (busy ? "…" : null)}

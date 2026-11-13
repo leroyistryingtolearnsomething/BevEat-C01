@@ -7,9 +7,9 @@ import plus16 from "../../assets/figma/menu/plus-16.svg";
 // `price` is the server's line total as text, "…" while it loads, or null when there is none.
 // `problem` is set when the server's 409 says this line can't be ordered any more: the row then
 // says why and swaps the stepper for a big Remove button.
-export default function TrayRow({ line, price, problem, onQuantity, onRemove }) {
+export default function TrayRow({ line, price, problem, leaving, flipKey, onQuantity, onRemove }) {
   return (
-    <li className={`km-tray-row${problem ? " km-tray-row--problem" : ""}`}>
+    <li data-flip={flipKey} className={`km-tray-row${problem ? " km-tray-row--problem" : ""}${leaving ? " km-tray-row--leaving" : ""}`}>
       <DishPhoto src={line.imageUrl} name={line.name} className="km-tray-row__img" />
       <div className="km-tray-row__text">
         <p className="km-tray-row__name">{line.name}</p>

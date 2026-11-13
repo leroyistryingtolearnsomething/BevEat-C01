@@ -120,7 +120,7 @@ button { cursor: pointer; }
 .btn--text { min-height: 44px; background: none; color: var(--p-green); }
 
 .foot { margin-top: 24px; text-align: center; font-size: 14px; color: var(--p-muted); }
-.foot a { display: inline-block; padding: 12px 4px; }
+.foot a { display: inline-block; padding: 14px 6px; } /* 44px tall (was 42) */
 
 fieldset { margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px; }
 legend { padding: 0; margin-bottom: 8px; }
@@ -460,8 +460,9 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
 .hk-meter__fill {
   height: 100%; min-width: 15px; /* a tiny dot still shows when almost nothing is left */
   background: var(--hk-mint); border-radius: 9px;
-  transition: width 0.4s ease;
 }
+
+.hk-link::after { content: ""; position: absolute; inset: -14px -8px; } /* hit area, not visible */
 
 /* ---------- Mum's rules ---------- */
 .hk-rules { display: flex; flex-direction: column; gap: 10px; }
@@ -477,7 +478,7 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
 
 /* ---------- Section headings with a link on the right ---------- */
 .hk-row-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.hk-link { font-family: "Fredoka", system-ui, sans-serif; font-size: 14px; font-weight: 500; color: var(--hk-link); text-decoration: none; }
+.hk-link { position: relative; font-family: "Fredoka", system-ui, sans-serif; font-size: 14px; font-weight: 500; color: var(--hk-link); text-decoration: none; }
 
 /* ---------- Today's yummiest pics ---------- */
 .hk-pics { display: flex; flex-direction: column; gap: 12px; }
@@ -786,6 +787,7 @@ button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
   flex: none; position: relative; width: 50px; height: 30px; padding: 0; border: 0; border-radius: 999px;
   background: var(--p-line); transition: background 0.15s;
 }
+.switch::after { content: ""; position: absolute; inset: -7px -4px; } /* 58x44 hit area */
 .switch[aria-checked="true"] { background: var(--p-green); }
 .switch__knob {
   position: absolute; top: 4px; left: 4px; width: 22px; height: 22px; border-radius: 50%; background: #fff;
@@ -881,7 +883,7 @@ button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
 
 /* heart button: same look as the stall menu's heart (Raghav's icons) */
 .dp-heart {
-  flex: none; display: flex; align-items: center; gap: 4px; min-height: 36px; padding: 4px 10px 4px 8px;
+  flex: none; display: flex; align-items: center; gap: 4px; min-height: 44px; padding: 4px 12px 4px 10px;
   border-radius: 999px; background: #fff; border: 2px solid var(--k-ink); box-shadow: 0 2px 0 var(--k-ink);
   color: var(--k-ink); font-family: "Fredoka", system-ui, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer;
   transition: transform .1s;
@@ -933,3 +935,10 @@ a.km-hero__pics { color: var(--k-ink); text-decoration: none; }
 .my-orders__num { font-family: "Fredoka", system-ui, sans-serif; font-size: 22px; font-weight: 700; }
 .my-orders__text { flex: 1; display: flex; flex-direction: column; }
 .my-orders__text small { font-size: 13px; color: var(--k-soft); }
+
+/* a failed heart: a small message over the page, the pics stay where they are */
+.dp-toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 5;
+  width: max-content; max-width: calc(100% - 40px); margin: 0; padding: 12px 18px; border-radius: 18px; text-align: center;
+  background: var(--k-ink); color: #fff; font-size: 14px; line-height: 1.35;
+}

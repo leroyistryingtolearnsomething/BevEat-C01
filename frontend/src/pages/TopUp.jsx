@@ -5,7 +5,8 @@ import { KidSwitcher, PageHeader, ParentTabs, money, useKids } from "../componen
 import lockIcon from "../assets/figma/lock.svg";
 import clockIcon from "../assets/figma/clock.svg";
 import downloadIcon from "../assets/figma/download.svg";
-import successIcon from "../assets/figma/success.svg";
+import Roll from "../components/Roll.jsx";
+import SuccessCheck from "../components/SuccessCheck.jsx";
 import Icon from "../components/Icon.jsx";
 
 const AMOUNTS = [10, 20, 50];
@@ -73,7 +74,7 @@ export default function TopUp() {
     return (
       <main className="screen parent with-tabs">
         <section className="done" role="status">
-          <img src={successIcon} alt="" width="88" height="88" />
+          <SuccessCheck />
           <h1>{money(topUp.amount)} added</h1>
           <p className="lead">{topUp.kidName}'s wallet is now {money(topUp.walletBefore + topUp.amount)}</p>
           <dl className="card facts">
@@ -126,7 +127,7 @@ export default function TopUp() {
           {validAmount && (
             <div className="card card--mint">
               <p className="card__label">{kid.name}’s wallet after</p>
-              <p className="card__amount card__amount--green">{money(kid.walletBalance + value)}</p>
+              <p className="card__amount card__amount--green"><Roll text={money(kid.walletBalance + value)} /></p>
               <p className="card__label">Daily limit stays {money(kid.dailyLimit)}</p>
             </div>
           )}
