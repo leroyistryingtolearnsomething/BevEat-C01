@@ -17,12 +17,15 @@ const stalls = [
   { stall_id: 1, name: "Ah Hock Chicken Rice", owner_id: 20, avg_prep_minutes: 4 },
   { stall_id: 2, name: "Mee Pok Man", owner_id: 21, avg_prep_minutes: null },
 ];
-const t = (min) => new Date(Date.UTC(2026, 10, 6, 4, min));
+// orders placed a few minutes ago (cards hide old orders, so the test data has to be recent)
+const t = (min) => new Date(Date.now() - (10 - min) * 60000);
 const orders = [
   { order_id: 1, child_id: 12, stall_id: 1, queue_number: 101, status: "placed", placed_at: t(0), ready_at: null, collected_at: null },
   { order_id: 2, child_id: 12, stall_id: 1, queue_number: 102, status: "placed", placed_at: t(1), ready_at: null, collected_at: null },
   { order_id: 3, child_id: 10, stall_id: 1, queue_number: 103, status: "placed", placed_at: t(2), ready_at: null, collected_at: null },
   { order_id: 4, child_id: 10, stall_id: 2, queue_number: 201, status: "cancelled", placed_at: t(0), ready_at: null, collected_at: null },
+  // ready 2 hours ago but never picked up, should be hidden from the cards and the ping
+  { order_id: 5, child_id: 10, stall_id: 2, queue_number: 202, status: "ready", placed_at: t(-130), ready_at: t(-110), collected_at: null, pickup_code: "1234" },
 ];
 
 // ---------- fake database ----------
@@ -155,6 +158,12 @@ async function run() {
   check(res.status === 200 && res.body.ahead === 2, "kid sees 2 orders ahead");
   check(res.body.waitMinutes === 12, "wait time = (ahead + 1) x stall prep time");
   check(res.body.queueNumber === 103 && res.body.ready === false, "shows queue number, not ready yet");
+  check(res.body.stage === "received", "orders still ahead = order received");
+  const readyBy = new Date(res.body.readyBy).getTime();
+  check(Math.abs(readyBy - (t(2).getTime() + 12 * 60000)) < 1000, "readyBy = placed time + wait, for the countdown");
+
+  res = await get("/orders/1/queue", otherKid);
+  check(res.body.ahead === 0 && res.body.stage === "cooking", "first in line = cooking");
 
   res = await get("/orders/3/queue", parent);
   check(res.status === 200, "parent can see their kid's order");
@@ -196,7 +205,8 @@ async function run() {
 
   // kid home card: today's orders, cancelled one left out
   res = await get("/me/orders", kid);
-  check(res.status === 200 && res.body.orders.length === 1, "kid home shows the order still cooking");
+  check(res.status === 200 && res.body.orders.length === 1, "kid home shows the order still cooking, old ready order is hidden");
+  check(res.body.orders[0].stage === "received" && res.body.orders[0].readyBy, "kid home card has the stage and countdown time");
   check(res.body.orders[0].ahead === 2 && res.body.orders[0].waitMinutes === 12, "kid home has the queue and wait time");
   res = await get("/me/orders", parent);
   check(res.status === 403, "my orders is only for kids");
@@ -243,6 +253,9 @@ async function run() {
   const code = res.body.orders[0].pickupCode;
   check(/^\d{4}$/.test(code), "ready ping has a 4 digit pickup code");
 
+  res = await get("/orders/3/queue", kid);
+  check(res.body.stage === "ready" && res.body.readyBy === null, "stage is ready, no countdown");
+
   res = await get("/orders/3/queue", parent);
   check(res.body.pickupCode === code, "parent can see the pickup code too");
 
@@ -270,6 +283,7 @@ async function run() {
 
   res = await get("/orders/3/queue", kid);
   check(res.body.pickupCode === undefined, "code is gone after it's collected");
+  check(res.body.stage === "collected", "stage is collected");
 
   res = await get("/me/ready-orders", kid);
   check(res.body.orders.length === 0, "ping stops after it's collected");

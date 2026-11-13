@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { getKidsOrders } from "../api.js";
+import { statusLine, useNow } from "./OrderStatus.jsx";
 
 // parent home: kids' orders today that aren't picked up yet, same info the kid sees
 const POLL_MS = 15000;
 
 export default function ParentOrdersCard({ token }) {
   const [orders, setOrders] = useState([]);
+  const now = useNow();
 
   useEffect(() => {
     const load = () => getKidsOrders(token).then((d) => setOrders(d.orders)).catch(() => {}); // try again next time
@@ -24,9 +26,7 @@ export default function ParentOrdersCard({ token }) {
           <p>
             <strong>{o.childName}'s order #{o.queueNumber}</strong> at {o.stallName}
             <br />
-            {o.ready
-              ? `Ready to collect, pickup code ${o.pickupCode}`
-              : `Cooking, ${o.ahead} before it, about ${o.waitMinutes} min`}
+            {statusLine(o, now)}
           </p>
         </div>
       ))}
