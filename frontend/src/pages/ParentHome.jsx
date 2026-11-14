@@ -136,8 +136,9 @@ function AccountMenu({ name, onLogOut }) {
 }
 
 function Today({ kid, lowAlert, alertsLoaded }) {
-  const left = Math.max(0, kid.dailyLimit - kid.spentToday);
-  const spentPct = kid.dailyLimit ? Math.min(100, (kid.spentToday / kid.dailyLimit) * 100) : 0;
+  const limit = kid.todayLimit ?? kid.dailyLimit; // today's weekday limit if there is one
+  const left = Math.max(0, limit - kid.spentToday);
+  const spentPct = limit ? Math.min(100, (kid.spentToday / limit) * 100) : 0;
   // alerts know the amount the parent picked, until they load use one day's limit
   const low = alertsLoaded ? !!lowAlert : kid.walletBalance < kid.dailyLimit;
   const topUp = `/parent/top-up?kid=${kid.id}`;
@@ -149,7 +150,7 @@ function Today({ kid, lowAlert, alertsLoaded }) {
       <div className="today__bar" role="progressbar" aria-label="Spent today" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(spentPct)}>
         <span style={{ width: `${spentPct}%` }} />
       </div>
-      <p className="today__meta">Spent {money(kid.spentToday)} · Daily limit {money(kid.dailyLimit)}</p>
+      <p className="today__meta">Spent {money(kid.spentToday)} · {limit === kid.dailyLimit ? "Daily limit" : "Today's limit"} {money(limit)}</p>
 
       {low ? (
         <div className="wallet wallet--low">
