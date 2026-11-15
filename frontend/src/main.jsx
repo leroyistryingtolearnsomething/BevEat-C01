@@ -8,6 +8,7 @@ import "./glass.css";
 import "./kidOrderDone.css";
 import "./kidMotion.css";
 import "./uxMotion.css";
+import "./buttonMotion.css";
 import { installGlassDrag } from "./glassDrag.js";
 import { installGlassGlow } from "./glassGlow.js";
 

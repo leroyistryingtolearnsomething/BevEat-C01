@@ -6,6 +6,7 @@ import ParentAlerts from "../components/ParentAlerts.jsx";
 import ParentOrdersCard from "../components/ParentOrdersCard.jsx";
 import { AskMumBell, AskMumPings, useAskMumPending } from "../components/AskMum.jsx";
 import Icon from "../components/Icon.jsx";
+import TransitionLink from "../components/TransitionLink.jsx";
 import walletIcon from "../assets/figma/wallet.svg";
 import warningIcon from "../assets/figma/warning.svg";
 import plusGreen from "../assets/figma/plus-green.svg";
@@ -52,10 +53,10 @@ export default function ParentHome() {
           <ParentAlerts token={token} onLowWallets={setLowWallets} />
           <ParentOrdersCard token={token} />
           <Today kid={kid} lowAlert={lowWallets?.find((a) => a.childId === kid.id)} alertsLoaded={!!lowWallets} />
-          <Link to={`/parent/macros?kid=${kid.id}`} className="m-home-link">
+          <TransitionLink to={`/parent/macros?kid=${kid.id}`} className="m-home-link">
             <span>{kid.name}'s food and nutrients</span>
             <span aria-hidden="true">›</span>
-          </Link>
+          </TransitionLink>
 
           <div className="seg" role="group" aria-label="Show">
             {[["allergies", "Allergies"], ["limit", "Daily limit"]].map(([key, label]) => (

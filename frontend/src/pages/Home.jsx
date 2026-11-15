@@ -1,23 +1,25 @@
 import { useEffect, useState } from "react";
 import { getHome } from "../api.js";
 import { clearSession, getSession } from "../session.js";
+import { recall, remember } from "../memo.js";
 import KidTabs from "../components/KidTabs.jsx";
 import KidAvatarMenu from "../components/KidAvatarMenu.jsx";
 import DishCard from "../components/menu/DishCard.jsx";
 import MyOrdersCard from "../components/MyOrdersCard.jsx";
 import TrayButton from "../components/menu/TrayButton.jsx";
+import TransitionLink from "../components/TransitionLink.jsx";
 import { Link, useNavigate } from "react-router-dom";
 // Kid Home page: shows the data from GET /api/home
 export default function Home() {
   const { token } = getSession();             // the logged-in kid's token
-  const [home, setHome] = useState(null);     // the data, null until it arrives
+  const [home, setHome] = useState(() => recall(`${token}:home`)); // the data: last visit's copy, then the fresh one
   const [error, setError] = useState("");     // an error message, if it fails
     const navigate = useNavigate();
 
   // runs once when the page opens: ask the backend for the data
   useEffect(() => {
     getHome(token)
-      .then((data) => setHome(data))          // success: save the data, page redraws
+      .then((data) => setHome(remember(`${token}:home`, data))) // success: save the data, page redraws
             .catch((err) => {
         if (err.status === 401) {          // login expired or invalid
           clearSession();                  // forget the old token
@@ -97,7 +99,7 @@ export default function Home() {
           <span className="hk-link">📍 Map</span>
         </div>
         {stalls.map((s) => (
-          <Link key={s.stall} to={`/kid/stalls/${s.stall}`} className="hk-stall">
+          <TransitionLink key={s.stall} to={`/kid/stalls/${s.stall}`} className="hk-stall">
             {s.image ? (
               <img src={s.image} alt="" className="hk-stall__img" />
             ) : (
@@ -112,7 +114,7 @@ export default function Home() {
                   : `✓ ${s.safePicks} safe ${s.safePicks === 1 ? "pick" : "picks"} for you`}
               </p>
             </div>
-          </Link>
+          </TransitionLink>
         ))}
       </section>
       <KidTabs active="home" />

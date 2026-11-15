@@ -202,7 +202,9 @@ button.km-back { padding: 0; cursor: pointer; } /* the "go back" version is a bu
 .km-big--white { background: #fff; }
 .km-big--grow { flex: 1; width: auto; min-width: 0; }
 .km-big:disabled { background: var(--km-muted-pill); box-shadow: 0 2px 0 var(--k-ink); cursor: not-allowed; }
-.km-big:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 var(--k-ink); }
+/* Figma "Big Button" Pressed: the hard shadow shrinks 5px -> 1px and the label drops 3px; the face itself stays put.
+   (The label drop is padding, because the label is bare text; the button's height stays the same, so nothing around it moves.) */
+.km-big:active:not(:disabled) { box-shadow: 0 1px 0 var(--k-ink); padding-top: 19px; padding-bottom: 13px; }
 span.km-big { cursor: default; }
 
 /* Footer fixed to the bottom. 3 classes so it beats ".kid > :not(.blob) { position: relative }" */
@@ -330,7 +332,11 @@ span.km-big { cursor: default; }
   font-family: var(--km-font); font-size: 19px; font-weight: 600; line-height: normal; cursor: pointer;
 }
 .km-askmum:disabled { cursor: progress; }
-.km-askmum--sent { background: var(--km-mint); color: var(--k-ink); box-shadow: 0 2px 0 var(--k-ink); cursor: default; }
+.km-askmum--sent, .km-askmum--sent:disabled { background: var(--km-mint); color: var(--k-ink); box-shadow: 0 2px 0 var(--k-ink); cursor: default; }
+/* Figma widths: 161px idle, 196px once sent (a fixed width is what lets the button grow smoothly) */
+.km-askmum { box-sizing: border-box; inline-size: 161px; white-space: nowrap; }
+.km-askmum--sent { inline-size: 196px; }
+.km-askmum:active:not(:disabled) { box-shadow: 0 1px 0 var(--k-ink); padding-top: 19px; padding-bottom: 13px; }
 .km-caption { font-size: 13px; font-weight: 600; color: var(--km-caption); }
 
 /* 05b: the kid's optional note for Mum. Sticker Pop pieces: ink outlines, hard ink shadows.

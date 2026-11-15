@@ -1,0 +1,27 @@
+/* Buttons, from the UX & animation rules: every button answers a press on the same frame (a 150ms ease-out scale to 0.96, so
+   letting go mid-press glides back), small visuals get a 44px tappable zone without getting bigger, and wide rows tint instead of
+   shrinking (4% of a wide surface is a jump). Everything that moves is inside "no-preference"; the parent app's glass buttons
+   and the kid app's sticker buttons keep their own press (glass.css, styles.css, kidMotion.css), so this only fills the gaps.
+   --ux-out is declared in uxMotion.css. */
+
+:root { --press: 0.96; }
+
+/* hit area: the visual stays 20px, the tappable zone is 44px (never below 24px even where two zones meet) */
+.km-qty button, .km-tray-qty button, .hk-link, .edit-link { position: relative; }
+.km-qty button::after, .km-tray-qty button::after, .hk-link::after, .edit-link::after {
+  content: ""; position: absolute; top: 50%; left: 50%;
+  width: max(100%, 44px); height: max(100%, 44px); translate: -50% -50%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* press: small buttons, icon buttons and chips that had no feedback (the parent app's glass .btn is excluded by its own, stronger rules) */
+  :is(.btn:not(.parent .btn), .hk-link, .edit-link, .am-ok, .km-undo__btn, .m-chip, a.km-hero__pics, .km-qty button, .km-tray-qty button) {
+    transition: transform 150ms var(--ux-out);
+  }
+  :is(.btn:not(.parent .btn), .hk-link, .edit-link, .am-ok, .km-undo__btn, .m-chip, a.km-hero__pics, .km-qty button, .km-tray-qty button):active:not(:disabled) {
+    transform: scale(var(--press));
+  }
+  /* the extras rows are wide: they dim a touch under the finger instead */
+  .km-extra { transition: filter 150ms var(--ux-out); }
+  .km-extra:active { filter: brightness(0.95); }
+}
