@@ -7,6 +7,12 @@ import tickIcon from "../assets/figma/tick.svg";
 import plusIcon from "../assets/figma/plus-dark.svg";
 import shieldIcon from "../assets/figma/shield-warning.svg";
 
+// a little picture for each allergy so they're quicker to spot
+const ALLERGY_ICON = {
+  peanut: "🥜", "tree nuts": "🌰", egg: "🥚", milk: "🥛", shellfish: "🦐",
+  fish: "🐟", soy: "🫘", wheat: "🌾", sesame: "🫓",
+};
+
 // Parent edits a kid's allergies; removing one asks first, because those dishes come back
 export default function ParentAllergies() {
   const { kids, kid, select, error, reload, token } = useKids();
@@ -62,7 +68,8 @@ export default function ParentAllergies() {
                 const on = chosen.includes(key);
                 return (
                   <button key={key} type="button" className="allergy-chip" aria-pressed={on} onClick={() => tap(key)}>
-                    <img src={on ? tickIcon : plusIcon} alt="" width="16" height="16" />{label}
+                    <img src={on ? tickIcon : plusIcon} alt="" width="16" height="16" />
+                    <span className="allergy-chip__icon" aria-hidden="true">{ALLERGY_ICON[key]}</span>{label}
                   </button>
                 );
               })}
