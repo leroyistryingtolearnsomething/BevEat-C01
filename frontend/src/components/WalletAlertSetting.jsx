@@ -20,7 +20,7 @@ export default function WalletAlertSetting({ token, kid }) {
     if (value !== "") {
       cents = Math.round(Number(value) * 100);
       if (!Number.isFinite(cents) || cents < 100 || cents > 10000)
-        return setStatus({ busy: false, msg: "", err: "Put S$1 to S$100, or leave it empty" });
+        return setStatus({ busy: false, msg: "", err: "Put $1 to $100, or leave it empty" });
     }
     setStatus({ busy: true, msg: "", err: "" });
     try {
@@ -41,7 +41,7 @@ export default function WalletAlertSetting({ token, kid }) {
         <label className="day-limit">
           <span>Alert under</span>
           <span className="input">
-            <span className="input__prefix">S$</span>
+            <span className="input__prefix">$</span>
             <input type="number" inputMode="decimal" min="1" max="100" step="0.5" placeholder={kid.dailyLimit.toFixed(2)}
               value={value} onChange={(e) => setValue(e.target.value)} />
           </span>

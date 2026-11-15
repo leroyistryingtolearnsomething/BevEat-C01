@@ -50,7 +50,7 @@ async function addChild(req, res, next) {
   if (typeof username !== "string" || !USERNAME_RE.test(username))
     return res.status(400).json({ error: "Login name must be 3 to 20 letters, numbers or _" });
   if (typeof pin !== "string" || !PIN_RE.test(pin)) return res.status(400).json({ error: "PIN must be 4 numbers" });
-  if (!validLimitCents(dailyLimitCents)) return res.status(400).json({ error: "Daily food money must be S$1 to S$50" });
+  if (!validLimitCents(dailyLimitCents)) return res.status(400).json({ error: "Daily food money must be $1 to $50" });
   if (!validAllergens(allergens)) return res.status(400).json({ error: "Unknown allergy" });
 
   try {
@@ -83,7 +83,7 @@ async function setAllergies(req, res, next) {
 // PUT /api/children/:childId/daily-limit  body { dailyLimitCents }
 async function setDailyLimit(req, res, next) {
   const { dailyLimitCents } = req.body || {};
-  if (!validLimitCents(dailyLimitCents)) return res.status(400).json({ error: "Daily food money must be S$1 to S$50" });
+  if (!validLimitCents(dailyLimitCents)) return res.status(400).json({ error: "Daily food money must be $1 to $50" });
   try {
     await ChildAccount.setDailyLimit(req.childId, dailyLimitCents / 100);
     res.json({ dailyLimit: dailyLimitCents / 100 });

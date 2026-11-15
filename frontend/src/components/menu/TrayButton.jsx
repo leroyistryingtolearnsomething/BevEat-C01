@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import TransitionLink from "../TransitionLink.jsx";
 import { loadTray, trayBadge, trayCount } from "../../tray.js";
 import trayIcon from "../../assets/figma/kid/tab-tray.svg";
 import "../../pages/kidMenu.css"; // the km-traybtn styles, so the page using this needn't import them
@@ -15,9 +15,9 @@ export default function TrayButton({ token }) {
   const label = count === 0 ? "My tray, empty" : `My tray, ${count} ${count === 1 ? "item" : "items"}`;
 
   return (
-    <Link to="/kid/tray" className="km-traybtn" aria-label={label}>
+    <TransitionLink to="/kid/tray" className="km-traybtn" aria-label={label}>
       <img src={trayIcon} width="24" height="24" alt="" aria-hidden="true" />
       {badge && <span className="km-traybtn__badge" aria-hidden="true">{badge}</span>}
-    </Link>
+    </TransitionLink>
   );
 }

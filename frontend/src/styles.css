@@ -313,7 +313,7 @@ legend { padding: 0; margin-bottom: 8px; }
 .card__lead { font-size: 13px; line-height: 1.4; color: var(--p-muted); }
 .card__hint { font-size: 12px; color: var(--p-muted); }
 .card__label { font-size: 13px; color: var(--p-muted); }
-.card__amount { font-size: 28px; font-weight: 700; }
+.card__amount { font-family: "Nunito", system-ui, sans-serif; font-size: 28px; font-weight: 800; } /* the top-up amounts match the limit amount */
 .card__amount--green { font-size: 24px; color: var(--p-green); }
 .card--mint { background: var(--p-mint); border-color: transparent; }
 
@@ -332,7 +332,7 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
 .confirm p { font-size: 15px; line-height: 1.35; color: var(--p-muted); }
 
 .limit-hero { padding: 20px 16px; border-radius: 16px; background: var(--p-green); color: #fff; text-align: center; font-size: 15px; }
-.limit-hero__amount { font-size: 46px; font-weight: 700; line-height: 1.2; }
+.limit-hero__amount { font-family: "Nunito", system-ui, sans-serif; font-size: 46px; font-weight: 800; line-height: 1.2; } /* Nunito's digits stand upright; Quicksand's lean */
 .limit-hero__small { font-size: 13px; }
 .limit-slider {
   -webkit-appearance: none; appearance: none; width: 100%; height: 6px; margin: 14px 0 4px; border-radius: 3px;

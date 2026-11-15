@@ -7,7 +7,7 @@ import baoCheer from "../assets/figma/kid/order-bao.svg";
 import clockIcon from "../assets/figma/clock.svg";
 import "./kidMenu.css";
 
-const sgd = (n) => `S$${Number(n).toFixed(2)}`;
+const sgd = (n) => `$${Number(n).toFixed(2)}`;
 const CONFETTI = ["#ff6b5b", "#5bc0eb", "#2ec4a0", "#ff9ec4", "#715bff", "#ffffff"];
 
 // Kids Figma "08 Yay! Order sent". Shown right after the wallet payment. It reads the checkout reply that Tray

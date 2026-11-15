@@ -23,7 +23,7 @@ export default function WeekdayLimits({ token, kid }) {
       if (values[k] === "") continue;
       const cents = Math.round(Number(values[k]) * 100);
       if (!Number.isFinite(cents) || cents < 100 || cents > 5000)
-        return setStatus({ busy: false, msg: "", err: `${label}: put S$1 to S$50, or leave it empty` });
+        return setStatus({ busy: false, msg: "", err: `${label}: put $1 to $50, or leave it empty` });
       days[k] = cents;
     }
     setStatus({ busy: true, msg: "", err: "" });
@@ -46,7 +46,7 @@ export default function WeekdayLimits({ token, kid }) {
             <label key={k} className="day-limit">
               <span>{label}</span>
               <span className="input">
-                <span className="input__prefix">S$</span>
+                <span className="input__prefix">$</span>
                 <input type="number" inputMode="decimal" min="1" max="50" step="0.5" placeholder={kid.dailyLimit.toFixed(2)}
                   value={values[k]} onChange={(e) => setValues({ ...values, [k]: e.target.value })} />
               </span>

@@ -48,7 +48,8 @@
      so --gentle is that spring sampled over 650ms. */
   :root { --gentle: linear(0, 0.028, 0.097, 0.191, 0.298, 0.408, 0.514, 0.612, 0.7, 0.776, 0.839, 0.891, 0.933, 0.965, 0.989, 1.006, 1.017, 1.024, 1.027, 1.028, 1.028, 1.026, 1.023, 1.02, 1.017, 1.014, 1); }
   ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 450ms; animation-timing-function: ease-out; }
-  ::view-transition-group(dish-photo), ::view-transition-group(dish-name), ::view-transition-group(dish-price) {
+  ::view-transition-group(dish-photo), ::view-transition-group(dish-name), ::view-transition-group(dish-price),
+  ::view-transition-group(parent-hero), ::view-transition-group(parent-wallet) {
     animation-duration: 650ms; animation-timing-function: var(--gentle);
   }
   /* tab switches are a quick dissolve (Figma: Dissolve 200ms), and the tab bar itself stays put while the screen behind it changes */

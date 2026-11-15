@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import TransitionLink from "../components/TransitionLink.jsx";
 import { getStallMenu, getStallWait } from "../api.js";
 import { getSession } from "../session.js";
 import { recall, remember } from "../memo.js";
@@ -125,9 +126,9 @@ export default function StallMenu() {
       {trayCount(tray) > 0 && (
         <footer className="km-footer">
           {/* The total here is only a guide: 06 My tray asks the server for the real price */}
-          <Link to="/kid/tray" className="km-big km-big--sun">
+          <TransitionLink to="/kid/tray" className="km-big km-big--sun">
             My tray  ·  {trayCount(tray)} {trayCount(tray) === 1 ? "item" : "items"}  ·  {formatSgd(trayCents(tray))}
-          </Link>
+          </TransitionLink>
         </footer>
       )}
     </main>

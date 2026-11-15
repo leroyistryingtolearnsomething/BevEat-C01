@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 import { setDailyLimit } from "../api.js";
 import { KidSwitcher, PageHeader, ParentTabs, money, useKids } from "../components/ParentShell.jsx";
 import WeekdayLimits from "../components/WeekdayLimits.jsx";
+import Roll from "../components/Roll.jsx";
+import SuccessCheck from "../components/SuccessCheck.jsx";
 import WalletAlertSetting from "../components/WalletAlertSetting.jsx";
 
 const PRESETS = [4, 6, 8, 10];
+const HERO = { viewTransitionName: "parent-hero" }; // pairs with Home's "food money today" card (see TransitionLink)
 
-// Parent sets how much a kid can spend each day (S$2 to S$20 on the slider)
+// Parent sets how much a kid can spend each day ($2 to $20 on the slider)
 export default function ParentLimit() {
   const { kids, kid, select, error, reload, token } = useKids();
   const [limit, setLimit] = useState(5);
@@ -31,16 +34,16 @@ export default function ParentLimit() {
 
   return (
     <main className="screen parent with-tabs">
-      <PageHeader title="Daily spending limit" backTo={kid ? `/parent/home?kid=${kid.id}` : "/parent/home"} />
+      <PageHeader title="Daily spending limit" backTo={kid ? `/parent/home?kid=${kid.id}` : "/parent/home"} arrive={{ ".today": "parent-hero" }} />
       {error && <p className="form-error" role="alert">{error}</p>}
       {!kids && !error && <p className="lead">Loading…</p>}
 
       {kid && (
         <>
           <KidSwitcher kids={kids} kid={kid} onSelect={select} />
-          <section className="limit-hero" aria-live="polite">
+          <section className="limit-hero" style={HERO} aria-live="polite">
             <p>{kid.name} can spend up to</p>
-            <p className="limit-hero__amount">{money(limit)}</p>
+            <p className="limit-hero__amount"><Roll text={money(limit)} /></p>
             <p className="limit-hero__small">a day at the hawker centre</p>
           </section>
 
@@ -49,22 +52,22 @@ export default function ParentLimit() {
             <input id="limit" type="range" className="limit-slider" min="2" max="20" step="0.5"
               value={limit} onChange={(e) => change(Number(e.target.value))}
               aria-valuetext={money(limit)} style={{ "--fill": `${((limit - 2) / 18) * 100}%` }} />
-            <div className="limit-scale" aria-hidden="true"><span>S$2</span><span>S$20</span></div>
+            <div className="limit-scale" aria-hidden="true"><span>$2</span><span>$20</span></div>
             <div className="chips presets">
               {PRESETS.map((v) => (
-                <button key={v} type="button" className="preset" aria-pressed={limit === v} onClick={() => change(v)}>S${v}</button>
+                <button key={v} type="button" className="preset" aria-pressed={limit === v} onClick={() => change(v)}>${v}</button>
               ))}
             </div>
           </section>
 
           <dl className="card facts">
             <div><dt>Spent today</dt><dd>{money(kid.spentToday)}</dd></div>
-            <div><dt>A hawker meal near school</dt><dd>about S$3.50</dd></div>
+            <div><dt>A hawker meal near school</dt><dd>about $3.50</dd></div>
             <div><dt>Resets every day at</dt><dd>12:00 am</dd></div>
           </dl>
 
           {status.err && <p className="form-error" role="alert">{status.err}</p>}
-          {status.msg && <p className="form-ok" role="status">{status.msg}</p>}
+          {status.msg && <p className="form-ok" role="status"><SuccessCheck size={24} />{status.msg}</p>}
           <button className="btn btn--primary" onClick={save} disabled={status.busy}>
             {status.busy ? "Saving…" : "Save limit"}
           </button>

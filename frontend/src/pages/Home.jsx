@@ -55,13 +55,13 @@ export default function Home() {
       <section className="hk-money">
         <p className="hk-money__title">My food money today</p>
         <p className="hk-money__left">
-          S${money.left.toFixed(2)} <span>left</span>
+          ${money.left.toFixed(2)} <span>left</span>
         </p>
         <div className="hk-meter">
           <div className="hk-meter__fill" style={{ width: `${(money.left / money.dailyLimit) * 100}%` }} />
         </div>
         <p className="hk-money__note">
-          Spent S${money.spentToday.toFixed(2)} · Daily limit S${money.dailyLimit.toFixed(2)}
+          Spent ${money.spentToday.toFixed(2)} · Daily limit ${money.dailyLimit.toFixed(2)}
         </p>
       </section>
             {/* Mum's rules: one chip per allergy */}

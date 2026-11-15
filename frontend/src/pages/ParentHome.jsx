@@ -82,7 +82,8 @@ export default function ParentHome() {
             <section>
               <div className="section-head">
                 <h2>{kid.name}'s daily limit</h2>
-                <Link to={`/parent/limit?kid=${kid.id}`} className="edit-link">Edit</Link>
+                {/* the green "food money today" card grows into the limit page's green card */}
+                <TransitionLink to={`/parent/limit?kid=${kid.id}`} scope="page" shared={{ ".today": "parent-hero" }} className="edit-link">Edit</TransitionLink>
               </div>
               <p className="lead">{kid.name} can spend up to {money(kid.dailyLimit)} a day. It resets at 12:00 am.</p>
             </section>
@@ -162,7 +163,7 @@ function Today({ kid, lowAlert, alertsLoaded }) {
               {lowAlert?.picked ? `Under the ${money(lowAlert.alertBelow)} you picked` : `Under tomorrow's ${money(kid.dailyLimit)} limit`}
             </p>
           </div>
-          <Link to={topUp} className="wallet__btn wallet__btn--dark"><img src={plusWhite} alt="" width="16" height="16" />Top up</Link>
+          <TransitionLink to={topUp} scope="page" shared={{ ".wallet": "parent-wallet" }} className="wallet__btn wallet__btn--dark"><img src={plusWhite} alt="" width="16" height="16" />Top up</TransitionLink>
         </div>
       ) : (
         <div className="wallet">
@@ -171,7 +172,7 @@ function Today({ kid, lowAlert, alertsLoaded }) {
             <p className="wallet__small">In {kid.name}'s wallet</p>
             <p className="wallet__big">{money(kid.walletBalance)}</p>
           </div>
-          <Link to={topUp} className="wallet__btn"><img src={plusGreen} alt="" width="16" height="16" />Top up</Link>
+          <TransitionLink to={topUp} scope="page" shared={{ ".wallet": "parent-wallet" }} className="wallet__btn"><img src={plusGreen} alt="" width="16" height="16" />Top up</TransitionLink>
         </div>
       )}
     </section>

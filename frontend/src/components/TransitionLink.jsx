@@ -6,16 +6,17 @@ import { Link, useNavigate } from "react-router-dom";
 export const DISH_MORPH = { ".km-card__photo": "dish-photo", ".km-card__name": "dish-name", ".km-pill--price": "dish-price" };
 
 // Gives the named elements inside `root` their transition names; returns a function that takes the names off again.
+// A selector of "&" means the root element itself (a card that is the link).
 function nameThem(root, map) {
   // a name may only exist once on the page: the locked page's own photo carries "dish-photo" permanently, and the card you
   // tap there (an alternative dish) is about to take it, so drop the old holder first (it is leaving anyway)
-  if (!root?.closest) return () => {};
+  if (!root?.querySelector) return () => {};
   const mine = new Set(Object.values(map));
   document.querySelectorAll("[style*='view-transition-name']").forEach((el) => { if (mine.has(el.style.viewTransitionName) && !root.contains(el)) el.style.viewTransitionName = ""; });
   const els = [];
   for (const [selector, name] of Object.entries(map)) {
-    const el = root?.querySelector(selector);
-    if (el) { el.style.viewTransitionName = name; els.push(el); }
+    const el = selector === "&" ? root : root.querySelector(selector);
+    if (el && el.style) { el.style.viewTransitionName = name; els.push(el); }
   }
   const clear = () => els.forEach((el) => { el.style.viewTransitionName = ""; });
   setTimeout(clear, 2500); // never leave a name behind if a transition is cut short
@@ -27,7 +28,10 @@ function nameThem(root, map) {
 // inside a nested <Routes>, so this starts it by hand.) Browsers without the API (Firefox) just navigate.
 // kind: "back" (returning to a screen already seen: 450ms fade) or "tab" (switching tabs: 200ms dissolve, as in the Figma
 // prototype). Either way the arriving screen is just there, with no entrance animation of its own.
-export default function TransitionLink({ to, state, shared, kind, onClick, ...rest }) {
+// shared: { selector: name } looked up inside the link (or on the whole page with scope="page", for a card that sits next to the
+// link rather than inside it). arrive: { selector: name } looked up on the NEW page once it is drawn, so Back can shrink a hero
+// into the card it came from.
+export default function TransitionLink({ to, state, shared, scope, arrive, kind, onClick, ...rest }) {
   const navigate = useNavigate();
 
   function handleClick(e) {
@@ -37,10 +41,15 @@ export default function TransitionLink({ to, state, shared, kind, onClick, ...re
     e.preventDefault();
     const root = document.documentElement;
     if (kind) { root.dataset.vt = kind; root.dataset.back = ""; }
-    const clear = shared ? nameThem(e.currentTarget, shared) : null; // only this card carries the names
-    const t = document.startViewTransition(() => flushSync(() => navigate(to, { state })));
+    const clear = shared ? nameThem(scope === "page" ? document : e.currentTarget, shared) : null; // only this card carries the names
+    let clearArrive;
+    const t = document.startViewTransition(() => {
+      flushSync(() => navigate(to, { state }));
+      if (arrive) clearArrive = nameThem(document, arrive);
+    });
     t.finished.finally(() => {
       clear?.();
+      clearArrive?.();
       if (kind) { delete root.dataset.vt; setTimeout(() => delete root.dataset.back, 1500); } // after the entrance animations are done
     });
   }

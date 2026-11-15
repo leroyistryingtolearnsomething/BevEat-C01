@@ -10,7 +10,7 @@ const { DAYS, sgWeekdayToday, weekdayOf, limitFor, limitOnDay, round2 } = requir
 const PERIOD_DAYS = { week: 7, month: 30 };
 const NEAR_LIMIT = 0.8; // warn at 80% of the day's limit
 
-const money = (n) => `S$${n.toFixed(2)}`;
+const money = (n) => `$${n.toFixed(2)}`;
 
 // GET /api/children/:childId/spending?period=week|month  (req.childId from requireOwnChild)
 async function getSpendingReport(req, res, next) {
@@ -106,7 +106,7 @@ async function getWalletAlert(req, res, next) {
 async function setWalletAlert(req, res, next) {
   const { alertBelowCents } = req.body || {};
   const ok = alertBelowCents === null || (Number.isInteger(alertBelowCents) && alertBelowCents >= 100 && alertBelowCents <= 10000);
-  if (!ok) return res.status(400).json({ error: "Alert amount must be S$1 to S$100" });
+  if (!ok) return res.status(400).json({ error: "Alert amount must be $1 to $100" });
   try {
     const amount = alertBelowCents === null ? null : alertBelowCents / 100;
     await WalletAlert.setAlert(req.childId, amount);
