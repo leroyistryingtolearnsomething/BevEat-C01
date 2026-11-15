@@ -114,7 +114,6 @@ export default function ParentSpending() {
                 <div><dt>Total spent</dt><dd>{money(sums.total)}</dd></div>
                 <div><dt>Average a day</dt><dd>{money(sums.averagePerDay)}</dd></div>
                 <div><dt>Limit used</dt><dd>{sums.usedPct}%</dd></div>
-                <div><dt>Days over the limit</dt><dd>{sums.daysOverLimit}</dd></div>
               </dl>
 
               {days.length === 0 ? (

@@ -33,9 +33,9 @@ test("range and weekdays together", () => {
 
 test("totals are worked out again for the filtered days", () => {
   const s = sumUp(filterDays(days, { from: "2026-11-11", to: "2026-11-12" }));
-  assert.deepEqual(s, { total: 8.5, averagePerDay: 4.25, daysOverLimit: 1, usedPct: 85 });
+  assert.deepEqual(s, { total: 8.5, averagePerDay: 4.25, usedPct: 85 });
 });
 
 test("nothing left after filtering gives zeros, not NaN", () => {
-  assert.deepEqual(sumUp([]), { total: 0, averagePerDay: 0, daysOverLimit: 0, usedPct: 0 });
+  assert.deepEqual(sumUp([]), { total: 0, averagePerDay: 0, usedPct: 0 });
 });

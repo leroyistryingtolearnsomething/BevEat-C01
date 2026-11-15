@@ -15,7 +15,6 @@ export function sumUp(days) {
   return {
     total,
     averagePerDay: days.length ? round2(total / days.length) : 0,
-    daysOverLimit: days.filter((d) => d.overLimit).length,
     usedPct: totalLimit ? Math.round((total / totalLimit) * 100) : 0,
   };
 }
