@@ -672,6 +672,14 @@ button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
 .spend-day__amt { font-weight: 700; white-space: nowrap; }
 .spend-day__amt small { color: var(--p-muted); font-weight: 400; }
 
+/* reset PIN boxes: red until both match, then green (.parent so the glass look doesnt win) */
+.pin-boxes { display: flex; flex-direction: column; gap: 12px; }
+.parent .pin-boxes--bad .input, .parent .pin-boxes--bad .input:focus-within { border-color: var(--p-danger); }
+.parent .pin-boxes--bad .input:focus-within { box-shadow: 0 0 0 3px rgb(168 50 31 / 0.25); }
+.parent .pin-boxes--ok .input, .parent .pin-boxes--ok .input:focus-within { border-color: var(--p-green); background: var(--p-mint); }
+.pin-boxes__hint { font-size: 13px; font-weight: 700; color: var(--p-danger); }
+.pin-boxes--ok .pin-boxes__hint { color: var(--p-green); }
+
 .day-limits { display: flex; flex-direction: column; gap: 8px; }
 .day-limit { display: grid; grid-template-columns: 1fr 130px; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; }
 .day-limit .input input { width: 100%; min-width: 0; }
