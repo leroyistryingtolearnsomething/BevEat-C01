@@ -671,6 +671,13 @@ button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
 .spend-day--over .spend-day__amt { color: var(--p-danger); }
 .spend-day__amt { font-weight: 700; white-space: nowrap; }
 .spend-day__amt small { color: var(--p-muted); font-weight: 400; }
+/* limit line on each bar (xinsheng) */
+.spend-day__bar { position: relative; }
+.spend-day__limit { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -3px; border-radius: 2px; background: var(--p-ink); }
+.spend-key { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; color: var(--p-muted); }
+.spend-key .spend-day__limit { position: static; display: inline-block; height: 12px; margin: 0; }
+.spend-empty { align-items: center; text-align: center; padding-block: 24px; }
+.spend-empty > span { font-size: 36px; }
 
 /* reset PIN boxes: red until both match, then green (.parent so the glass look doesnt win) */
 .pin-boxes { display: flex; flex-direction: column; gap: 12px; }
