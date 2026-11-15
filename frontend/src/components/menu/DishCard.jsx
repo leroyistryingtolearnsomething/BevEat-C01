@@ -41,7 +41,7 @@ export default function DishCard({ dish, flat = false }) {
       <h3 className="km-card__name" title={dish.name}>{dish.name}</h3>
 
       <div className="km-card__meta">
-        <span className={`km-pill km-pill--price${muted ? " km-pill--muted" : ""}`}>S${dish.price.toFixed(2)}</span>
+        <span className={`km-pill km-pill--price${muted ? " km-pill--muted" : ""}`}>${dish.price.toFixed(2)}</span>
         <span className="km-card__spacer" />
         <img src={heart} width="14" height="14" alt="" />
         <span className="km-card__hearts">

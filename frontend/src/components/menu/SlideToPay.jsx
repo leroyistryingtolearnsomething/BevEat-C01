@@ -3,10 +3,10 @@ import { isComplete, keyStep, progressFromDrag } from "./slideToPay.js";
 
 const SHAKE_MS = 360; // the "that didn't work" wiggle after a failed payment
 
-// 06 My tray: "Slide to pay S$4.60". The kid drags the round thumb to the right; only a slide
+// 06 My tray: "Slide to pay $4.60". The kid drags the round thumb to the right; only a slide
 // of 90% or more pays, anything less springs back, so a stray tap can't spend their money.
 //
-// amount:     "S$4.60", or null while there's no fresh price (the label then has no amount)
+// amount:     "$4.60", or null while there's no fresh price (the label then has no amount)
 // disabled:   can't pay right now (over budget, problem rows, or a quote is loading)
 // paying:     the checkout call is on its way
 // paid:       optional. Payment went through: green track, a tick and "Paid!" until the page moves on

@@ -9,7 +9,7 @@ export const MAX_QTY = 10; // the same limit the server enforces
 export const toCents = (amount) => Math.round(Number(amount) * 100);
 const cents = toCents;
 
-export const formatSgd = (amountInCents) => `S$${(amountInCents / 100).toFixed(2)}`;
+export const formatSgd = (amountInCents) => `$${(amountInCents / 100).toFixed(2)}`;
 
 // One portion of a line: the dish plus the extras picked for it
 export function unitCents(line) {

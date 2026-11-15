@@ -6,6 +6,10 @@
 
 :root { --press: 0.96; }
 
+/* the "Saved" message on the daily limit page starts with the drawn success check, like the top-up page's */
+.form-ok:has(.ux-check) { display: flex; align-items: center; gap: 10px; }
+.form-ok .ux-check { flex: none; }
+
 /* hit area: the visual stays 20px, the tappable zone is 44px (never below 24px even where two zones meet) */
 .km-qty button, .km-tray-qty button, .hk-link, .edit-link { position: relative; }
 .km-qty button::after, .km-tray-qty button::after, .hk-link::after, .edit-link::after {
@@ -24,4 +28,11 @@
   /* the extras rows are wide: they dim a touch under the finger instead */
   .km-extra { transition: filter 150ms var(--ux-out); }
   .km-extra:active { filter: brightness(0.95); }
+}
+
+/* Parent app: the glass tab bar and the kid switcher stay put while a page changes (they exist on both pages), instead of fading with it */
+.tabs { view-transition-name: parent-tabs; }
+.kid-switch { view-transition-name: parent-kids; }
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-group(parent-tabs), ::view-transition-group(parent-kids) { animation-duration: 0s; }
 }

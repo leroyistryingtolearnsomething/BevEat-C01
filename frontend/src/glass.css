@@ -245,6 +245,9 @@ dialog::backdrop { background: rgb(15 31 20 / 0.3); -webkit-backdrop-filter: blu
   .parent [data-press]:is(.btn, .back, .allergy-chip, a.m-home-link, a.wallet__btn, .hello__avatar) { transform: none; }
 }
 
+/* the account avatar's little chevron badge sits half outside the circle, so the avatar must not clip (the glow is already rounded) */
+.parent .hello__avatar.hello__avatar { overflow: visible; }
+
 /* ---- tab bar lens, matched to Telegram's iOS 26 bar (captured via iPhone Mirroring) ----
    At rest the selected capsule is a flat, slightly denser pane. While pressed/dragged it swells past the bar's edges
    (about 1.2x wide, 1.35x tall), turns clearer, gains a bright rim, and magnifies/saturates what is under it;

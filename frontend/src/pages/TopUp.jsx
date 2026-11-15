@@ -29,7 +29,7 @@ export default function TopUp() {
   const failed = topUp?.status === "failed";
 
   async function makeQr() {
-    if (!validAmount) return setError("Amount must be S$1 to S$200.");
+    if (!validAmount) return setError("Amount must be $1 to $200.");
     setError("");
     setBusy(true);
     try {
@@ -93,14 +93,14 @@ export default function TopUp() {
 
   return (
     <main className="screen parent with-tabs">
-      <PageHeader title="Top up wallet" subtitle="Money goes into your child’s KiddyEats wallet" backTo={backTo} />
+      <PageHeader title="Top up wallet" subtitle="Money goes into your child’s KiddyEats wallet" backTo={backTo} arrive={{ ".wallet": "parent-wallet" }} />
       {loadError && <p className="form-error" role="alert">{loadError}</p>}
       {!kids && !loadError && <p className="lead">Loading…</p>}
 
       {kid && (
         <div className="topup">
           <KidSwitcher kids={kids} kid={kid} onSelect={(id) => { select(id); setError(""); }} />
-          <div className="card">
+          <div className="card" style={{ viewTransitionName: "parent-wallet" }}>
             <p className="card__label">In {kid.name}’s wallet now</p>
             <p className="card__amount">{money(kid.walletBalance)}</p>
           </div>
@@ -109,15 +109,15 @@ export default function TopUp() {
           <div className="presets presets--fill" role="group" aria-label="Amount">
             {AMOUNTS.map((a) => (
               <button key={a} type="button" className="preset" aria-pressed={other === null && amount === a}
-                onClick={() => { setAmount(a); setOther(null); setError(""); }}>S${a}</button>
+                onClick={() => { setAmount(a); setOther(null); setError(""); }}>${a}</button>
             ))}
             <button type="button" className="preset" aria-pressed={other !== null} onClick={() => setOther(other ?? "")}>Other</button>
           </div>
           {other !== null && (
             <div className="field">
-              <label htmlFor="other">Amount (S$1 to S$200)</label>
+              <label htmlFor="other">Amount ($1 to $200)</label>
               <div className="input">
-                <span className="input__prefix">S$</span>
+                <span className="input__prefix">$</span>
                 <input id="other" inputMode="decimal" autoFocus placeholder="e.g. 15" value={other}
                   onChange={(e) => setOther(e.target.value.replace(/[^\d.]/g, ""))} />
               </div>

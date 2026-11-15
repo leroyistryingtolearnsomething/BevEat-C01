@@ -9,6 +9,8 @@
 .roll__d { display: inline-block; height: 1em; line-height: 1; overflow: hidden; }
 .roll__col { display: flex; flex-direction: column; align-items: center; } /* a narrow 1 sits centred in its column, so the gap is even */
 .roll__col > span { display: block; height: 1em; line-height: 1; }
+/* the $ and the . get the digits' box too (1em tall, line-height 1), or they sit a few px lower than the digits */
+.roll > span:not(.roll__d) { display: block; height: 1em; line-height: 1; }
 
 /* a drawn check starts hidden only when it is about to animate */
 .ux-check { display: block; overflow: visible; }

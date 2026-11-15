@@ -1,10 +1,11 @@
-import { Link } from "react-router-dom";
 import Icon from "./Icon.jsx";
+import TransitionLink from "./TransitionLink.jsx";
 
-export default function BackButton({ to, label = "Back" }) {
+// arrive: { selector: name } on the page this goes back to, so a hero can shrink into its card (see TransitionLink)
+export default function BackButton({ to, label = "Back", arrive }) {
   return (
-    <Link to={to} className="back" aria-label={label}>
+    <TransitionLink to={to} kind="back" arrive={arrive} className="back" aria-label={label}>
       <Icon name="chevronLeft" size={22} />
-    </Link>
+    </TransitionLink>
   );
 }

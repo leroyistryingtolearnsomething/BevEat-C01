@@ -30,9 +30,9 @@ export default function KidWallet() {
       {home && (
         <section className="hk-money">
           <p className="hk-money__title">In my wallet</p>
-          <p className="hk-money__left">S${home.money.wallet.toFixed(2)}</p>
+          <p className="hk-money__left">${home.money.wallet.toFixed(2)}</p>
           <p className="hk-money__note">
-            I can spend S${home.money.left.toFixed(2)} more today · Daily limit S${home.money.dailyLimit.toFixed(2)}
+            I can spend ${home.money.left.toFixed(2)} more today · Daily limit ${home.money.dailyLimit.toFixed(2)}
           </p>
         </section>
       )}

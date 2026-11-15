@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { listChildren } from "../api.js";
 import { clearSession, getSession } from "../session.js";
 import { refractFilter } from "../glassRefract.js";
+import { recall, remember } from "../memo.js";
 import BackButton from "./BackButton.jsx";
 import homeIcon from "../assets/figma/tab-home.svg";
 import homeOnIcon from "../assets/figma/tab-home-on.svg";
@@ -15,7 +16,7 @@ import limitOnIcon from "../assets/figma/tab-limit-on.svg";
 
 // Shared parts of the parent app: the logged-in parent's kids, the kid switcher and the bottom tabs
 
-export const money = (n) => `S$${n.toFixed(2)}`;
+export const money = (n) => `$${n.toFixed(2)}`;
 // shown on the chips; the API uses the same words in lower case ("tree nuts")
 export const ALLERGENS = ["Peanut", "Tree nuts", "Egg", "Milk", "Shellfish", "Fish", "Soy", "Wheat", "Sesame"];
 const KID_COLOURS = ["#2F6DB5", "#B04E15", "#7B4CC2", "#B33F6A"];
@@ -24,14 +25,15 @@ const KID_COLOURS = ["#2F6DB5", "#B04E15", "#7B4CC2", "#B33F6A"];
 export function useKids() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const [kids, setKids] = useState(null);
-  const [error, setError] = useState("");
   const { token } = getSession();
+  // the last list opens at once (then refreshes), so a page reached from another parent page has its kid and hero straight away
+  const [kids, setKids] = useState(() => recall(`${token}:kids`));
+  const [error, setError] = useState("");
 
   const reload = useCallback(
     () =>
       listChildren(token)
-        .then((d) => setKids(d.children))
+        .then((d) => setKids(remember(`${token}:kids`, d.children)))
         .catch((err) => {
           if (err.status !== 401) return setError(err.message);
           clearSession();
@@ -171,10 +173,10 @@ export function ParentTabs({ active, kidId }) {
 }
 
 // back button + title + optional subtitle, used at the top of each inner page
-export function PageHeader({ title, subtitle, backTo }) {
+export function PageHeader({ title, subtitle, backTo, arrive }) {
   return (
     <header className="p-header">
-      <BackButton to={backTo} />
+      <BackButton to={backTo} arrive={arrive} />
       <div>
         <h1>{title}</h1>
         {subtitle && <p className="lead">{subtitle}</p>}

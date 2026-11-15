@@ -93,11 +93,11 @@ export default function AddChild() {
               <label key={cents} className="chip chip--money">
                 <input type="radio" name="limit" checked={form.dailyLimitCents === cents}
                   onChange={() => setForm({ ...form, dailyLimitCents: cents })} />
-                <span>S${cents / 100}</span>
+                <span>${cents / 100}</span>
               </label>
             ))}
           </div>
-          <p className="field__hint">A hawker meal near school is about S$3.50.</p>
+          <p className="field__hint">A hawker meal near school is about $3.50.</p>
         </fieldset>
 
         <fieldset>
