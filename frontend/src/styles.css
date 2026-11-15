@@ -690,6 +690,13 @@ button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
 .pickup__label { color: var(--k-muted); font-weight: 700; }
 .pickup__code { font-size: 56px; font-weight: 800; letter-spacing: 8px; line-height: 1.1; }
 .pickup__small { color: var(--k-soft); font-size: 14px; }
+/* pickup code, one tile per number */
+.pickup__tiles { display: flex; justify-content: center; gap: 8px; max-width: 100%; margin: 4px 0 6px; }
+.pickup__tiles span { display: grid; place-items: center; width: 56px; flex: 0 1 auto; min-width: 0; height: 68px; border: var(--k-line); border-radius: 14px; box-shadow: var(--k-shadow); background: var(--k-sun); font-size: 40px; font-weight: 800; color: var(--k-ink); animation: tile-pop 1.6s ease-in-out infinite; }
+.pickup__tiles span:nth-child(2) { animation-delay: 0.15s; }
+.pickup__tiles span:nth-child(3) { animation-delay: 0.3s; }
+.pickup__tiles span:nth-child(4) { animation-delay: 0.45s; }
+@keyframes tile-pop { 0%, 70%, 100% { transform: translateY(0); } 35% { transform: translateY(-4px); } }
 
 /* ---------- Parent Menu: what the kid sees, with lock buttons (Figma 04) ---------- */
 .seg--3 { gap: 6px; padding: 4px; border-radius: 14px; background: var(--p-line); }

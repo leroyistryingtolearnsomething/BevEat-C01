@@ -58,7 +58,12 @@ export default function KidPickup() {
           <p className="pickup__title">Your food is ready! 🎉</p>
           <p>Go to <strong>{order.stallName}</strong> and show this code</p>
           <p className="pickup__label">Pickup code</p>
-          <p className="pickup__code">{order.pickupCode}</p>
+          {/* one box per number so the stall uncle can read it easily */}
+          <p className="pickup__tiles" aria-label={`Pickup code ${order.pickupCode}`}>
+            {String(order.pickupCode).split("").map((c, i) => (
+              <span key={i} aria-hidden="true">{c}</span>
+            ))}
+          </p>
           <p className="pickup__small">Order number {order.queueNumber}</p>
           <button type="button" className="km-big km-big--sun" onClick={received} disabled={busy}>
             {busy ? "Saving…" : "Order received"}
