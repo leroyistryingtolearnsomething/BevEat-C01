@@ -50,7 +50,15 @@ export default function KidPickup() {
         <h1 className="km-h2">My order</h1>
       </header>
       {err && <p className="km-lead" role="alert">{err}</p>}
-      {!order && !err && <p className="km-lead">Loading…</p>}
+      {!order && !err && (
+        // grey boxes while the order loads, instead of just "Loading…"
+        <section className="pickup__card" aria-busy="true" aria-label="Loading your order">
+          <span className="skel skel--title" />
+          <span className="skel skel--line" />
+          <span className="skel skel--big" />
+          <span className="skel skel--line" />
+        </section>
+      )}
       {order && order.stage !== "cancelled" && <StageSteps stage={order.stage} />}
 
       {order && order.stage === "ready" && (

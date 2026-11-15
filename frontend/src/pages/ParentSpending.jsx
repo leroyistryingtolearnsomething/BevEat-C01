@@ -5,6 +5,16 @@ import { KidSwitcher, PageHeader, ParentTabs, money, useKids } from "../componen
 const SHORT_DAY = { sun: "Sun", mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat" };
 const dateLabel = (iso) => new Date(iso + "T00:00:00").toLocaleDateString("en-SG", { day: "numeric", month: "short" });
 
+// grey placeholder rows while the report loads
+function SpendSkeleton() {
+  return (
+    <section className="card" aria-busy="true" aria-label="Loading report">
+      <span className="skel skel--title" />
+      {[1, 2, 3, 4, 5].map((n) => <span key={n} className="skel skel--line" />)}
+    </section>
+  );
+}
+
 // Parent spending report: what the kid spent each day vs that day's limit
 export default function ParentSpending() {
   const { kids, kid, select, error, token } = useKids();
@@ -30,7 +40,7 @@ export default function ParentSpending() {
     <main className="screen parent with-tabs">
       <PageHeader title="Spending report" backTo={kid ? `/parent/home?kid=${kid.id}` : "/parent/home"} />
       {(error || err) && <p className="form-error" role="alert">{error || err}</p>}
-      {!kids && !error && <p className="lead">Loading…</p>}
+      {!kids && !error && <SpendSkeleton />}
 
       {kid && (
         <>
@@ -41,7 +51,7 @@ export default function ParentSpending() {
             ))}
           </div>
 
-          {!report && !err && <p className="lead">Loading…</p>}
+          {!report && !err && <SpendSkeleton />}
           {report && (
             <>
               <dl className="card facts">
