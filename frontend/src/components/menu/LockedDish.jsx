@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import BackCircle, { useGoBack } from "./BackCircle.jsx";
 import DishCard from "./DishCard.jsx";
 import DishPhoto from "./DishPhoto.jsx";
@@ -12,7 +12,8 @@ import send from "../../assets/figma/menu/send-22.svg";
 import check22 from "../../assets/figma/menu/check-22.svg";
 
 // 05 "Oops! allergy" and 05b "Mum says not today". Same layout, different colours, badge and words.
-export default function LockedDish({ dish, alternatives, token }) {
+// pending: only the photo and name are known yet (opened from a card), so the words, alternatives and button wait for the server
+export default function LockedDish({ dish, alternatives, token, pending = false }) {
   const allergy = dish.status === "blocked_allergy";
   const backTo = `/kid/stalls/${dish.stallId}`; // only when there's no previous page to go back to
   const goBack = useGoBack(backTo);
@@ -31,8 +32,8 @@ export default function LockedDish({ dish, alternatives, token }) {
         <BackCircle to={backTo} back />
       </div>
 
-      <div className="km-badge-photo">
-        <DishPhoto src={dish.imageUrl} name={dish.name} className="km-badge-photo__img" />
+      <div className="km-badge-photo" style={{ viewTransitionName: "dish-photo" }}>
+        <DishPhoto src={dish.imageUrl} name={dish.name} className="km-badge-photo__img" eager />
         {allergy ? (
           <>
             <span className="km-badge-photo__mark km-badge-photo__mark--allergy" aria-hidden="true">!</span>
@@ -46,9 +47,9 @@ export default function LockedDish({ dish, alternatives, token }) {
         )}
       </div>
 
-      {allergy ? <AllergyWords dish={dish} /> : <ParentWords dish={dish} token={token} />}
+      {!pending && (allergy ? <AllergyWords dish={dish} /> : <ParentWords dish={dish} token={token} />)}
 
-      <section className="km-alt-box" aria-labelledby="km-alt-title">
+      {!pending && <section className="km-alt-box" aria-labelledby="km-alt-title">
         <h2 id="km-alt-title" className="km-h2">{allergy ? "Try these yummy picks instead" : "Or try these"}</h2>
         {alternatives.length > 0 ? (
           <div className="km-alt-row">
@@ -59,11 +60,11 @@ export default function LockedDish({ dish, alternatives, token }) {
         ) : (
           <p className="km-muted">No other picks here right now. Try another stall!</p>
         )}
-      </section>
+      </section>}
 
-      <footer className="km-footer">
+      {!pending && <footer className="km-footer">
         <button type="button" onClick={goBack} className="km-big km-big--white">{allergy ? "Got it!" : "Pick something else"}</button>
-      </footer>
+      </footer>}
     </main>
   );
 }
@@ -94,11 +95,21 @@ function ruleText(dish) {
   return `Mum picked “${label}”.`;
 }
 
+// The kid's optional note for Mum. Same rules as the server (parseAskMumNote): trimmed, at most
+// 100 characters, counted with [...text] so an emoji counts as 1 (the input's maxLength would
+// count it as 2, so it isn't used: the counter and the disabled button do the limiting).
+const NOTE_MAX = 100;
+const NOTE_CHIPS = ["I'm extra hungry today", "It's a special day", "Just this once please!"];
+const noteLength = (text) => [...text.trim()].length;
+
 function ParentWords({ dish, token }) {
   // null = still checking, then the request today (or none). "sending" while the tap is in flight.
   const [request, setRequest] = useState(undefined);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const [note, setNote] = useState("");
+  const noteId = useId();
+  const tooLong = noteLength(note) > NOTE_MAX;
 
   // Coming back to 05b shows "Sent to Mum!" again if the kid already asked today
   useEffect(() => {
@@ -111,7 +122,8 @@ function ParentWords({ dish, token }) {
     setSending(true);
     setError("");
     try {
-      setRequest(await askMum(token, dish.id));
+      // an empty box is sent as no note at all; the server trims and checks it again
+      setRequest(await askMum(token, dish.id, note.trim() || undefined));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -125,15 +137,57 @@ function ParentWords({ dish, token }) {
       <h1 className="km-title">Mum says not today</h1>
       <p className="km-lead">{ruleText(dish)}</p>
 
-      {sent ? (
-        <p className="km-askmum km-askmum--sent" role="status">
-          <img src={check22} width="22" height="22" alt="" /> Sent to Mum!
-        </p>
-      ) : (
-        <button type="button" className="km-askmum" onClick={onAsk} disabled={sending || request === undefined}>
-          <img src={send} width="22" height="22" alt="" /> Ask Mum
-        </button>
+      {!sent && (
+        <>
+          <div className="km-note-box">
+            <label className="km-note-label" htmlFor={`${noteId}-input`}>Add a note for Mum (optional)</label>
+            <input
+              id={`${noteId}-input`}
+              className={`km-note-input${tooLong ? " km-note-input--over" : ""}`}
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Why today?"
+              disabled={sending}
+              aria-describedby={`${noteId}-count`}
+              aria-invalid={tooLong}
+              autoComplete="off"
+            />
+            <p id={`${noteId}-count`} className={`km-note-count${tooLong ? " km-note-count--over" : ""}`} aria-live="polite">
+              {noteLength(note)}/{NOTE_MAX}
+              {tooLong && <span> · a bit too long!</span>}
+            </p>
+            <div className="km-note-chips" role="group" aria-label="Quick notes">
+              {NOTE_CHIPS.map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  className="km-note-chip"
+                  aria-pressed={note.trim() === chip}
+                  onClick={() => setNote(chip)}
+                  disabled={sending}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
       )}
+
+      {/* One button for both states, so Ask Mum can turn into "Sent to Mum!" in place (Figma: 500ms bouncy Smart Animate) */}
+      <button
+        type="button"
+        className={`km-askmum${sent ? " km-askmum--sent" : tooLong ? " km-askmum--off" : ""}`}
+        onClick={onAsk}
+        disabled={sent || sending || request === undefined || tooLong}
+      >
+        <img key={sent ? "sent" : "ask"} className="km-askmum__icon" src={sent ? check22 : send} width="22" height="22" alt="" />
+        {sent ? "Sent to Mum!" : "Ask Mum"}
+      </button>
+      <span className="sr-only" role="status">{sent ? "Sent to Mum!" : ""}</span>
+      {/* plain text: React escapes it, so whatever the kid typed is shown exactly as words */}
+      {sent && request.note && <p className="km-note-quote">“{request.note}”</p>}
 
       <p className="km-caption" aria-live="polite">
         {error ||

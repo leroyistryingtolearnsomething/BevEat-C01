@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import TransitionLink from "./TransitionLink.jsx";
 import Bao from "./Bao.jsx";
 import ComingSoon from "./ComingSoon.jsx";
 import homeIcon from "../assets/figma/kid/tab-home.svg";
@@ -27,22 +27,22 @@ export default function KidTabs({ active }) {
   return (
     <>
     <nav className="hk-tabbar" aria-label="Main">
-      <Link to="/kid/home" {...tab("home")}>
+      <TransitionLink to="/kid/home" kind="tab" {...tab("home")}>
         <span className="hk-tab__icon"><TabIcon src={homeIcon} /></span>Home
-      </Link>
+      </TransitionLink>
       <button type="button" className="hk-tab" aria-haspopup="dialog" onClick={() => setSoon(SOON.bao)}>
         <span className="hk-tab__icon"><Bao size={30} /></span>Ask Bao
       </button>
-      <Link to ="/kid/snap" className="hk-tab hk-tab--snap">
+      <TransitionLink to="/kid/snap" kind="tab" className="hk-tab hk-tab--snap">
         <span className="hk-tab__icon"><TabIcon src={cameraIcon} size={28} /></span>Snap
-      </Link>
+      </TransitionLink>
       <button type="button" className="hk-tab" aria-haspopup="dialog" aria-label="Stars, coming soon" onClick={() => setSoon(SOON.stars)}>
         <span className="hk-tab__icon"><TabIcon src={starIcon} /></span>
         Stars
       </button>
-      <Link to="/kid/wallet" {...tab("wallet")}>
+      <TransitionLink to="/kid/wallet" kind="tab" {...tab("wallet")}>
         <span className="hk-tab__icon"><TabIcon src={walletIcon} /></span>Wallet
-      </Link>
+      </TransitionLink>
     </nav>
     <ComingSoon what={soon} onClose={() => setSoon(null)} />
     </>

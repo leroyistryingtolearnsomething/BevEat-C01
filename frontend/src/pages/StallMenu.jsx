@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import TransitionLink from "../components/TransitionLink.jsx";
 import { getStallMenu, getStallWait } from "../api.js";
 import { getSession } from "../session.js";
+import { recall, remember } from "../memo.js";
 import { loadTray, trayCount, trayCents, formatSgd, moneyLeftCents, toCents } from "../tray.js";
 import BackCircle from "../components/menu/BackCircle.jsx";
 import DishCard from "../components/menu/DishCard.jsx";
@@ -22,7 +24,7 @@ export default function StallMenu() {
   const { stallId } = useParams();
   const { token } = getSession();
   const [view, setView] = useState(DEFAULT_VIEW);
-  const [menu, setMenu] = useState(null); // last menu that loaded, kept while a chip reloads
+  const [menu, setMenu] = useState(() => recall(`${token}:menu:${stallId}:${DEFAULT_VIEW}`)); // last menu that loaded, kept while a chip reloads (and from the last visit)
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [waitMinutes, setWaitMinutes] = useState(null);
@@ -33,7 +35,7 @@ export default function StallMenu() {
     setLoading(true);
     setError("");
     getStallMenu(token, stallId, view)
-      .then((data) => current && setMenu(data))
+      .then((data) => { remember(`${token}:menu:${stallId}:${view}`, data); if (current) setMenu(data); })
       .catch((err) => current && setError(err.message))
       .finally(() => current && setLoading(false));
     return () => { current = false; };
@@ -124,9 +126,9 @@ export default function StallMenu() {
       {trayCount(tray) > 0 && (
         <footer className="km-footer">
           {/* The total here is only a guide: 06 My tray asks the server for the real price */}
-          <Link to="/kid/tray" className="km-big km-big--sun">
+          <TransitionLink to="/kid/tray" className="km-big km-big--sun">
             My tray  ·  {trayCount(tray)} {trayCount(tray) === 1 ? "item" : "items"}  ·  {formatSgd(trayCents(tray))}
-          </Link>
+          </TransitionLink>
         </footer>
       )}
     </main>

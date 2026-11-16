@@ -25,6 +25,7 @@ const kids = [
 const spend = { 10: { 0: 4.2, 1: 7, 3: 2.5 }, 11: { 0: 4 }, 12: {} };
 let dayLimits = []; // { child_id, weekday, daily_limit }
 let limitHistory = []; // { child_id, changed_at, daily_limit, day_limits }
+let walletAlerts = []; // { child_id, alert_below }
 
 // ---------- fake database ----------
 
@@ -76,6 +77,19 @@ function fakeQuery(sql, params = []) {
   if (sql.includes("INSERT INTO child_day_limits")) {
     const [child_id, weekday, daily_limit] = params;
     dayLimits.push({ child_id, weekday, daily_limit: String(daily_limit) });
+    return { rows: [] };
+  }
+
+  if (sql.includes("FROM child_wallet_alerts WHERE child_id = ANY")) {
+    return { rows: walletAlerts.filter((w) => params[0].includes(w.child_id)) };
+  }
+  if (sql.includes("DELETE FROM child_wallet_alerts")) {
+    walletAlerts = walletAlerts.filter((w) => w.child_id !== params[0]);
+    return { rows: [] };
+  }
+  if (sql.includes("INSERT INTO child_wallet_alerts")) {
+    walletAlerts = walletAlerts.filter((w) => w.child_id !== params[0]);
+    walletAlerts.push({ child_id: params[0], alert_below: String(params[1]) });
     return { rows: [] };
   }
 
@@ -201,6 +215,30 @@ async function run() {
 
   res = await get("/children/alerts", kidToken);
   check(res.status === 403, "kids can't get parent alerts");
+
+  // parent picks the low wallet amount
+  res = await get("/children/11/wallet-alert", parent1);
+  check(res.status === 200 && res.body.alertBelow === null, "no alert amount picked yet");
+  res = await put("/children/11/wallet-alert", parent1, { alertBelowCents: 2500 });
+  check(res.status === 200 && res.body.alertBelow === 25, "parent picks S$25");
+  res = await get("/children/alerts", parent1);
+  const chloeLow = res.body.alerts.find((a) => a.childId === 11 && a.type === "low_wallet");
+  check(chloeLow && chloeLow.picked && chloeLow.alertBelow === 25, "Chloe's S$20 wallet is now low (under S$25)");
+
+  await put("/children/10/wallet-alert", parent1, { alertBelowCents: 200 });
+  res = await get("/children/alerts", parent1);
+  check(!typesFor(res.body.alerts, 10).includes("low_wallet"), "Ethan's S$3 is fine with a S$2 alert");
+
+  res = await put("/children/10/wallet-alert", parent1, { alertBelowCents: null });
+  res = await get("/children/alerts", parent1);
+  check(typesFor(res.body.alerts, 10).includes("low_wallet"), "null goes back to one day's limit");
+
+  res = await put("/children/10/wallet-alert", parent1, { alertBelowCents: 50 });
+  check(res.status === 400, "under S$1 is rejected");
+  res = await put("/children/10/wallet-alert", parent1, { alertBelowCents: "500" });
+  check(res.status === 400, "has to be a number of cents");
+  res = await put("/children/12/wallet-alert", parent1, { alertBelowCents: 500 });
+  check(res.status === 404, "can't set it for another parent's kid");
 
   console.log(failed ? `\n${failed} failed` : "\nall passed");
   process.exitCode = failed ? 1 : 0;

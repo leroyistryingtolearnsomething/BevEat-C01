@@ -7,7 +7,18 @@ export const isPin = (s) => /^\d{4}$/.test(s);
 
 // Puts the cursor in the first wrong field (field keys match the input ids)
 export function focusFirst(errors) {
-  document.getElementById(Object.keys(errors)[0])?.focus();
+  const field = document.getElementById(Object.keys(errors)[0]);
+  field?.focus();
+  shake(field);
+}
+
+// one 360ms shake (CSS .ux-shake); removing and re-adding the class lets it play again on the next failed submit
+export function shake(el) {
+  if (!el) return;
+  el.classList.remove("ux-shake");
+  void el.offsetWidth;
+  el.classList.add("ux-shake");
+  el.addEventListener("animationend", () => el.classList.remove("ux-shake"), { once: true });
 }
 
 // Each returns { field: message } for the fields that are wrong; empty object means OK

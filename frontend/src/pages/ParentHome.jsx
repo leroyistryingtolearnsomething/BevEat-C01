@@ -3,8 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { clearSession, getSession } from "../session.js";
 import { KidSwitcher, ParentTabs, money, useKids } from "../components/ParentShell.jsx";
 import ParentAlerts from "../components/ParentAlerts.jsx";
+import ParentOrdersCard from "../components/ParentOrdersCard.jsx";
 import { AskMumBell, AskMumPings, useAskMumPending } from "../components/AskMum.jsx";
 import Icon from "../components/Icon.jsx";
+import TransitionLink from "../components/TransitionLink.jsx";
 import walletIcon from "../assets/figma/wallet.svg";
 import warningIcon from "../assets/figma/warning.svg";
 import plusGreen from "../assets/figma/plus-green.svg";
@@ -16,6 +18,7 @@ export default function ParentHome() {
   const { name } = getSession();
   const { kids, kid, select, error, token } = useKids();
   const [section, setSection] = useState("allergies");
+  const [lowWallets, setLowWallets] = useState(null); // low_wallet alerts, null until loaded
   const askMum = useAskMumPending(token); // Ask Mum requests waiting for an answer (Leslie, CB69-26)
 
   const logOut = () => {
@@ -47,12 +50,13 @@ export default function ParentHome() {
         <>
           <KidSwitcher kids={kids} kid={kid} onSelect={select} />
           <AskMumPings requests={askMum} />
-          <ParentAlerts token={token} />
-          <Today kid={kid} />
-          <Link to={`/parent/macros?kid=${kid.id}`} className="m-home-link">
+          <ParentAlerts token={token} onLowWallets={setLowWallets} />
+          <ParentOrdersCard token={token} />
+          <Today kid={kid} lowAlert={lowWallets?.find((a) => a.childId === kid.id)} alertsLoaded={!!lowWallets} />
+          <TransitionLink to={`/parent/macros?kid=${kid.id}`} className="m-home-link">
             <span>{kid.name}'s food and nutrients</span>
             <span aria-hidden="true">›</span>
-          </Link>
+          </TransitionLink>
 
           <div className="seg" role="group" aria-label="Show">
             {[["allergies", "Allergies"], ["limit", "Daily limit"]].map(([key, label]) => (
@@ -78,7 +82,8 @@ export default function ParentHome() {
             <section>
               <div className="section-head">
                 <h2>{kid.name}'s daily limit</h2>
-                <Link to={`/parent/limit?kid=${kid.id}`} className="edit-link">Edit</Link>
+                {/* the green "food money today" card grows into the limit page's green card */}
+                <TransitionLink to={`/parent/limit?kid=${kid.id}`} scope="page" shared={{ ".today": "parent-hero" }} className="edit-link">Edit</TransitionLink>
               </div>
               <p className="lead">{kid.name} can spend up to {money(kid.dailyLimit)} a day. It resets at 12:00 am.</p>
             </section>
@@ -132,10 +137,12 @@ function AccountMenu({ name, onLogOut }) {
   );
 }
 
-function Today({ kid }) {
-  const left = Math.max(0, kid.dailyLimit - kid.spentToday);
-  const spentPct = kid.dailyLimit ? Math.min(100, (kid.spentToday / kid.dailyLimit) * 100) : 0;
-  const low = kid.walletBalance < kid.dailyLimit;
+function Today({ kid, lowAlert, alertsLoaded }) {
+  const limit = kid.todayLimit ?? kid.dailyLimit; // today's weekday limit if there is one
+  const left = Math.max(0, limit - kid.spentToday);
+  const spentPct = limit ? Math.min(100, (kid.spentToday / limit) * 100) : 0;
+  // alerts know the amount the parent picked, until they load use one day's limit
+  const low = alertsLoaded ? !!lowAlert : kid.walletBalance < kid.dailyLimit;
   const topUp = `/parent/top-up?kid=${kid.id}`;
 
   return (
@@ -145,16 +152,18 @@ function Today({ kid }) {
       <div className="today__bar" role="progressbar" aria-label="Spent today" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(spentPct)}>
         <span style={{ width: `${spentPct}%` }} />
       </div>
-      <p className="today__meta">Spent {money(kid.spentToday)} · Daily limit {money(kid.dailyLimit)}</p>
+      <p className="today__meta">Spent {money(kid.spentToday)} · {limit === kid.dailyLimit ? "Daily limit" : "Today's limit"} {money(limit)}</p>
 
       {low ? (
         <div className="wallet wallet--low">
           <img src={warningIcon} alt="" width="22" height="22" />
           <div className="wallet__text">
             <p className="wallet__strong">Wallet low: {money(kid.walletBalance)}</p>
-            <p className="wallet__small">Under tomorrow's {money(kid.dailyLimit)} limit</p>
+            <p className="wallet__small">
+              {lowAlert?.picked ? `Under the ${money(lowAlert.alertBelow)} you picked` : `Under tomorrow's ${money(kid.dailyLimit)} limit`}
+            </p>
           </div>
-          <Link to={topUp} className="wallet__btn wallet__btn--dark"><img src={plusWhite} alt="" width="16" height="16" />Top up</Link>
+          <TransitionLink to={topUp} scope="page" shared={{ ".wallet": "parent-wallet" }} className="wallet__btn wallet__btn--dark"><img src={plusWhite} alt="" width="16" height="16" />Top up</TransitionLink>
         </div>
       ) : (
         <div className="wallet">
@@ -163,7 +172,7 @@ function Today({ kid }) {
             <p className="wallet__small">In {kid.name}'s wallet</p>
             <p className="wallet__big">{money(kid.walletBalance)}</p>
           </div>
-          <Link to={topUp} className="wallet__btn"><img src={plusGreen} alt="" width="16" height="16" />Top up</Link>
+          <TransitionLink to={topUp} scope="page" shared={{ ".wallet": "parent-wallet" }} className="wallet__btn"><img src={plusGreen} alt="" width="16" height="16" />Top up</TransitionLink>
         </div>
       )}
     </section>

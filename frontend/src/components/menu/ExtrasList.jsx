@@ -11,7 +11,7 @@ export default function ExtrasList({ addOns, selectedIds, onToggle }) {
       <legend className="km-h2">Extras</legend>
       {addOns.map((a) => {
         const selected = selectedIds.includes(a.id);
-        const price = a.extraPrice > 0 ? `+S$${a.extraPrice.toFixed(2)}` : "Free";
+        const price = a.extraPrice > 0 ? `+$${a.extraPrice.toFixed(2)}` : "Free";
         return (
           <label key={a.id} className={`km-extra${selected ? " km-extra--on" : ""}${a.locked ? " km-extra--locked" : ""}`}>
             <input

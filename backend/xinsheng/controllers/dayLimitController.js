@@ -1,9 +1,9 @@
-// Per weekday limits, e.g. S$3 on Monday but S$6 on Friday (req.childId from requireOwnChild)
+// Per weekday limits, e.g. $3 on Monday but $6 on Friday (req.childId from requireOwnChild)
 const Home = require("../../gabriel/models/homeModel");
 const DayLimit = require("../models/dayLimitModel");
 const { DAYS, sgWeekdayToday, limitFor } = require("../services/moneyService");
 
-// same range as the normal daily limit (S$1 to S$50)
+// same range as the normal daily limit ($1 to $50)
 const validLimitCents = (c) => Number.isInteger(c) && c >= 100 && c <= 5000;
 
 async function dayLimitsJson(childId) {
@@ -42,7 +42,7 @@ async function setDayLimits(req, res, next) {
     const weekday = DAYS.indexOf(day);
     if (weekday === -1) return res.status(400).json({ error: `Unknown day ${day}` });
     if (cents === null) continue;
-    if (!validLimitCents(cents)) return res.status(400).json({ error: "Daily food money must be S$1 to S$50" });
+    if (!validLimitCents(cents)) return res.status(400).json({ error: "Daily food money must be $1 to $50" });
     list.push({ weekday, dailyLimit: cents / 100 });
   }
 

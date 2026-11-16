@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import TransitionLink, { DISH_MORPH } from "../TransitionLink.jsx";
 import DishPhoto from "./DishPhoto.jsx";
 import AllergyArt from "./AllergyArt.jsx";
 import { allergyNote, cardLabel } from "./dishText.js";
@@ -21,7 +21,15 @@ export default function DishCard({ dish, flat = false }) {
   const classes = ["km-card", flat && "km-card--flat", allergy && "km-card--allergy", parent && "km-card--parent"];
 
   return (
-    <Link to={`/kid/dishes/${dish.id}`} className={classes.filter(Boolean).join(" ")} aria-label={cardLabel(dish)}>
+    // the tapped photo, name and price grow into the detail page (see TransitionLink); img/name/price let that page
+    // show them before its own data loads
+    <TransitionLink
+      to={`/kid/dishes/${dish.id}`}
+      state={{ img: dish.imageUrl, name: dish.name, price: dish.price, status: dish.status, stallId: dish.stallId }}
+      shared={DISH_MORPH}
+      className={classes.filter(Boolean).join(" ")}
+      aria-label={cardLabel(dish)}
+    >
       <div className="km-card__photo">
         <DishPhoto src={dish.imageUrl} name={dish.name} className="km-card__img" />
         {locked && <div className="km-card__overlay" aria-hidden="true" />}
@@ -33,7 +41,7 @@ export default function DishCard({ dish, flat = false }) {
       <h3 className="km-card__name" title={dish.name}>{dish.name}</h3>
 
       <div className="km-card__meta">
-        <span className={`km-pill km-pill--price${muted ? " km-pill--muted" : ""}`}>S${dish.price.toFixed(2)}</span>
+        <span className={`km-pill km-pill--price${muted ? " km-pill--muted" : ""}`}>${dish.price.toFixed(2)}</span>
         <span className="km-card__spacer" />
         <img src={heart} width="14" height="14" alt="" />
         <span className="km-card__hearts">
@@ -46,7 +54,7 @@ export default function DishCard({ dish, flat = false }) {
       <div className="km-card__note">
         <CardNote dish={dish} allergy={allergy} parent={parent} />
       </div>
-    </Link>
+    </TransitionLink>
   );
 }
 

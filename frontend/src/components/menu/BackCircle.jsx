@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import TransitionLink, { backWithTransition } from "../TransitionLink.jsx";
 import chevLeft from "../../assets/figma/menu/chev-left.svg";
 
 // Go back to the page the kid came from (Home, See all, a stall...).
@@ -6,8 +7,8 @@ import chevLeft from "../../assets/figma/menu/chev-left.svg";
 // so go to `fallback` instead.
 export function useGoBack(fallback) {
   const navigate = useNavigate();
-  const { key } = useLocation();
-  return () => (key === "default" ? navigate(fallback, { replace: true }) : navigate(-1));
+  const { key, pathname } = useLocation();
+  return () => (key === "default" ? navigate(fallback, { replace: true }) : backWithTransition(navigate, pathname));
 }
 
 // Figma "Back" button: 44px white circle with the chevron icon.
@@ -22,8 +23,8 @@ export default function BackCircle({ to, back = false, label = "Back", className
       </button>
     );
   return (
-    <Link to={to} className={`km-back ${className}`} aria-label={label}>
+    <TransitionLink to={to} kind="back" className={`km-back ${className}`} aria-label={label}>
       {icon}
-    </Link>
+    </TransitionLink>
   );
 }

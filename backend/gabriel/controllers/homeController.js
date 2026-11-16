@@ -3,6 +3,8 @@ const Menu = require('../../raghav/models/menuModel');
 const { loadChildContext, buildDishCards, toDishFacts, isAllowed } = require('../../raghav/services/menuService');
 const {decideDish} = require('../../raghav/services/dishSafety');
 const FoodRuleSettings = require('../../leslie/models/foodRuleSettingsModel');
+const DayLimit = require('../../xinsheng/models/dayLimitModel'); // weekday limits (Xin Sheng)
+const { limitFor, sgWeekdayToday } = require('../../xinsheng/services/moneyService');
 
 // Mum's rules switches (Leslie, CB69-18) as chips: the page shows "No " + label
 const FOOD_RULE_CHIPS = [
@@ -54,7 +56,8 @@ async function getHome(req, res, next) {
         const pics = await topPicCards(childId, HOME_PICS);
         const safeCounts = await countSafePicks(childId, stalls);
 
-        const dailyLimit = Number(child.daily_limit);
+        // today's limit: a weekday limit if the parent set one, otherwise the normal daily limit
+        const dailyLimit = limitFor(child.daily_limit, await DayLimit.getDayLimits(childId), sgWeekdayToday());
         const spentToday = Number(spent); // Number function turns it from a text to a number
         const left = Math.max(dailyLimit - spentToday, 0); // arranging the data pulled from the 2 await funcs
         //Math.max stops left from being negative if somehow overspent (x,0) takes the left parameter

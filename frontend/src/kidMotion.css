@@ -7,15 +7,15 @@
   .kid { --k-ease-out: cubic-bezier(0.23, 1, 0.32, 1); --k-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
 
   /* --- screens: the top-level blocks rise in one after another (first 8 only, 40ms apart) --- */
-  @keyframes k-rise { from { opacity: 0; transform: translateY(12px); } }
+  @keyframes k-rise { from { opacity: 0; transform: translateY(8px); } }
   .kid:not(.od) > :not(.blob, .hk-tabbar, .km-footer, .km-undo, .od-confetti, [popover], dialog) {
-    animation: k-rise 280ms var(--k-ease-out) both; animation-delay: calc(var(--i, 0) * 40ms);
+    animation: k-rise 220ms var(--k-ease-out) both; animation-delay: calc(var(--i, 0) * 30ms);
   }
   .kid > :nth-child(2) { --i: 1; } .kid > :nth-child(3) { --i: 2; } .kid > :nth-child(4) { --i: 3; } .kid > :nth-child(5) { --i: 4; }
   .kid > :nth-child(6) { --i: 5; } .kid > :nth-child(7) { --i: 6; } .kid > :nth-child(n+8) { --i: 7; }
 
   /* --- dish grids and tray rows: each card settles in after the one before it --- */
-  .km-grid > *, .hk-pics__row > *, .km-tray-row { animation: k-rise 260ms var(--k-ease-out) both; animation-delay: calc(var(--j, 0) * 35ms); }
+  .km-grid > *, .hk-pics__row > *, .km-tray-row { animation: k-rise 220ms var(--k-ease-out) both; animation-delay: calc(var(--j, 0) * 30ms); }
   :is(.km-grid, .hk-pics__row) > :nth-child(2) { --j: 1; } :is(.km-grid, .hk-pics__row) > :nth-child(3) { --j: 2; }
   :is(.km-grid, .hk-pics__row) > :nth-child(4) { --j: 3; } :is(.km-grid, .hk-pics__row) > :nth-child(5) { --j: 4; }
   :is(.km-grid, .hk-pics__row) > :nth-child(6) { --j: 5; } :is(.km-grid, .hk-pics__row) > :nth-child(n+7) { --j: 6; }
@@ -28,11 +28,45 @@
   .kid :is(.km-big, .km-back, .km-chip, .km-tray-remove, .km-heart, .hk-tab, a.hk-stall, a.km-card, .km-qty button, .km-tray-qty button) {
     transition: transform 140ms var(--k-ease-out), filter 140ms ease-out, background-color 200ms ease-out;
   }
-  .kid :is(.km-big, .km-back, .km-chip, .km-tray-remove, .km-heart, a.hk-stall, a.km-card):active:not(:disabled) { transform: scale(0.97); }
-  .kid .hk-tab:active { transform: scale(0.93); }
+  .kid :is(.km-back, .km-chip, .km-tray-remove, .km-heart, a.km-card):active:not(:disabled) { transform: scale(var(--press, 0.96)); }
+  /* the big buttons press like the Figma "Big Button": 80ms ease-out (see kidMenu.css for the pressed look) */
+  .kid .km-big.km-big { transition: box-shadow 80ms var(--k-ease-out), padding 80ms var(--k-ease-out), background-color 200ms ease-out; }
+
+  /* Ask Mum -> "Sent to Mum!" is Figma's 500ms bouncy Smart Animate: the one button changes colour, width and shadow, and the icon pops */
+  .km-askmum {
+    transition: background-color 500ms var(--k-spring), color 500ms var(--k-spring), box-shadow 500ms var(--k-spring),
+      inline-size 500ms var(--k-spring), padding 80ms var(--k-ease-out);
+  }
+  .km-askmum--sent .km-askmum__icon { animation: ux-pop 380ms var(--k-spring) both; }
+  /* a wide card shrinking 3% is a jump, so the stall card just dims a touch under the finger */
+  .kid a.hk-stall:active { filter: brightness(0.95); }
+
+  /* --- page changes (<Link viewTransition>): the screens cross-fade quickly, and the tapped dish photo grows into the detail hero ---
+     The hero doesn't also rise in: two motions on one photo would fight. */
+  /* Timing from the BiteBuddy Figma prototype: stall -> menu and dish -> detail are Smart Animate, 450ms, "Gentle" spring.
+     Gentle (mass 1, stiffness 100, damping 15) reaches its target at ~370ms, overshoots 2.8% and settles by ~650ms,
+     so --gentle is that spring sampled over 650ms. */
+  :root { --gentle: linear(0, 0.028, 0.097, 0.191, 0.298, 0.408, 0.514, 0.612, 0.7, 0.776, 0.839, 0.891, 0.933, 0.965, 0.989, 1.006, 1.017, 1.024, 1.027, 1.028, 1.028, 1.026, 1.023, 1.02, 1.017, 1.014, 1); }
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 450ms; animation-timing-function: ease-out; }
+  ::view-transition-group(dish-photo), ::view-transition-group(dish-name), ::view-transition-group(dish-price),
+  ::view-transition-group(parent-hero), ::view-transition-group(parent-wallet) {
+    animation-duration: 650ms; animation-timing-function: var(--gentle);
+  }
+  /* tab switches are a quick dissolve (Figma: Dissolve 200ms), and the tab bar itself stays put while the screen behind it changes */
+  html[data-vt="tab"]::view-transition-old(root), html[data-vt="tab"]::view-transition-new(root) { animation-duration: 200ms; }
+  .hk-tabbar { view-transition-name: kid-tabbar; }
+  ::view-transition-group(kid-tabbar) { animation-duration: 0s; }
+  /* the morphing hero and title row must not also rise in; the rest of the page rises in just after, like Figma's body */
+  .kid.km-screen--detail > .km-hero, .kid.km-screen--detail > .km-body, .kid.km-screen--locked > .km-badge-photo { animation: none; }
+  .kid.km-screen--detail > .km-body > :not(.km-title-row) { animation: k-rise 280ms var(--k-ease-out) 150ms both; }
+  /* going Back returns to a screen the kid has already seen: it is simply there, so the shrinking photo lands on it */
+  /* (they finish instantly rather than being switched off: switching an animation off and later on again restarts it,
+     and the whole page would play its entrance again when the attribute is removed) */
+  html[data-back] .kid, html[data-back] .kid * { animation-duration: 1ms !important; animation-delay: 0s !important; }
+  .kid .hk-tab:active { transform: scale(var(--press, 0.96)); } /* never below 0.95 */
   /* the open tab's glass capsule pops in when a tab screen opens */
-  @keyframes k-capsule { from { opacity: 0; transform: scale(0.85); } }
-  .kid .hk-tab--active { animation: k-capsule 320ms var(--k-spring) 120ms both; }
+  @keyframes k-capsule { from { opacity: 0; transform: scale(0.9); } }
+  .kid .hk-tab--active { animation: k-capsule 200ms var(--k-ease-out) both; }
 
   /* --- toasts and menus come from where they live --- */
   @keyframes k-toast { from { opacity: 0; transform: translate(-50%, 14px); } }
@@ -66,4 +100,9 @@
   .od-confetti i:nth-child(9) { --dx: -30px; --dy: 100px; --rot: 240deg; } .od-confetti i:nth-child(10) { --dx: 40px; --dy: 105px; --rot: -240deg; }
   .od-confetti i:nth-child(11) { --dx: -90px; --dy: -150px; --rot: 160deg; } .od-confetti i:nth-child(12) { --dx: 90px; --dy: -150px; --rot: -160deg; }
   .od-confetti i:nth-child(13) { --dx: -140px; --dy: -20px; --rot: 60deg; } .od-confetti i:nth-child(14) { --dx: 140px; --dy: 30px; --rot: -60deg; }
+}
+
+/* the cross-fade and the photo morph are off with reduced motion (the * rule above does not reach view-transition pseudo-elements) */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }

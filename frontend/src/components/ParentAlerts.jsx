@@ -7,13 +7,16 @@ import { getParentAlerts } from "../api.js";
 const POLL_MS = 30000;
 const ICON = { near_limit: "⚠️", limit_reached: "⛔", pin_locked: "🔒" };
 
-export default function ParentAlerts({ token }) {
+export default function ParentAlerts({ token, onLowWallets }) {
   const [alerts, setAlerts] = useState([]);
 
   useEffect(() => {
     const check = () =>
       getParentAlerts(token)
-        .then((d) => setAlerts(d.alerts.filter((a) => a.type !== "low_wallet")))
+        .then((d) => {
+          setAlerts(d.alerts.filter((a) => a.type !== "low_wallet"));
+          if (onLowWallets) onLowWallets(d.alerts.filter((a) => a.type === "low_wallet")); // wallet box on parent home uses these
+        })
         .catch(() => {}); // try again next time
     check();
     const id = setInterval(check, POLL_MS);

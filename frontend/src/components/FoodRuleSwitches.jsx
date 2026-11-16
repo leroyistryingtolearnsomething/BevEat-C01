@@ -21,12 +21,15 @@ export default function FoodRuleSwitches({ token, kid }) {
 
   async function flip(key) {
     const on = !rules[key];
+    const before = rules;
+    setRules({ ...rules, [key]: on }); // the knob moves on this frame; it goes back if the server says no
     setStatus({ busy: key, msg: "", err: "" });
     try {
       setRules(await setFoodRules(token, kid.id, { [key]: on }));
       const title = RULES.find((r) => r.key === key).title;
       setStatus({ busy: "", msg: on ? `“${title}” is on for ${kid.name}.` : `“${title}” is off.`, err: "" });
     } catch (err) {
+      setRules(before);
       setStatus({ busy: "", msg: "", err: err.message });
     }
   }

@@ -67,6 +67,22 @@ async function getActiveForChild(childId) {
   return rows;
 }
 
+// same thing for a parent, all their kids (for the card on parent home)
+async function getActiveForParent(parentId) {
+  const { rows } = await pool.query(
+    `SELECT o.order_id, o.child_id, o.stall_id, o.queue_number, o.placed_at, o.ready_at, o.pickup_code,
+            s.name AS stall_name, s.avg_prep_minutes, u.display_name AS child_name
+     FROM orders o
+     JOIN stalls s ON s.stall_id = o.stall_id
+     JOIN child_profiles c ON c.child_id = o.child_id
+     JOIN users u ON u.user_id = o.child_id
+     WHERE c.parent_id = $1 AND o.collected_at IS NULL AND o.status <> 'cancelled' AND ${TODAY}
+     ORDER BY o.placed_at`,
+    [parentId]
+  );
+  return rows;
+}
+
 // stall owner's screen: waiting orders first, then ready ones
 async function getForOwner(ownerId) {
   const { rows } = await pool.query(
@@ -80,11 +96,22 @@ async function getForOwner(ownerId) {
 }
 
 // pickup code is made when the order is ready, kid shows it at the stall
-async function markReady(orderId, pickupCode) {
+// readyAt = when the countdown ended (auto ready), otherwise now
+async function markReady(orderId, pickupCode, readyAt = null) {
   const { rows } = await pool.query(
-    `UPDATE orders SET status = 'ready', ready_at = now(), pickup_code = $2
-     WHERE order_id = $1 AND ready_at IS NULL RETURNING order_id, ready_at`,
-    [orderId, pickupCode]
+    `UPDATE orders SET status = 'ready', ready_at = COALESCE($3, now()), pickup_code = $2
+     WHERE order_id = $1 AND ready_at IS NULL RETURNING order_id, ready_at, pickup_code`,
+    [orderId, pickupCode, readyAt]
+  );
+  return rows[0];
+}
+
+// kid taps "Order received" once they have the food
+async function markReceivedByKid(orderId, childId) {
+  const { rows } = await pool.query(
+    `UPDATE orders SET status = 'collected', collected_at = now()
+     WHERE order_id = $1 AND child_id = $2 AND ready_at IS NOT NULL AND collected_at IS NULL RETURNING order_id, collected_at`,
+    [orderId, childId]
   );
   return rows[0];
 }
@@ -98,4 +125,4 @@ async function markCollected(orderId) {
   return rows[0];
 }
 
-module.exports = { getOrder, countAhead, getStallQueue, getReadyForChild, getActiveForChild, getForOwner, markReady, markCollected };
+module.exports = { getOrder, countAhead, getStallQueue, getReadyForChild, getActiveForChild, getActiveForParent, getForOwner, markReady, markReceivedByKid, markCollected };

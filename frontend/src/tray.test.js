@@ -49,20 +49,20 @@ test("tray count and total", () => {
   const lines = addLine(addLine([], chickenRice(2, [egg])), { itemId: 10, price: 1.8, quantity: 1, addOns: [] });
   assert.equal(trayCount(lines), 3);
   assert.equal(trayCents(lines), 2 * 430 + 180);
-  assert.equal(formatSgd(trayCents(lines)), "S$10.40");
+  assert.equal(formatSgd(trayCents(lines)), "$10.40");
 });
 
-test("money left counts what's already in the tray (S$5.00 today, S$3.00 in tray -> S$2.00)", () => {
-  const tray = addLine([], { itemId: 6, price: 2.5, quantity: 1, addOns: [{ id: 17, extraPrice: 0.5 }] }); // S$3.00
+test("money left counts what's already in the tray ($5.00 today, $3.00 in tray -> $2.00)", () => {
+  const tray = addLine([], { itemId: 6, price: 2.5, quantity: 1, addOns: [{ id: 17, extraPrice: 0.5 }] }); // $3.00
   assert.equal(moneyLeftCents(5, tray), 200);
-  // a S$2.50 dish no longer fits, a S$2.00 one still does
+  // a $2.50 dish no longer fits, a $2.00 one still does
   assert.ok(250 > moneyLeftCents(5, tray));
   assert.ok(!(200 > moneyLeftCents(5, tray)));
 });
 
 test("money left is never negative, and an empty tray leaves all of it", () => {
   assert.equal(moneyLeftCents(5, []), 500);
-  const big = addLine([], { itemId: 25, price: 5.5, quantity: 2, addOns: [] }); // S$11.00
+  const big = addLine([], { itemId: 25, price: 5.5, quantity: 2, addOns: [] }); // $11.00
   assert.equal(moneyLeftCents(5, big), 0);
 });
 

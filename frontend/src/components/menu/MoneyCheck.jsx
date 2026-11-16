@@ -1,4 +1,5 @@
 import { formatSgd, toCents } from "../../tray.js";
+import Roll from "../Roll.jsx";
 import coin20 from "../../assets/figma/menu/coin-20.svg";
 
 // Kids Figma 06 "Money check" card. Every number comes from the server's quote
@@ -16,16 +17,16 @@ export default function MoneyCheck({ quote, busy }) {
       <dl className="km-money__rows">
         <div className="km-money__row">
           <dt>My food money</dt>
-          <dd className="km-money__value">{sgd(money.canSpend)}</dd>
+          <dd className="km-money__value"><Roll text={sgd(money.canSpend)} /></dd>
         </div>
         <div className="km-money__row">
           <dt>This tray</dt>
-          <dd className="km-money__value km-money__value--minus">− {sgd(total)}</dd>
+          <dd className="km-money__value km-money__value--minus"><>− <Roll text={sgd(total)} /></></dd>
         </div>
         <div className="km-money__line" aria-hidden="true" />
         <div className="km-money__row km-money__row--total">
           <dt>Left after</dt>
-          <dd className={`km-money__left${canPay ? "" : " km-money__left--short"}`}>{sgd(money.leftAfter)}</dd>
+          <dd className={`km-money__left${canPay ? "" : " km-money__left--short"}`}><Roll text={sgd(money.leftAfter)} /></dd>
         </div>
       </dl>
     </section>

@@ -1,6 +1,8 @@
 // Parent's kids: list them, add one, change allergies and daily food money
 const bcrypt = require("bcrypt");
 const ChildAccount = require("../models/childAccountModel");
+const DayLimit = require("../../xinsheng/models/dayLimitModel"); // weekday limits (Xin Sheng)
+const { limitFor, sgWeekdayToday } = require("../../xinsheng/services/moneyService");
 
 const SALT_ROUNDS = 10;
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/i;
@@ -20,6 +22,8 @@ const allergenNames = (keys) => [...new Set(keys)].map((a) => ALLERGENS[a]);
 async function listChildren(req, res, next) {
   try {
     const rows = await ChildAccount.listForParent(req.user.id);
+    const dayRows = rows.length ? await DayLimit.getDayLimitsForChildren(rows.map((c) => c.child_id)) : [];
+    const today = sgWeekdayToday();
     res.json({
       children: rows.map((c) => ({
         id: c.child_id,
@@ -27,6 +31,8 @@ async function listChildren(req, res, next) {
         avatarEmoji: c.avatar_emoji,
         walletBalance: Number(c.wallet_balance),
         dailyLimit: Number(c.daily_limit),
+        // today's limit, different from dailyLimit when a weekday limit is set for today
+        todayLimit: limitFor(c.daily_limit, dayRows.filter((r) => r.child_id === c.child_id), today),
         spentToday: Number(c.spent_today),
         allergens: c.allergens.map((name) => KEY_FOR[name]).filter(Boolean),
       })),
@@ -44,7 +50,7 @@ async function addChild(req, res, next) {
   if (typeof username !== "string" || !USERNAME_RE.test(username))
     return res.status(400).json({ error: "Login name must be 3 to 20 letters, numbers or _" });
   if (typeof pin !== "string" || !PIN_RE.test(pin)) return res.status(400).json({ error: "PIN must be 4 numbers" });
-  if (!validLimitCents(dailyLimitCents)) return res.status(400).json({ error: "Daily food money must be S$1 to S$50" });
+  if (!validLimitCents(dailyLimitCents)) return res.status(400).json({ error: "Daily food money must be $1 to $50" });
   if (!validAllergens(allergens)) return res.status(400).json({ error: "Unknown allergy" });
 
   try {
@@ -77,7 +83,7 @@ async function setAllergies(req, res, next) {
 // PUT /api/children/:childId/daily-limit  body { dailyLimitCents }
 async function setDailyLimit(req, res, next) {
   const { dailyLimitCents } = req.body || {};
-  if (!validLimitCents(dailyLimitCents)) return res.status(400).json({ error: "Daily food money must be S$1 to S$50" });
+  if (!validLimitCents(dailyLimitCents)) return res.status(400).json({ error: "Daily food money must be $1 to $50" });
   try {
     await ChildAccount.setDailyLimit(req.childId, dailyLimitCents / 100);
     res.json({ dailyLimit: dailyLimitCents / 100 });

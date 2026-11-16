@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { getOrderQueue } from "../api.js";
 import { getSession } from "../session.js";
+import { timeLeft, useNow } from "../components/OrderStatus.jsx";
 import baoCheer from "../assets/figma/kid/order-bao.svg";
-import phoneIcon from "../assets/figma/kid/icon-phone.svg";
+import clockIcon from "../assets/figma/clock.svg";
 import "./kidMenu.css";
 
-const sgd = (n) => `S$${Number(n).toFixed(2)}`;
+const sgd = (n) => `$${Number(n).toFixed(2)}`;
 const CONFETTI = ["#ff6b5b", "#5bc0eb", "#2ec4a0", "#ff9ec4", "#715bff", "#ffffff"];
 
 // Kids Figma "08 Yay! Order sent". Shown right after the wallet payment. It reads the checkout reply that Tray
@@ -14,15 +15,17 @@ const CONFETTI = ["#ff6b5b", "#5bc0eb", "#2ec4a0", "#ff9ec4", "#715bff", "#fffff
 export default function KidOrderDone() {
   const { state } = useLocation();
   const done = state?.done;
-  const [wait, setWait] = useState(null); // minutes until the slowest stall is ready, from the queue endpoint
+  const [wait, setWait] = useState(null); // { readyBy, waitMinutes } of the slowest stall, from the queue endpoint
+  const now = useNow();
 
   useEffect(() => {
     if (!done?.orders?.length) return;
     const { token } = getSession();
     let current = true;
-    Promise.all(done.orders.map((o) => getOrderQueue(token, o.orderId).then((q) => q.waitMinutes, () => null))).then((mins) => {
-      const known = mins.filter((m) => Number.isFinite(m));
-      if (current && known.length) setWait(Math.max(...known));
+    Promise.all(done.orders.map((o) => getOrderQueue(token, o.orderId).catch(() => null))).then((qs) => {
+      // countdown to the order that will be ready last
+      const known = qs.filter((q) => q && q.readyBy).sort((a, b) => new Date(b.readyBy) - new Date(a.readyBy));
+      if (current && known.length) setWait(known[0]);
     });
     return () => { current = false; };
   }, [done]);
@@ -32,6 +35,10 @@ export default function KidOrderDone() {
   const { orders, total, walletBalance } = done;
   const many = orders.length > 1;
   const first = orders[0];
+  const left = wait && timeLeft(wait.readyBy, now);
+  // bar fills up as the countdown goes down
+  const msLeft = wait ? Math.max(0, new Date(wait.readyBy).getTime() - now) : 0;
+  const filled = wait ? Math.min(100, Math.max(5, 100 - (msLeft / (wait.waitMinutes * 60000)) * 100)) : 5;
 
   return (
     <main className="screen kid km-screen od">
@@ -55,13 +62,13 @@ export default function KidOrderDone() {
 
       <section className="od-status" aria-label="Order status">
         <div className="od-status__row">
-          <span className="od-status__icon"><img src={phoneIcon} width="20" height="20" alt="" /></span>
+          <span className="od-status__icon"><img src={clockIcon} width="20" height="20" alt="" /></span>
           <div>
-            <p className="od-status__title">{wait != null ? `Ready in about ${wait} min` : "We'll ping you when it's ready"}</p>
-            <p className="od-status__sub">Your phone will buzz. Keep it close!</p>
+            <p className="od-status__title">{!wait ? "We'll ping you when it's ready" : left ? `Ready in about ${left}` : "Almost ready!"}</p>
+            <p className="od-status__sub">A green banner pops up when it's ready.</p>
           </div>
         </div>
-        <div className="od-progress" aria-hidden="true"><i /></div>
+        <div className="od-progress" aria-hidden="true"><i style={{ width: `${filled}%` }} /></div>
       </section>
 
       <div className="od-actions">

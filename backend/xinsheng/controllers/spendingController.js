@@ -4,12 +4,13 @@ const ChildAccount = require("../../leroy/models/childAccountModel"); // Leroy's
 const DayLimit = require("../models/dayLimitModel");
 const Spending = require("../models/spendingModel");
 const User = require("../models/userModel");
+const WalletAlert = require("../models/walletAlertModel");
 const { DAYS, sgWeekdayToday, weekdayOf, limitFor, limitOnDay, round2 } = require("../services/moneyService");
 
 const PERIOD_DAYS = { week: 7, month: 30 };
 const NEAR_LIMIT = 0.8; // warn at 80% of the day's limit
 
-const money = (n) => `S$${n.toFixed(2)}`;
+const money = (n) => `$${n.toFixed(2)}`;
 
 // GET /api/children/:childId/spending?period=week|month  (req.childId from requireOwnChild)
 async function getSpendingReport(req, res, next) {
@@ -56,6 +57,7 @@ async function getAlerts(req, res, next) {
     const ids = kids.map((k) => k.child_id);
     const dayRows = await DayLimit.getDayLimitsForChildren(ids);
     const locked = await User.getLockedChildIds(ids);
+    const walletAlerts = await WalletAlert.getForChildren(ids);
     const today = sgWeekdayToday();
 
     const alerts = [];
@@ -64,12 +66,21 @@ async function getAlerts(req, res, next) {
       const limit = limitFor(k.daily_limit, dayRows.filter((r) => r.child_id === k.child_id), today);
       const spent = Number(k.spent_today);
       const wallet = Number(k.wallet_balance);
-      const add = (type, message) => alerts.push({ childId: k.child_id, name, type, message });
+      const add = (type, message, extra) => alerts.push({ childId: k.child_id, name, type, message, ...extra });
+      // amount the parent picked, otherwise one day's limit
+      const picked = walletAlerts.find((w) => w.child_id === k.child_id);
+      const alertBelow = picked ? Number(picked.alert_below) : limit;
 
       if (locked.includes(k.child_id))
         add("pin_locked", `${name} typed the wrong PIN 5 times. Reset the PIN to unlock it.`);
-      if (wallet < limit)
-        add("low_wallet", `${name}'s wallet has ${money(wallet)}, less than one day's food money (${money(limit)}).`);
+      if (wallet < alertBelow)
+        add(
+          "low_wallet",
+          picked
+            ? `${name}'s wallet has ${money(wallet)}, under the ${money(alertBelow)} you picked.`
+            : `${name}'s wallet has ${money(wallet)}, less than one day's food money (${money(limit)}).`,
+          { alertBelow, picked: !!picked }
+        );
       if (limit > 0 && spent >= limit)
         add("limit_reached", `${name} has used all of today's ${money(limit)}.`);
       else if (limit > 0 && spent >= limit * NEAR_LIMIT)
@@ -81,4 +92,28 @@ async function getAlerts(req, res, next) {
   }
 }
 
-module.exports = { getSpendingReport, getAlerts };
+// GET /api/children/:childId/wallet-alert  -> { alertBelow } (null = one day's limit)
+async function getWalletAlert(req, res, next) {
+  try {
+    const [row] = await WalletAlert.getForChildren([req.childId]);
+    res.json({ alertBelow: row ? Number(row.alert_below) : null });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// PUT /api/children/:childId/wallet-alert  body { alertBelowCents }  (null = back to one day's limit)
+async function setWalletAlert(req, res, next) {
+  const { alertBelowCents } = req.body || {};
+  const ok = alertBelowCents === null || (Number.isInteger(alertBelowCents) && alertBelowCents >= 100 && alertBelowCents <= 10000);
+  if (!ok) return res.status(400).json({ error: "Alert amount must be $1 to $100" });
+  try {
+    const amount = alertBelowCents === null ? null : alertBelowCents / 100;
+    await WalletAlert.setAlert(req.childId, amount);
+    res.json({ alertBelow: amount });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getSpendingReport, getAlerts, getWalletAlert, setWalletAlert };

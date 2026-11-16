@@ -60,3 +60,10 @@ SELECT c.child_id, c.daily_limit,
        COALESCE((SELECT jsonb_object_agg(d.weekday, d.daily_limit) FROM public.child_day_limits d
                   WHERE d.child_id = c.child_id), '{}')
   FROM public.child_profiles c;
+
+-- added 12 Nov: parent picks when the low wallet alert shows (no row = below one day's limit)
+CREATE TABLE public.child_wallet_alerts (
+  child_id    integer PRIMARY KEY REFERENCES public.child_profiles(child_id) ON DELETE CASCADE,
+  alert_below numeric(6,2) NOT NULL CHECK (alert_below BETWEEN 1 AND 100)
+);
+ALTER TABLE public.child_wallet_alerts ENABLE ROW LEVEL SECURITY;

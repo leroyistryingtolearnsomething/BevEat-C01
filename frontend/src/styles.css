@@ -120,7 +120,7 @@ button { cursor: pointer; }
 .btn--text { min-height: 44px; background: none; color: var(--p-green); }
 
 .foot { margin-top: 24px; text-align: center; font-size: 14px; color: var(--p-muted); }
-.foot a { display: inline-block; padding: 12px 4px; }
+.foot a { display: inline-block; padding: 14px 6px; } /* 44px tall (was 42) */
 
 fieldset { margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px; }
 legend { padding: 0; margin-bottom: 8px; }
@@ -313,7 +313,7 @@ legend { padding: 0; margin-bottom: 8px; }
 .card__lead { font-size: 13px; line-height: 1.4; color: var(--p-muted); }
 .card__hint { font-size: 12px; color: var(--p-muted); }
 .card__label { font-size: 13px; color: var(--p-muted); }
-.card__amount { font-size: 28px; font-weight: 700; }
+.card__amount { font-family: "Nunito", system-ui, sans-serif; font-size: 28px; font-weight: 800; } /* the top-up amounts match the limit amount */
 .card__amount--green { font-size: 24px; color: var(--p-green); }
 .card--mint { background: var(--p-mint); border-color: transparent; }
 
@@ -323,6 +323,7 @@ legend { padding: 0; margin-bottom: 8px; }
   font-size: 14px; font-weight: 700; color: var(--p-ink);
 }
 .allergy-chip[aria-pressed="true"] { background: var(--p-danger); border-color: var(--p-danger); color: #fff; }
+.allergy-chip__icon { font-size: 18px; line-height: 1; }
 
 dialog { color: var(--p-ink); }
 dialog::backdrop { background: rgb(15 31 20 / 0.45); }
@@ -332,7 +333,7 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
 .confirm p { font-size: 15px; line-height: 1.35; color: var(--p-muted); }
 
 .limit-hero { padding: 20px 16px; border-radius: 16px; background: var(--p-green); color: #fff; text-align: center; font-size: 15px; }
-.limit-hero__amount { font-size: 46px; font-weight: 700; line-height: 1.2; }
+.limit-hero__amount { font-family: "Nunito", system-ui, sans-serif; font-size: 46px; font-weight: 800; line-height: 1.2; } /* Nunito's digits stand upright; Quicksand's lean */
 .limit-hero__small { font-size: 13px; }
 .limit-slider {
   -webkit-appearance: none; appearance: none; width: 100%; height: 6px; margin: 14px 0 4px; border-radius: 3px;
@@ -460,8 +461,9 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
 .hk-meter__fill {
   height: 100%; min-width: 15px; /* a tiny dot still shows when almost nothing is left */
   background: var(--hk-mint); border-radius: 9px;
-  transition: width 0.4s ease;
 }
+
+.hk-link::after { content: ""; position: absolute; inset: -14px -8px; } /* hit area, not visible */
 
 /* ---------- Mum's rules ---------- */
 .hk-rules { display: flex; flex-direction: column; gap: 10px; }
@@ -477,7 +479,7 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
 
 /* ---------- Section headings with a link on the right ---------- */
 .hk-row-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.hk-link { font-family: "Fredoka", system-ui, sans-serif; font-size: 14px; font-weight: 500; color: var(--hk-link); text-decoration: none; }
+.hk-link { position: relative; font-family: "Fredoka", system-ui, sans-serif; font-size: 14px; font-weight: 500; color: var(--hk-link); text-decoration: none; }
 
 /* ---------- Today's yummiest pics ---------- */
 .hk-pics { display: flex; flex-direction: column; gap: 12px; }
@@ -498,7 +500,7 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
 }
 /* pic and stall cards are <Link>s (<a> tags): drop the link underline and blue text, add a press effect */
 a.hk-stall { color: inherit; text-decoration: none; transition: transform .12s; }
-a.hk-stall:active { transform: scale(.97); }
+a.hk-stall:active { filter: brightness(.95); }
 .hk-stall__img {
   flex: none; width: 64px; height: 64px; object-fit: cover;
   border: 2px solid var(--k-ink); border-radius: 16px;
@@ -670,6 +672,48 @@ button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
 .spend-day--over .spend-day__amt { color: var(--p-danger); }
 .spend-day__amt { font-weight: 700; white-space: nowrap; }
 .spend-day__amt small { color: var(--p-muted); font-weight: 400; }
+/* limit line on each bar (xinsheng) */
+.spend-day__bar { position: relative; }
+.spend-day__limit { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -3px; border-radius: 2px; background: var(--p-ink); }
+.spend-key { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; color: var(--p-muted); }
+.spend-key .spend-day__limit { position: static; display: inline-block; height: 12px; margin: 0; }
+.spend-empty { align-items: center; text-align: center; padding-block: 24px; }
+.spend-empty > span { font-size: 36px; }
+/* spending report filter */
+.spend-filter__dates { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.spend-filter__dates label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 700; color: var(--p-muted); }
+.spend-filter__dates input { min-width: 0; min-height: 44px; padding: 0 10px; border: 1.5px solid var(--p-border); border-radius: 12px; background: #fff; font: inherit; font-size: 15px; color: var(--p-ink); }
+.spend-filter__note { font-size: 12px; color: var(--p-muted); }
+.spend-filter__row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
+.spend-filter__label { font-size: 13px; font-weight: 700; color: var(--p-muted); }
+.spend-filter__quick { display: flex; gap: 6px; }
+.spend-filter__quick button { min-height: 32px; padding: 0 12px; border: 1.5px solid var(--p-green); border-radius: 16px; background: #fff; font: inherit; font-size: 13px; font-weight: 700; color: var(--p-green); }
+.spend-filter__quick button[aria-pressed="true"] { background: var(--p-green); color: #fff; }
+.spend-filter__days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+/* day buttons: green + tick when shown, grey dashed + crossed out when hidden */
+.day-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 0; min-height: 46px; padding: 0; border: 1.5px dashed var(--p-border); border-radius: 12px; background: transparent; font: inherit; font-size: 12px; font-weight: 700; color: var(--p-muted); text-decoration: line-through; transition: background 150ms ease-out, color 150ms ease-out, border-color 150ms ease-out, transform 120ms ease-out; }
+.day-pill:active { transform: scale(0.94); }
+.day-pill__tick { font-size: 11px; line-height: 1; opacity: 0; transform: scale(0.5); transition: opacity 150ms, transform 150ms; }
+.day-pill[aria-pressed="true"] { border: 1.5px solid var(--p-green); background: var(--p-green); color: #fff; text-decoration: none; }
+.day-pill[aria-pressed="true"] .day-pill__tick { opacity: 1; transform: scale(1); }
+.spend-count { margin-left: 6px; font-size: 13px; font-weight: 700; color: var(--p-muted); }
+.spend-days--fade { animation: spend-fade 220ms ease-out; }
+@keyframes spend-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* grey loading placeholders that shimmer */
+.skel { display: block; width: 100%; height: 14px; border-radius: 8px; background: linear-gradient(90deg, #e6ebe3 25%, #f4f7f1 50%, #e6ebe3 75%); background-size: 200% 100%; animation: skel-shine 1.2s linear infinite; }
+.skel--title { width: 50%; height: 20px; }
+.skel--line { width: 85%; }
+.skel--big { width: 70%; height: 56px; border-radius: 14px; }
+@keyframes skel-shine { from { background-position: 200% 0; } to { background-position: 0 0; } }
+
+/* reset PIN boxes: red until both match, then green (.parent so the glass look doesnt win) */
+.pin-boxes { display: flex; flex-direction: column; gap: 12px; }
+.parent .pin-boxes--bad .input, .parent .pin-boxes--bad .input:focus-within { border-color: var(--p-danger); }
+.parent .pin-boxes--bad .input:focus-within { box-shadow: 0 0 0 3px rgb(168 50 31 / 0.25); }
+.parent .pin-boxes--ok .input, .parent .pin-boxes--ok .input:focus-within { border-color: var(--p-green); background: var(--p-mint); }
+.pin-boxes__hint { font-size: 13px; font-weight: 700; color: var(--p-danger); }
+.pin-boxes--ok .pin-boxes__hint { color: var(--p-green); }
 
 .day-limits { display: flex; flex-direction: column; gap: 8px; }
 .day-limit { display: grid; grid-template-columns: 1fr 130px; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; }
@@ -681,6 +725,13 @@ button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
 .pickup__label { color: var(--k-muted); font-weight: 700; }
 .pickup__code { font-size: 56px; font-weight: 800; letter-spacing: 8px; line-height: 1.1; }
 .pickup__small { color: var(--k-soft); font-size: 14px; }
+/* pickup code, one tile per number */
+.pickup__tiles { display: flex; justify-content: center; gap: 8px; max-width: 100%; margin: 4px 0 6px; }
+.pickup__tiles span { display: grid; place-items: center; width: 56px; flex: 0 1 auto; min-width: 0; height: 68px; border: var(--k-line); border-radius: 14px; box-shadow: var(--k-shadow); background: var(--k-sun); font-size: 40px; font-weight: 800; color: var(--k-ink); animation: tile-pop 1.6s ease-in-out infinite; }
+.pickup__tiles span:nth-child(2) { animation-delay: 0.15s; }
+.pickup__tiles span:nth-child(3) { animation-delay: 0.3s; }
+.pickup__tiles span:nth-child(4) { animation-delay: 0.45s; }
+@keyframes tile-pop { 0%, 70%, 100% { transform: translateY(0); } 35% { transform: translateY(-4px); } }
 
 /* ---------- Parent Menu: what the kid sees, with lock buttons (Figma 04) ---------- */
 .seg--3 { gap: 6px; padding: 4px; border-radius: 14px; background: var(--p-line); }
@@ -797,6 +848,7 @@ button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
   flex: none; position: relative; width: 50px; height: 30px; padding: 0; border: 0; border-radius: 999px;
   background: var(--p-line); transition: background 0.15s;
 }
+.switch::after { content: ""; position: absolute; inset: -7px -4px; } /* 58x44 hit area */
 .switch[aria-checked="true"] { background: var(--p-green); }
 .switch__knob {
   position: absolute; top: 4px; left: 4px; width: 22px; height: 22px; border-radius: 50%; background: #fff;
@@ -892,7 +944,7 @@ button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
 
 /* heart button: same look as the stall menu's heart (Raghav's icons) */
 .dp-heart {
-  flex: none; display: flex; align-items: center; gap: 4px; min-height: 36px; padding: 4px 10px 4px 8px;
+  flex: none; display: flex; align-items: center; gap: 4px; min-height: 44px; padding: 4px 12px 4px 10px;
   border-radius: 999px; background: #fff; border: 2px solid var(--k-ink); box-shadow: 0 2px 0 var(--k-ink);
   color: var(--k-ink); font-family: "Fredoka", system-ui, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer;
   transition: transform .1s;
@@ -944,3 +996,50 @@ a.km-hero__pics { color: var(--k-ink); text-decoration: none; }
 .my-orders__num { font-family: "Fredoka", system-ui, sans-serif; font-size: 22px; font-weight: 700; }
 .my-orders__text { flex: 1; display: flex; flex-direction: column; }
 .my-orders__text small { font-size: 13px; color: var(--k-soft); }
+.my-orders__empty { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border: 2px dashed var(--k-soft); border-radius: 20px; color: var(--k-muted); font-size: 15px; font-weight: 600; }
+.my-orders__empty span { font-size: 22px; }
+
+/* ---------- Kids' orders card on parent home (Xin Sheng) ---------- */
+.p-orders { display: flex; flex-direction: column; gap: 8px; }
+.p-order { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--p-blue-tint); color: var(--p-blue-ink); font-size: 14px; line-height: 1.4; }
+.p-order p { flex: 1; }
+.p-order--ready { background: var(--p-mint); color: var(--p-green-dark); }
+
+/* a failed heart: a small message over the page, the pics stay where they are */
+.dp-toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 5;
+  width: max-content; max-width: calc(100% - 40px); margin: 0; padding: 12px 18px; border-radius: 18px; text-align: center;
+  background: var(--k-ink); color: #fff; font-size: 14px; line-height: 1.35;
+}
+
+/* ---------- Order steps on the kid's order page (Xin Sheng) ---------- */
+.stage-steps { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 0; margin: 0; }
+.stage-steps li { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; text-align: center; color: var(--k-soft); }
+.stage-steps span {
+  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+  border: var(--k-line); background: #fff; color: var(--k-ink); font-size: 14px;
+}
+.stage-steps__done span { background: #2ec4a0; color: #fff; }
+.stage-steps__now { color: var(--k-ink); }
+.stage-steps__now span { background: var(--k-sun); }
+
+/* ---------- Order ready banner (Xin Sheng) ---------- */
+/* sits above the kid tab bar, same mint as a ready order card but a bit darker */
+.ready-ping {
+  position: fixed; left: 16px; right: 16px; bottom: calc(104px + env(safe-area-inset-bottom)); z-index: 50;
+  display: flex; flex-direction: column; gap: 8px; max-width: 480px; margin: 0 auto;
+  font-family: "Nunito", system-ui, sans-serif; color: var(--k-ink);
+}
+.ready-ping__row {
+  display: flex; align-items: center; gap: 8px; padding: 10px 8px 10px 14px;
+  background: #b9ecd2; border: var(--k-line); border-radius: 20px; box-shadow: var(--k-shadow);
+}
+.ready-ping__link { flex: 1; display: flex; flex-direction: column; gap: 2px; color: inherit; text-decoration: none; }
+.ready-ping__title { font-family: "Fredoka", system-ui, sans-serif; font-size: 17px; font-weight: 600; }
+.ready-ping__text { font-size: 14px; font-weight: 700; }
+.ready-ping__text b { font-family: "Fredoka", system-ui, sans-serif; font-size: 17px; letter-spacing: 2px; }
+.ready-ping__close {
+  flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%;
+  background: transparent; color: var(--k-ink); font-size: 28px; line-height: 1; cursor: pointer;
+}
+.ready-ping__close:hover, .ready-ping__close:focus-visible { background: rgb(31 32 65 / 0.08); }
