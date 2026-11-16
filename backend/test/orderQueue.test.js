@@ -168,7 +168,8 @@ async function run() {
   check(res.body.queueNumber === 103 && res.body.ready === false, "shows queue number, not ready yet");
   check(res.body.stage === "received", "orders still ahead = order received");
   const readyBy = new Date(res.body.readyBy).getTime();
-  check(Math.abs(readyBy - (t(2).getTime() + 12 * 60000)) < 1000, "readyBy = placed time + wait, for the countdown");
+  // use order 3's real placed_at, calling t(2) again here gives a later time if the server was slow to start
+  check(Math.abs(readyBy - (orders[2].placed_at.getTime() + 12 * 60000)) < 1000,"readyBy = placed time + wait, for the countdown");
 
   res = await get("/orders/1/queue", otherKid);
   check(res.body.ahead === 0 && res.body.stage === "cooking", "first in line = cooking");
@@ -304,7 +305,7 @@ async function run() {
   res = await get("/me/ready-orders", kid);
   const auto = res.body.orders.find((o) => o.orderId === 6);
   check(auto && /^\d{4}$/.test(auto.pickupCode), "countdown ended (5 min prep, placed 6.5 min ago) so it's ready with a code");
-  check(Math.abs(new Date(orders[5].ready_at) - (t(-10).getTime() + 5 * 60000)) < 1000, "ready time = when the countdown ended");
+  check(Math.abs(new Date(orders[5].ready_at) - (orders[5].placed_at.getTime() + 5 * 60000)) < 1000, "ready time = when the countdown ended");
 
   res = await put("/orders/2/received", otherKid);
   check(res.status === 409, "can't say received before it's ready");
