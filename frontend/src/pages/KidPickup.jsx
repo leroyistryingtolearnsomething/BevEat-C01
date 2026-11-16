@@ -50,7 +50,15 @@ export default function KidPickup() {
         <h1 className="km-h2">My order</h1>
       </header>
       {err && <p className="km-lead" role="alert">{err}</p>}
-      {!order && !err && <p className="km-lead">Loading…</p>}
+      {!order && !err && (
+        // grey boxes while the order loads, instead of just "Loading…"
+        <section className="pickup__card" aria-busy="true" aria-label="Loading your order">
+          <span className="skel skel--title" />
+          <span className="skel skel--line" />
+          <span className="skel skel--big" />
+          <span className="skel skel--line" />
+        </section>
+      )}
       {order && order.stage !== "cancelled" && <StageSteps stage={order.stage} />}
 
       {order && order.stage === "ready" && (
@@ -58,7 +66,12 @@ export default function KidPickup() {
           <p className="pickup__title">Your food is ready! 🎉</p>
           <p>Go to <strong>{order.stallName}</strong> and show this code</p>
           <p className="pickup__label">Pickup code</p>
-          <p className="pickup__code">{order.pickupCode}</p>
+          {/* one box per number so the stall uncle can read it easily */}
+          <p className="pickup__tiles" aria-label={`Pickup code ${order.pickupCode}`}>
+            {String(order.pickupCode).split("").map((c, i) => (
+              <span key={i} aria-hidden="true">{c}</span>
+            ))}
+          </p>
           <p className="pickup__small">Order number {order.queueNumber}</p>
           <button type="button" className="km-big km-big--sun" onClick={received} disabled={busy}>
             {busy ? "Saving…" : "Order received"}

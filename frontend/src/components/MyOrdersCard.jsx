@@ -8,7 +8,7 @@ import { statusLine, useNow } from "./OrderStatus.jsx";
 const POLL_MS = 10000;
 
 export default function MyOrdersCard() {
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState(null); // null = not loaded yet
   const now = useNow();
 
   useEffect(() => {
@@ -19,7 +19,16 @@ export default function MyOrdersCard() {
     return () => clearInterval(id);
   }, []);
 
-  if (orders.length === 0) return null;
+  if (!orders) return null; // don't flash the empty message before it loads
+  if (orders.length === 0) {
+    // no orders today, show a small hint instead of hiding the card
+    return (
+      <section className="my-orders">
+        <h2>My orders</h2>
+        <p className="my-orders__empty"><span aria-hidden="true">🍽️</span> No orders yet today. Go pick something yummy!</p>
+      </section>
+    );
+  }
 
   return (
     <section className="my-orders">
