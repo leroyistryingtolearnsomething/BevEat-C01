@@ -103,7 +103,7 @@ export default function Home() {
           className ="hk-centre"
           aria-label="Hawker centre"
           value={centreId}
-          onChange={(e) => setCentre(remember`${token}: centre`,Number(e.target.value))}>
+          onChange={(e) => setCentre(remember(`${token}:centre`,Number(e.target.value)))}>
             {centres.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option> //displays the options of the dropdown, displaying centre id
               // and hawker centre name
