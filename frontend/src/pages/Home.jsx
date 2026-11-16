@@ -14,11 +14,12 @@ export default function Home() {
   const { token } = getSession();             // the logged-in kid's token
   const [home, setHome] = useState(() => recall(`${token}:home`)); // the data: last visit's copy, then the fresh one
   const [error, setError] = useState("");     // an error message, if it fails
+  const [centre, setCentre] = useState(()=> recall(`${token}:centre`)); //the picked hawker centre id, null = let the backend pick the first
     const navigate = useNavigate();
 
   // runs once when the page opens: ask the backend for the data
   useEffect(() => {
-    getHome(token)
+    getHome(token, centre)
       .then((data) => setHome(remember(`${token}:home`, data))) // success: save the data, page redraws
             .catch((err) => {
         if (err.status === 401) {          // login expired or invalid
@@ -28,13 +29,13 @@ export default function Home() {
           setError(err.message);
         }
       }); // failure: save the error, page redraws
-  }, []);
+  }, [centre]); // [centre]: run when the page opens, and again every time centre changes.
 
   if (error) return <main className="screen kid"><p>{error}</p></main>;
   if (!home) return <main className="screen kid"><p>Loading…</p></main>;
 
-  const { child, money, rules, pics, stalls } = home;   // pull the two parts out of the data, to save typing
-
+  const { child, money, rules, pics, stalls, centres, centre: centreId } = home;   // pull the two parts out of the data, to save typing
+// centre: centreId takes home.centre and calls it centreId
   return (
     <main className="screen kid home-kid">
             <div className="blob blob--sun" aria-hidden="true" />
@@ -98,6 +99,16 @@ export default function Home() {
           <h2>Stalls near you</h2>
           <span className="hk-link">📍 Map</span>
         </div>
+        <select
+          className ="hk-centre"
+          aria-label="Hawker centre"
+          value={centreId}
+          onChange={(e) => setCentre(remember`${token}: centre`,Number(e.target.value))}>
+            {centres.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option> //displays the options of the dropdown, displaying centre id
+              // and hawker centre name
+            ))}
+          </select>
         {stalls.map((s) => (
           <TransitionLink key={s.stall} to={`/kid/stalls/${s.stall}`} className="hk-stall">
             {s.image ? (

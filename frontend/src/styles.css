@@ -501,6 +501,15 @@ dialog::backdrop { background: rgb(15 31 20 / 0.45); }
 /* pic and stall cards are <Link>s (<a> tags): drop the link underline and blue text, add a press effect */
 a.hk-stall { color: inherit; text-decoration: none; transition: transform .12s; }
 a.hk-stall:active { filter: brightness(.95); }
+/* hawker centre dropdown above the stall cards */
+.hk-centre {
+  width: 100%; padding: 10px 40px 10px 14px;
+  font-family: "Fredoka", system-ui, sans-serif; font-size: 15px; font-weight: 500; color: var(--k-ink);
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' fill='none' stroke='%231f2041' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 14px center;
+  border: var(--k-line); border-radius: 16px; box-shadow: var(--k-shadow);
+  appearance: none; -webkit-appearance: none; cursor: pointer;
+}
+.hk-centre:focus-visible { outline: 3px solid var(--hk-link); outline-offset: 2px; }
 .hk-stall__img {
   flex: none; width: 64px; height: 64px; object-fit: cover;
   border: 2px solid var(--k-ink); border-radius: 16px;

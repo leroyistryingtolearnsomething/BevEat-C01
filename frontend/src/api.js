@@ -66,7 +66,8 @@ export const createTopUp = (token, childId, amount) =>
 
 export const getTopUp = (token, topUpId) => request(`/top-ups/${topUpId}`, { token });
 
-export const getHome = (token) => request("/home", { token });
+// centre: a hawker centre id, or leave it out for the first centre
+export const getHome = (token, centre) => request(centre ? `/home?centre=${centre}` : "/home", { token });
 
 // "See all" for Today's yummiest pics: { pics: [stall-menu dish cards] }
 export const getAllPics = (token) => request("/home/pics", { token });
