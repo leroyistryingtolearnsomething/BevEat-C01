@@ -158,6 +158,13 @@ function DishDetail({ dish, canSpend, token, pending = false }) {
           </span>
         </div>
         {tooMuch && <span className="km-note km-note--muted km-note--self">Not enough money today</span>}
+        {/* Mum's changes from her Ask Mum yes (Leslie, CB69-74): the stall gets these on the ticket */}
+        {dish.askMumChanges && dish.askMumChanges.length > 0 && (
+          <p className="km-mumasks">
+            <span className="km-mumasks__label">Mum said yes! She asked for:</span>
+            {dish.askMumChanges.map((c) => <span key={c} className="km-note km-note--mint">{c}</span>)}
+          </p>
+        )}
 
         {!pending && <section className="km-safe" aria-label="Safe for you">
           <p className="km-safe__head">

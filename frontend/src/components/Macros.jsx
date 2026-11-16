@@ -131,6 +131,10 @@ export function OrderRow({ order }) {
       <div className="m-order__main">
         <p className="m-order__name">{order.name}</p>
         <p className="m-order__sub">{order.stall} · {timeLabel(order.placedAt)}</p>
+        {/* Ask Mum changes that went on the stall's ticket (CB69-74) */}
+        {order.ticketNotes && order.ticketNotes.length > 0 && (
+          <p className="m-order__sub m-order__ticket">{order.ticketNotes.join(" · ")}</p>
+        )}
         <p className="m-order__macros">
           <span className="m-kcal">{kcal(order.kcal)} kcal</span>
           C {grams(order.carbs)} · P {grams(order.protein)} · F {grams(order.fat)}

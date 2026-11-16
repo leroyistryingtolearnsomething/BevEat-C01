@@ -13,11 +13,11 @@ async function loadChildContext(childId) {
   const money = await Teammates.getMoneyToday(childId);
   if (!money) return null;
 
-  const [allergies, customBlocks, foodRules, approvedItemIds] = await Promise.all([
+  const [allergies, customBlocks, foodRules, approved] = await Promise.all([
     Teammates.getChildAllergies(childId),
     Teammates.getCustomAllergyBlocks(childId),
     Teammates.getFoodRules(childId),
-    AskMum.approvedItemIdsToday(childId),
+    AskMum.approvedToday(childId),
   ]);
 
   return {
@@ -25,7 +25,9 @@ async function loadChildContext(childId) {
     allergies,
     customBlocks,
     foodRules,
-    approvedItemIds: new Set(approvedItemIds),
+    approvedItemIds: new Set(approved.map((a) => a.itemId)),
+    // Mum's changes on today's yeses, by dish: { changes, parentNote } (Leslie, CB69-74)
+    approvedChanges: new Map(approved.map((a) => [a.itemId, { changes: a.changes, parentNote: a.parentNote }])),
     // what the child can pay right now: today's limit left, but never more than the wallet holds
     canSpend: round2(Math.min(money.leftToday, money.walletBalance)),
   };

@@ -70,6 +70,7 @@
 .m-order__main { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .m-order__name { font-size: 15px; font-weight: 700; }
 .m-order__sub { font-size: 12px; color: var(--p-muted); }
+.m-order__ticket { color: var(--p-green); font-weight: 600; }
 .m-order__macros { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: var(--p-muted); }
 .m-kcal { padding: 1px 8px; border-radius: 999px; background: var(--p-mint); color: var(--p-green-dark); font-weight: 700; }
 .m-order__side { flex: none; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; gap: 6px; }

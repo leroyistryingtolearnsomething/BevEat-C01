@@ -54,9 +54,10 @@ async function placeOrders(childId, tray) {
       for (const line of stall.lines) {
         const m = line.macros;
         const item = await client.query(
-          `INSERT INTO order_items (order_id, item_id, item_name, quantity, unit_price, calories, protein_g, carbs_g, fat_g)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING order_item_id`,
-          [orderId, line.itemId, line.name, line.quantity, line.unitPrice, m.calories, m.proteinG, m.carbsG, m.fatG]
+          `INSERT INTO order_items (order_id, item_id, item_name, quantity, unit_price, calories, protein_g, carbs_g, fat_g, comment)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING order_item_id`,
+          // comment = Mum's Ask Mum changes for the stall, e.g. "Mum asks: Less salt" (Leslie, CB69-74)
+          [orderId, line.itemId, line.name, line.quantity, line.unitPrice, m.calories, m.proteinG, m.carbsG, m.fatG, line.ticketNote || null]
         );
         for (const a of line.addOns) {
           await client.query(

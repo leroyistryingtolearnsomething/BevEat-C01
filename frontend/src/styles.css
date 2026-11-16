@@ -813,6 +813,17 @@ button.hk-avatar { padding: 0; color: inherit; cursor: pointer; }
   width: 100%; min-height: 46px; padding: 0 14px; border: 1px solid var(--p-line); border-radius: 12px; background: #fff; font-size: 14px;
 }
 .am-note input:focus-visible { outline: 3px solid var(--p-green); outline-offset: 1px; }
+/* Mum's changes (CB69-74, Figma 09e/09f/09g) */
+.am-changes h3 { font-size: 16px; }
+.am-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.am-chip {
+  min-height: 36px; padding: 0 14px; border: 1px solid var(--p-line); border-radius: 999px; background: #fff;
+  color: var(--p-ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.am-chip--on { border: 1.5px solid var(--p-green); background: var(--p-mint); color: var(--p-green); }
+.am-chip:focus-visible { outline: 3px solid var(--p-green); outline-offset: 1px; }
+.am-kidtags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.am-kidtag { padding: 3px 10px; border: 1.5px solid #201e3c; border-radius: 999px; background: #fff; color: #201e3c; font-size: 12px; font-weight: 700; }
 .am-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .am-actions .btn { min-width: 0; padding-inline: 8px; }
 .am-done { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 12px; text-align: center; }

@@ -50,7 +50,12 @@ function decideDish(dish, child) {
   }
 
   const verdict = { status: STATUS.ALLOWED, overBudget: isOverBudget(dish.price, child.canSpend) };
-  if (rule) verdict.askMumApproved = true; // Mum said "yes, just this once"
+  if (rule) {
+    verdict.askMumApproved = true; // Mum said "yes, just this once"
+    // ...and maybe "Less salt" etc. (Leslie, CB69-74): the kid sees these as tags
+    const mum = child.approvedChanges && child.approvedChanges.get(dish.itemId);
+    if (mum && mum.changes.length > 0) verdict.askMumChanges = mum.changes;
+  }
   return verdict;
 }
 

@@ -50,4 +50,16 @@ async function approvedItemIdsToday(childId) {
   return rows.map((r) => r.item_id);
 }
 
-module.exports = { findToday, create, approvedItemIdsToday };
+// Same as above, plus what Mum asked for when she said yes (Leslie, CB69-74, migration 008):
+// [{ itemId, changes: ["Less salt"], parentNote }]. Used by the menu (kid sees tags) and checkout
+// (the changes go on the order ticket).
+async function approvedToday(childId) {
+  const { rows } = await pool.query(
+    `SELECT item_id, changes, parent_note FROM ask_mum_requests
+      WHERE child_id = $1 AND status = 'approved' AND request_date = ${SG_TODAY}`,
+    [childId]
+  );
+  return rows.map((r) => ({ itemId: r.item_id, changes: r.changes || [], parentNote: r.parent_note || null }));
+}
+
+module.exports = { findToday, create, approvedItemIdsToday, approvedToday };

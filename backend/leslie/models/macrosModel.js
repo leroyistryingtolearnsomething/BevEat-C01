@@ -48,7 +48,8 @@ async function getOrders(childId, fromDate, toDate) {
               'fat', oi.fat_g,
               'fibre', COALESCE(to_jsonb(oi) ->> 'fibre_g', to_jsonb(m) ->> 'fibre_g'),
               'sugar', COALESCE(to_jsonb(oi) ->> 'sugar_g', to_jsonb(m) ->> 'sugar_g'),
-              'checked', COALESCE(m.allergens_checked, false)
+              'checked', COALESCE(m.allergens_checked, false),
+              'comment', oi.comment
             ) ORDER BY oi.order_item_id) AS items,
             ARRAY(
               SELECT a.name FROM order_items x

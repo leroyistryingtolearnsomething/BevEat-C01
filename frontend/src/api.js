@@ -193,8 +193,9 @@ export const getAskMumPending = (token) => request("/ask-mum/pending", { token }
 export const getAskMumRequest = (token, requestId) => request(`/ask-mum/requests/${encodeURIComponent(requestId)}`, { token });
 
 // decision = "approved" | "denied", note is optional (max 200 characters)
-export const decideAskMum = (token, requestId, decision, note) =>
-  request(`/ask-mum/${encodeURIComponent(requestId)}`, { method: "PUT", body: { decision, note }, token });
+// changes = Mum's chips on a yes, e.g. ["Less salt", "No chilli"] (CB69-74)
+export const decideAskMum = (token, requestId, decision, note, changes) =>
+  request(`/ask-mum/${encodeURIComponent(requestId)}`, { method: "PUT", body: { decision, note, changes }, token });
 
 // -> { noFried, noSugary }
 export const getFoodRules = (token, childId) => request(`/children/${childId}/food-rules`, { token });

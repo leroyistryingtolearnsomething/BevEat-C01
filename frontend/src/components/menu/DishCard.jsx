@@ -69,7 +69,12 @@ function CardNote({ dish, allergy, parent }) {
     );
   }
   if (dish.overBudget) return <span className="km-note km-note--muted" title="Not enough money today">Not enough money today</span>;
-  if (dish.askMumApproved) return <span className="km-note km-note--mint">Mum said yes!</span>;
+  if (dish.askMumApproved) {
+    // Mum's changes (CB69-74) show in full on the dish page; the card just hints at them
+    const changes = dish.askMumChanges || [];
+    const text = changes.length ? `Mum said yes · ${changes.join(", ")}` : "Mum said yes!";
+    return <span className="km-note km-note--mint" title={text}>{text}</span>;
+  }
   if (dish.badges.length > 0) {
     return (
       <span className="km-note km-note--mint">
