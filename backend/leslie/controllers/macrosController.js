@@ -35,6 +35,8 @@ function orderOut(o) {
     ...t,
     allergyClashes: o.clashes, // the kid's allergens in this order (empty = safe)
     allergensChecked: o.items.every((it) => it.checked), // a person has checked every dish's allergen list
+    // what was on the stall's ticket, e.g. "Mum asks: Less salt" (Ask Mum changes, CB69-74)
+    ticketNotes: o.items.map((it) => it.comment).filter(Boolean),
   };
 }
 

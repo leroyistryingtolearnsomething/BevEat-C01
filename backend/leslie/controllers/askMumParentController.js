@@ -4,6 +4,7 @@
 const AskMumParent = require("../models/askMumParentModel");
 const Teammates = require("../../raghav/services/teammates");
 const { findParentRule } = require("../../raghav/services/dishSafety");
+const { kindFor, optionsFor, cleanChanges } = require("../services/askMumChanges");
 
 const DECISIONS = ["approved", "denied"];
 const STATUSES = ["pending", "approved", "denied"];
@@ -40,6 +41,10 @@ async function toJson(rows) {
       status: r.status,
       childNote: r.child_note ?? null,
       parentNote: r.parent_note,
+      // Mum's changes (CB69-74): what she picked, and the chips to offer for this food or drink
+      changes: r.changes || [],
+      kind: kindFor(r.stall_cuisine),
+      changeOptions: optionsFor(kindFor(r.stall_cuisine)),
       createdAt: r.created_at,
       decidedAt: r.decided_at,
     }))
@@ -80,10 +85,10 @@ async function getOne(req, res, next) {
   }
 }
 
-// PUT /api/ask-mum/:requestId  body { decision: "approved" | "denied", note? }
+// PUT /api/ask-mum/:requestId  body { decision: "approved" | "denied", note?, changes?: ["Less salt", ...] }
 async function decide(req, res, next) {
   const requestId = Number(req.params.requestId);
-  const { decision, note } = req.body || {};
+  const { decision, note, changes } = req.body || {};
   if (!Number.isInteger(requestId) || requestId <= 0) return res.status(400).json({ error: "Invalid request id" });
   if (!DECISIONS.includes(decision)) return res.status(400).json({ error: "decision must be approved or denied" });
   if (note !== undefined && note !== null && typeof note !== "string")
@@ -93,13 +98,23 @@ async function decide(req, res, next) {
     return res.status(400).json({ error: `Keep the note under ${MAX_NOTE} characters` });
 
   try {
-    const updated = await AskMumParent.decide(requestId, req.user.id, decision, cleanNote);
+    // The chips depend on the dish (food or drink), so look the request up first
+    let cleanList = [];
+    if (decision === "approved" && changes !== undefined && changes !== null) {
+      const row = await AskMumParent.findForParent(requestId, req.user.id);
+      if (!row) return res.status(404).json({ error: "Request not found" });
+      const checked = cleanChanges(changes, kindFor(row.stall_cuisine));
+      if (checked.error) return res.status(400).json({ error: checked.error });
+      cleanList = checked.changes;
+    }
+    const updated = await AskMumParent.decide(requestId, req.user.id, decision, cleanNote, cleanList);
     if (updated) {
       return res.json({
         requestId: updated.request_id,
         status: updated.status,
         decidedAt: updated.decided_at,
         parentNote: updated.parent_note,
+        changes: updated.changes || [],
       });
     }
     // Nothing changed: tell "not yours / doesn't exist" (404, same answer so ids can't be probed)

@@ -173,6 +173,9 @@ button.km-back { padding: 0; cursor: pointer; } /* the "go back" version is a bu
   font-family: var(--km-font); font-size: 12px; font-weight: 500; line-height: normal; white-space: nowrap;
 }
 .km-note--mint { background: var(--km-mint-soft); }
+/* Mum's Ask Mum changes on the dish page (CB69-74) */
+.km-mumasks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 0; }
+.km-mumasks__label { width: 100%; font-family: var(--km-font); font-size: 13px; font-weight: 600; }
 .km-note--parent { background: var(--km-parent-soft); }
 .km-note--allergy { background: var(--km-allergy-soft); }
 .km-note--muted { background: var(--km-muted-pill); }

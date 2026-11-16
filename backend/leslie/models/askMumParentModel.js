@@ -8,8 +8,8 @@ const TODAY = `(now() AT TIME ZONE 'Asia/Singapore')::date`;
 // which of Mum's rules it breaks
 const REQUEST_SELECT = `
   SELECT r.request_id, r.child_id, u.display_name AS child_name, r.item_id, m.name AS dish_name,
-         s.name AS stall_name, m.price, m.default_image_url, m.is_fried, m.is_low_sugar, m.sugar_g,
-         r.status, r.child_note, r.parent_note, r.created_at, r.decided_at
+         s.name AS stall_name, s.cuisine AS stall_cuisine, m.price, m.default_image_url, m.is_fried, m.is_low_sugar, m.sugar_g,
+         r.status, r.child_note, r.parent_note, r.changes, r.created_at, r.decided_at
     FROM ask_mum_requests r
     JOIN child_profiles c ON c.child_id = r.child_id
     JOIN users u ON u.user_id = r.child_id
@@ -49,19 +49,20 @@ async function findForParent(requestId, parentId) {
 
 // Approve or deny. Only changes a row that is still pending, from today, and belongs to this
 // parent's kid (docs/api-contracts.md §2f), so a double tap or an old screen can't flip a decision.
+// changes = Mum's chips ("Less salt"), only kept on a yes (migration 008, CB69-74).
 // Returns the updated row, or undefined if nothing matched.
-async function decide(requestId, parentId, status, note) {
+async function decide(requestId, parentId, status, note, changes = []) {
   const { rows } = await pool.query(
     `UPDATE ask_mum_requests r
-        SET status = $2, decided_at = now(), parent_note = $4
+        SET status = $2, decided_at = now(), parent_note = $4, changes = $5
        FROM child_profiles c
       WHERE r.request_id = $1
         AND r.status = 'pending'
         AND r.request_date = ${TODAY}
         AND c.child_id = r.child_id
         AND c.parent_id = $3
-  RETURNING r.request_id, r.status, r.decided_at, r.parent_note`,
-    [requestId, status, parentId, note]
+  RETURNING r.request_id, r.status, r.decided_at, r.parent_note, r.changes`,
+    [requestId, status, parentId, note, status === "approved" ? changes : []]
   );
   return rows[0];
 }

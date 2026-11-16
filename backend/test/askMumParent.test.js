@@ -1,4 +1,4 @@
-// Ask Mum parent side (CB69-26) + Mum's rules switches (CB69-18), Leslie.
+// Ask Mum parent side (CB69-26) + Mum's rules switches (CB69-18) + Mum's changes (CB69-74), Leslie.
 // Runs the REAL Ask Mum model (raghav/models/askMumModel.js) against Raghav's fake menu database,
 // with ask_mum_requests, child_food_rules and child_profiles added on top. No Supabase needed.
 // Run with: npm test   (or just this file: node test/askMumParent.test.js)
@@ -36,12 +36,14 @@ const askRow = (r) => {
   return {
     ...r, child_name: db.children[r.child_id].name, dish_name: d.name, price: d.price, default_image_url: null,
     stall_name: db.stalls.find((s) => s.stall_id === d.stall_id).name,
+    stall_cuisine: db.stalls.find((s) => s.stall_id === d.stall_id).cuisine,
+    changes: r.changes || [],
     is_fried: FRIED.has(r.item_id), is_low_sugar: false, sugar_g: String(SUGAR[r.item_id] ?? 4),
   };
 };
 
 fakePool.query = async (sql, params = []) => {
-  const [p1, p2, p3, p4] = params;
+  const [p1, p2, p3, p4, p5] = params;
   if (sql.includes("FROM child_profiles WHERE child_id = $1 AND parent_id = $2"))
     return { rows: parentOf[p1] === p2 ? [{ child_id: p1 }] : [] };
 
@@ -70,7 +72,7 @@ fakePool.query = async (sql, params = []) => {
   }
   // match on flat SQL: the kid model splits its queries over several lines
   const flat = sql.replace(/\s+/g, " ");
-  if (flat.includes("SELECT item_id FROM ask_mum_requests"))
+  if (flat.includes("SELECT item_id FROM ask_mum_requests") || flat.includes("SELECT item_id, changes, parent_note FROM ask_mum_requests"))
     return { rows: asks.filter((a) => a.child_id === p1 && a.status === "approved" && a.request_date === today()) };
   if (flat.includes("FROM ask_mum_requests WHERE child_id = $1 AND item_id = $2"))
     return { rows: asks.filter((a) => a.child_id === p1 && a.item_id === p2 && a.request_date === today()).map((a) => ({ ...a })) };
@@ -79,7 +81,7 @@ fakePool.query = async (sql, params = []) => {
   if (sql.includes("UPDATE ask_mum_requests r")) {
     const a = asks.find((x) => x.request_id === p1 && x.status === "pending" && x.request_date === today() && parentOf[x.child_id] === p3);
     if (!a) return { rows: [] };
-    Object.assign(a, { status: p2, parent_note: p4, decided_at: new Date() });
+    Object.assign(a, { status: p2, parent_note: p4, changes: p5 || [], decided_at: new Date() });
     return { rows: [{ ...a }] };
   }
   if (sql.includes("FROM ask_mum_requests r")) {
@@ -201,6 +203,34 @@ async function run() {
   check((await mumA.get("/api/ask-mum/pending")).body.requests.length === 0, "yesterday's request drops off the bell");
   res = await mumA.put(`/api/ask-mum/${res.body.requestId}`, { decision: "approved" });
   check(res.status === 409 && /expired/.test(res.body.error), "approving yesterday's request is 409 (expired)");
+
+  // ----- Mum's changes (CB69-74, Figma 09e/09f/09g) -----
+  res = await aisyah.post("/api/ask-mum", { itemId: 17 }); // Kids Ayam Goreng Set, fried
+  const foodId = res.body.requestId;
+  let one = (await mumA.get(`/api/ask-mum/requests/${foodId}`)).body.request;
+  check(one.kind === "food" && one.changeOptions.length === 6 && one.changeOptions[0] === "Less salt", "a dish offers the 6 food chips");
+  check(Array.isArray(one.changes) && one.changes.length === 0, "no changes before Mum answers");
+  check((await mumA.put(`/api/ask-mum/${foodId}`, { decision: "approved", changes: ["No ice"] })).status === 400, "a drink chip on a dish is 400");
+  check((await mumA.put(`/api/ask-mum/${foodId}`, { decision: "approved", changes: "Less salt" })).status === 400, "changes must be a list");
+  check((await mumB.put(`/api/ask-mum/${foodId}`, { decision: "approved", changes: ["Less salt"] })).status === 404, "another parent can't add changes (404)");
+  res = await mumA.put(`/api/ask-mum/${foodId}`, { decision: "approved", changes: ["Less oil", "Less salt", "Less salt"] });
+  check(res.status === 200 && res.body.changes.join() === "Less salt,Less oil", "Yes, with changes: saved in chip order, no repeats");
+  one = (await mumA.get(`/api/ask-mum/requests/${foodId}`)).body.request;
+  check(one.changes.join() === "Less salt,Less oil", "09g summary reads the changes back");
+  d = await dishOn(2, 17);
+  check(d.status === "allowed" && d.askMumChanges.join() === "Less salt,Less oil", "kid's menu card carries the changes as tags");
+  check((await dishOn(2, 5)).askMumChanges === undefined, "a plain yes (Mee Goreng) has no change tags");
+  res = await aisyah.post("/api/tray/quote", { items: [{ itemId: 17, quantity: 1, addOnIds: [] }] });
+  const qLine = res.body.stalls && res.body.stalls[0].lines[0];
+  check(res.status === 200 && qLine.ticketNote === "Mum asks: Less salt, Less oil", "the tray line carries the ticket text for the stall");
+
+  res = await aisyah.post("/api/ask-mum", { itemId: 23 }); // Barley Water, 20 g sugar
+  const drinkId = res.body.requestId;
+  one = (await mumA.get(`/api/ask-mum/requests/${drinkId}`)).body.request;
+  check(one.kind === "drink" && one.changeOptions.includes("No sugar (kosong)"), "a drink offers the drink chips");
+  check((await mumA.put(`/api/ask-mum/${drinkId}`, { decision: "approved", changes: ["Less ice", "No ice"] })).status === 400, "Less ice + No ice together is 400");
+  res = await mumA.put(`/api/ask-mum/${drinkId}`, { decision: "denied", changes: ["Less ice"] });
+  check(res.status === 200 && res.body.status === "denied" && res.body.changes.length === 0, "a no ignores any changes");
 
   // ----- allergies can't be asked for -----
   rules.push({ child_id: ETHAN, rule_type: "no_fried", item_id: null });

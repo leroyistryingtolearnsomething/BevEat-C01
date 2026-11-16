@@ -18,6 +18,9 @@ function toLineJson(line, photo) {
     unitPrice: line.unitPrice,
     addOns: line.addOns,
     lineTotal: line.lineTotal,
+    // Mum's Ask Mum changes for this dish (Leslie, CB69-74): tags on the tray, text on the ticket
+    mumChanges: line.mumChanges || [],
+    ticketNote: line.ticketNote || null,
   };
 }
 

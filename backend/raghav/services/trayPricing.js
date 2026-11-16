@@ -7,6 +7,7 @@
 const Menu = require("../models/menuModel");
 const { loadChildContext, toDishFacts } = require("./menuService");
 const { STATUS, decideDish, decideAddOn, toCents } = require("./dishSafety");
+const { ticketText } = require("../../leslie/services/askMumChanges");
 
 // Why a tray line can't be ordered any more. The tray screen shows a different message for each.
 const REASON = Object.freeze({
@@ -83,7 +84,10 @@ function findLineProblems(item, lineIndex, dish, addOns, child) {
 
 // One priced line. unitPrice is the dish alone (what order_items.unit_price stores); each add-on
 // has its own extraPrice (order_item_add_ons.extra_price); lineTotal = (dish + add-ons) x quantity.
-function priceLine(item, lineIndex, dish, addOns) {
+function priceLine(item, lineIndex, dish, addOns, child) {
+  // Mum's changes from today's Ask Mum yes (Leslie, CB69-74). They go on the order ticket
+  // (order_items.comment) so the stall cooks it her way.
+  const mum = (child && child.approvedChanges && child.approvedChanges.get(dish.item_id)) || null;
   const chosen = item.addOnIds.map((id) => addOns.get(id));
   const unitCents = toCents(dish.price) + chosen.reduce((sum, a) => sum + toCents(a.extra_price), 0);
   return {
@@ -100,6 +104,8 @@ function priceLine(item, lineIndex, dish, addOns) {
     macros: chosen.map(macrosOf).reduce(addMacros, macrosOf(dish)),
     lineCents: unitCents * item.quantity,
     lineTotal: fromCents(unitCents * item.quantity),
+    mumChanges: mum ? mum.changes : [],
+    ticketNote: mum ? ticketText(mum.changes) : null,
   };
 }
 
@@ -143,7 +149,7 @@ async function priceTray(childId, items) {
   const problems = items.flatMap((item, i) => findLineProblems(item, i, dishes.get(item.itemId), addOns, child));
   if (problems.length > 0) throw new TrayError("locked", "Some food in your tray can't be ordered now", problems);
 
-  const lines = items.map((item, i) => priceLine(item, i, dishes.get(item.itemId), addOns));
+  const lines = items.map((item, i) => priceLine(item, i, dishes.get(item.itemId), addOns, child));
   const totalCents = lines.reduce((sum, l) => sum + l.lineCents, 0);
   const canSpendCents = toCents(child.canSpend);
 
