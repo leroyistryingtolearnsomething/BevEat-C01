@@ -201,6 +201,8 @@ function fakeQuery(sql, params = []) {
     return { rows: c ? [{ display_name: c.name, avatar_emoji: "🙂", wallet_balance: c.wallet, daily_limit: c.limit }] : [] };
   }
   if (sql.includes("SUM(total_amount)")) return { rows: [{ spent: children[p1] ? children[p1].spent : "0" }] };
+  // Home's hawker centre dropdown (Gabriel's getCentres)
+  if (sql.includes("FROM hawker_centres")) return { rows: [{ centre_id: 1, name: "Greenwood Food Centre", near_school: "Greenwood Primary School" }] };
 
   // Xin Sheng's dayLimitModel (moneyService reads it for weekday limits)
   if (sql.includes("FROM child_day_limits WHERE child_id = $1")) {

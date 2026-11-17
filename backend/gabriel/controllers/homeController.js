@@ -52,7 +52,11 @@ async function getHome(req, res, next) {
 
         const spent = await homeModel.getSpentToday(childId); // same as the home.getchildsummary
         const rules = await homeModel.getRules(childId);
-        const stalls = await homeModel.getStalls(childId);
+        const centres = await homeModel.getCentres();
+        let centreId = Number(req.query.centre);// checks the hawker centre id, returning it as a Number
+        if (!centres.some((c) => c.centre_id === centreId)) centreId = centres[0].centre_id; // uses first hawker centre if not real id
+
+        const stalls = await homeModel.getStalls(childId, centreId);
         const pics = await topPicCards(childId, HOME_PICS);
         const safeCounts = await countSafePicks(childId, stalls);
 
@@ -86,6 +90,12 @@ async function getHome(req, res, next) {
             rules: ruleChips,
             stalls: stallCards,
             pics, // same shape as a stall menu dish card
+            centres: centres.map((c) => ({
+                id: c.centre_id,
+                name: c.name,
+                nearSchool:c.near_school,
+            })),
+             centre: centreId,
         });
     
     }

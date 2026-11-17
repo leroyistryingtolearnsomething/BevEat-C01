@@ -73,7 +73,7 @@ async function getTopPics(childId, limit = 10) {
     return rows;    
 }
 
-async function getStalls(childId) {
+async function getStalls(childId, centreId) {
     const {rows} = await pool.query
     (
         `SELECT s.stall_id, s.name, s.unit_no, s.cover_image_url,
@@ -85,10 +85,22 @@ async function getStalls(childId) {
             LEFT JOIN menu_items m ON m.stall_id = s.stall_id AND
             m.is_available
             WHERE s.is_open
+            AND s.centre_id = $2
             GROUP BY s.stall_id
-            ORDER BY s.name`, [childId]
+            ORDER BY s.name`, [childId, centreId]
     );
 
     return rows;
 }
-module.exports = {getChildSummary, getSpentToday, getRules, getStalls, getTopPics};
+
+async function getCentres() {
+    const {rows} = await pool.query(
+        `SELECT centre_id, name, near_school
+        FROM hawker_centres
+        ORDER BY centre_id`
+    );
+    return rows;
+}
+
+
+module.exports = {getChildSummary, getSpentToday, getRules, getStalls, getTopPics, getCentres};
