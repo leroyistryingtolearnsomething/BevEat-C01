@@ -18,19 +18,23 @@ Start the backend too (`cd backend && npm run dev`), or every log in will say so
 | Path | Page | Who |
 |---|---|---|
 | `/` | Welcome: "Who's using KiddyEats?" | logged out |
-| `/parent/login` | Parent log in | logged out |
-| `/parent/signup` | Create parent account | logged out |
-| `/parent/add-child` | Add your child (name, login name, 4-number code, colour, daily money, allergies) | parent |
+| `/parent/login`, `/parent/signup` | Parent log in and sign up | logged out |
 | `/kid/login` | Kid log in (nickname + code keypad) | logged out |
-| `/parent/home`, `/kid/home` | Placeholder home pages with Log out | parent / kid |
+| `/parent/home` | Home: food money left, wallet, alerts, Ask Mum requests | parent |
+| `/parent/add-child` | Add a child (name, login name, 4-digit code, daily limit, allergies) | parent |
+| `/parent/allergies` | Allergies, custom allergies and Mum's rules | parent |
+| `/parent/limit` | Daily spending limit and different limits on some days | parent |
+| `/parent/menu` | What the child sees, with Lock buttons on dishes | parent |
+| `/parent/top-up` | NETS QR top-up with a 5 minute countdown | parent |
+| `/parent/spending`, `/parent/orders`, `/parent/macros` | Spending, order history and nutrition | parent |
+| `/parent/ask-mum/:requestId`, `/parent/pin` | Answer an Ask Mum request, reset a kid's code | parent |
+| `/kid/home`, `/kid/stalls/:stallId` | Home and stall menu (only safe dishes) | kid |
+| `/kid/dishes/:itemId`, `/kid/dishes/:itemId/pics` | Dish page and its photos | kid |
+| `/kid/tray`, `/kid/order-done`, `/kid/pickup/:orderId` | Tray, slide to pay, order sent, pickup code | kid |
+| `/kid/wallet`, `/kid/pics`, `/kid/snap` | Wallet, photo feed, take a dish photo | kid |
 
-## API the pages call
+The page guards only hide pages; the API checks the role on every request. The token is kept in `localStorage` under `kiddyeats.session`.
 
-| Call | Status |
-|---|---|
-| `POST /api/auth/child-login` `{ username, pin }` | in the backend |
-| `POST /api/auth/parent-login` `{ email, password }` → `{ token, parent: { id, name, email } }` | **to build** (401 for wrong details) |
-| `POST /api/auth/parent-signup` `{ name, mobile, email, password }` → `{ token, parent }` | **to build** (409 if the email is taken; `mobile` is sent as `+6581234567`) |
-| `POST /api/children` (parent token) `{ displayName, username, pin, colour, dailyLimitCents, allergens }` → `{ child }` | **to build** (409 if the login name is taken; allergens are lowercase, e.g. `"peanut"`) |
+## API
 
-The token is kept in `localStorage` under `kiddyeats.session`. The page guards only hide pages; the API must still check the role on every request.
+Every call the pages make is listed in [../backend/README.md](../backend/README.md).
