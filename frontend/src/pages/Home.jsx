@@ -17,11 +17,15 @@ export default function Home() {
   const [centre, setCentre] = useState(()=> recall(`${token}:centre`)); //the picked hawker centre id, null = let the backend pick the first
     const navigate = useNavigate();
 
-  // runs once when the page opens: ask the backend for the data
+  // runs when the page opens, and again when the kid picks another hawker centre: ask the backend for the data
   useEffect(() => {
+    let current = true; // true while this is the newest request
     getHome(token, centre)
-      .then((data) => setHome(remember(`${token}:home`, data))) // success: save the data, page redraws
-            .catch((err) => {
+      .then((data) => {
+        if (current) setHome(remember(`${token}:home`, data)); // success: save the data, page redraws
+      })                                                        // (an out-of-date answer is ignored)
+      .catch((err) => {
+        if (!current) return;              // an out-of-date request failing doesn't matter any more
         if (err.status === 401) {          // login expired or invalid
           clearSession();                  // forget the old token
           navigate("/kid/login", { replace: true });
@@ -29,12 +33,15 @@ export default function Home() {
           setError(err.message);
         }
       }); // failure: save the error, page redraws
+    // cleanup: React runs this just before the effect runs again (a new centre was picked),
+    // so this request is no longer the newest one and its answer will be ignored
+    return () => { current = false; };
   }, [centre]); // [centre]: run when the page opens, and again every time centre changes.
 
   if (error) return <main className="screen kid"><p>{error}</p></main>;
   if (!home) return <main className="screen kid"><p>Loading…</p></main>;
 
-  const { child, money, rules, pics, stalls, centres, centre: centreId } = home;   // pull the two parts out of the data, to save typing
+  const { child, money, rules, pics, stalls, centres, centre: centreId, comingSoon } = home;   // pull the two parts out of the data, to save typing
 // centre: centreId takes home.centre and calls it centreId
   return (
     <main className="screen kid home-kid">
@@ -109,24 +116,43 @@ export default function Home() {
               // and hawker centre name
             ))}
           </select>
-        {stalls.map((s) => (
-          <TransitionLink key={s.stall} to={`/kid/stalls/${s.stall}`} className="hk-stall">
-            {s.image ? (
-              <img src={s.image} alt="" className="hk-stall__img" />
-            ) : (
-              <div className="hk-stall__img hk-stall__img--empty">🍽️</div>
-            )}
-            <div className="hk-stall__text">
-              <h3>{s.name}</h3>
-              <p className="hk-sub">{s.unit}</p>
-              <p className={s.safePicks > 0 ? "hk-safe" : "hk-safe hk-safe--none"}>
-                {s.safePicks === 0
-                  ? "No safe picks for you"
-                  : `✓ ${s.safePicks} safe ${s.safePicks === 1 ? "pick" : "picks"} for you`}
-              </p>
+                {stalls.map((s) => {
+          // what's inside every stall card: the picture and the text
+          const inside = (
+            <>
+              {s.image ? (
+                <img src={s.image} alt="" className="hk-stall__img" />
+              ) : (
+                <div className="hk-stall__img hk-stall__img--empty">🍽️</div>
+              )}
+              <div className="hk-stall__text">
+                <h3>{s.name}</h3>
+                <p className="hk-sub">{s.unit}</p>
+                {comingSoon ? (
+                  <p className="hk-safe hk-safe--none">Menu coming soon</p>
+                ) : (
+                  <p className={s.safePicks > 0 ? "hk-safe" : "hk-safe hk-safe--none"}>
+                    {s.safePicks === 0
+                      ? "No safe picks for you"
+                      : `✓ ${s.safePicks} safe ${s.safePicks === 1 ? "pick" : "picks"} for you`}
+                  </p>
+                )}
+              </div>
+            </>
+          );
+
+          // coming soon: a plain box you can't tap. Otherwise: a link to the stall menu
+          return comingSoon ? (
+            <div key={s.stall} className="hk-stall hk-stall--soon" aria-disabled="true">
+              <span className="hk-soon">🚧 In progress</span>
+              {inside}
             </div>
-          </TransitionLink>
-        ))}
+          ) : (
+            <TransitionLink key={s.stall} to={`/kid/stalls/${s.stall}`} className="hk-stall">
+              {inside}
+            </TransitionLink>
+          );
+        })}
       </section>
       <KidTabs active="home" />
     </main>
